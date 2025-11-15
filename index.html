@@ -8565,86 +8565,52 @@ Teknolojinin hızla geliştiği günümüzde, dijital kitaplar da popüler hale 
                 showNotification('❌ Test sonucu silinirken hata oluştu: ' + error.message, 'error');
             }
         }
-
+            // Show pending tests modal with SUPABASE VIEW logic (FINAL & CORRECTED VERSION)
         async function showPendingTestsModal() {
             try {
                 showNotification('Bekleyen testler yükleniyor...', 'info');
 
-                // Get all students
-                const { data: students, error: studentsError } = await supabase
-                    .from('students')
+                // 1. Doğrudan View'dan bekleyen test verilerini çek
+                // NOT: Bu View'ı Supabase'de oluşturduğunuz varsayılmıştır.
+                const { data: rawPendingData, error } = await supabase
+                    .from('pending_tests_view')
                     .select('*')
-                    .order('name');
+                    .order('student_name'); // İsim sırasına göre sırala
 
-                if (studentsError) throw studentsError;
+                if (error) throw error;
 
-                // Get all tests
-                const { data: tests, error: testsError } = await supabase
-                    .from('tests')
-                    .select('*')
-                    .order('title');
+                // 2. Veriyi öğrenci bazında grupla (Modal için gerekli format)
+                const pendingDataMap = new Map();
+                let totalPendingAssignments = 0;
 
-                if (testsError) throw testsError;
-
-                // Get all assignments
-                const { data: assignments, error: assignmentsError } = await supabase
-                    .from('test_assignments')
-                    .select('*');
-
-                if (assignmentsError) throw assignmentsError;
-
-                // Get all results
-                const { data: results, error: resultsError } = await supabase
-                    .from('test_results')
-                    .select('*');
-
-                if (resultsError) throw resultsError;
-
-                // Build pending tests data
-                const pendingData = [];
-                
-                for (const student of students) {
-                    const studentPending = [];
+                for (const item of rawPendingData) {
+                    const studentKey = item.student_id;
                     
-                    // Get student's assignments
-                    const studentAssignments = assignments.filter(a => a.student_id === student.id);
-                    
-                    for (const assignment of studentAssignments) {
-                        // Check if student completed this test
-                        const completed = results.some(r => 
-                            r.student_id === student.id && r.test_id === assignment.test_id
-                        );
-                        
-                        if (!completed) {
-                            const test = tests.find(t => t.id === assignment.test_id);
-                            if (test) {
-                                studentPending.push({
-                                    testId: test.id,
-                                    testTitle: test.title,
-                                    assignedDate: assignment.created_at
-                                });
-                            }
-                        }
-                    }
-                    
-                    if (studentPending.length > 0) {
-                        pendingData.push({
-                            studentId: student.id,
-                            studentName: student.name,
-                            studentClass: student.class,
-                            pendingTests: studentPending
+                    if (!pendingDataMap.has(studentKey)) {
+                        pendingDataMap.set(studentKey, {
+                            studentId: item.student_id,
+                            studentName: item.student_name,
+                            studentClass: item.student_class,
+                            pendingTests: []
                         });
                     }
+                    
+                    pendingDataMap.get(studentKey).pendingTests.push({
+                        testTitle: item.test_title
+                    });
+                    totalPendingAssignments++;
                 }
 
-                // Create modal HTML
+                const pendingData = Array.from(pendingDataMap.values());
+                
+                // 3. Modalı oluştur ve göster
                 const modalHTML = `
                     <div id="pendingTestsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                        <div class="bg-white rounded-lg shadow-xl max-w-5xl w-full max-h-[90vh] flex flex-col">
+                        <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] flex flex-col">
                             <!-- Header -->
                             <div class="flex justify-between items-center p-6 border-b border-gray-200">
                                 <h3 class="text-xl font-semibold text-gray-900">
-                                    <i class="fas fa-clock text-yellow-600 mr-2"></i>Bekleyen Testler
+                                    <i class="fas fa-user-clock text-yellow-600 mr-2"></i>Öğrenci Bazında Bekleyen Testler
                                 </h3>
                                 <button onclick="closePendingTestsModal()" class="text-gray-400 hover:text-gray-600">
                                     <i class="fas fa-times text-2xl"></i>
@@ -8656,20 +8622,20 @@ Teknolojinin hızla geliştiği günümüzde, dijital kitaplar da popüler hale 
                                 ${pendingData.length === 0 ? `
                                     <div class="text-center py-12">
                                         <i class="fas fa-check-circle text-6xl text-green-400 mb-4"></i>
-                                        <p class="text-xl text-gray-600 font-semibold">Tüm testler tamamlandı!</p>
-                                        <p class="text-gray-500 mt-2">Hiçbir öğrencinin bekleyen testi yok.</p>
+                                        <p class="text-xl text-gray-600 font-semibold">Harika! Bekleyen test yok.</p>
+                                        <p class="text-gray-500 mt-2">Tüm öğrenciler kendilerine atanan testleri tamamlamış.</p>
                                     </div>
                                 ` : `
                                     <!-- Summary -->
                                     <div class="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                                        <div class="flex items-center gap-4">
+                                        <div class="flex items-center gap-6">
                                             <div class="text-center">
                                                 <div class="text-3xl font-bold text-yellow-700">${pendingData.length}</div>
-                                                <div class="text-sm text-yellow-600">Öğrenci</div>
+                                                <div class="text-sm text-yellow-600 font-medium">Öğrencinin Bekleyen Testi Var</div>
                                             </div>
                                             <div class="text-center">
-                                                <div class="text-3xl font-bold text-yellow-700">${pendingData.reduce((sum, s) => sum + s.pendingTests.length, 0)}</div>
-                                                <div class="text-sm text-yellow-600">Bekleyen Test</div>
+                                                <div class="text-3xl font-bold text-yellow-700">${totalPendingAssignments}</div>
+                                                <div class="text-sm text-yellow-600 font-medium">Toplam Bekleyen Atama</div>
                                             </div>
                                         </div>
                                     </div>
@@ -8678,7 +8644,6 @@ Teknolojinin hızla geliştiği günümüzde, dijital kitaplar da popüler hale 
                                     <div class="space-y-4">
                                         ${pendingData.map(student => `
                                             <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                                                <!-- Student Info -->
                                                 <div class="flex items-center justify-between mb-3">
                                                     <div class="flex items-center gap-3">
                                                         <div class="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
@@ -8695,17 +8660,18 @@ Teknolojinin hızla geliştiği günümüzde, dijital kitaplar da popüler hale 
                                                         </span>
                                                     </div>
                                                 </div>
-
-                                                <!-- Pending Tests -->
-                                                <div class="pl-13 space-y-2">
+                                                <div class="pl-12 space-y-2">
                                                     ${student.pendingTests.map((test, index) => `
-                                                        <div class="flex items-center gap-2 text-sm">
-                                                            <span class="text-gray-400">${index + 1}.</span>
-                                                            <i class="fas fa-file-alt text-yellow-500"></i>
-                                                            <span class="text-gray-700">${test.testTitle}</span>
-                                                            <span class="text-gray-400 text-xs ml-auto">
-                                                                Atandı: ${new Date(test.assignedDate).toLocaleDateString('tr-TR')}
-                                                            </span>
+                                                        <div class="flex items-center justify-between gap-3 text-sm p-2 bg-gray-50 rounded">
+                                                            <div class="flex items-center gap-3 flex-1">
+                                                                <span class="text-gray-400 font-mono">${index + 1}.</span>
+                                                                <i class="fas fa-file-alt text-yellow-500"></i>
+                                                                <span class="text-gray-700">${test.testTitle}</span>
+                                                            </div>
+                                                            <button onclick="removePendingAssignment(${student.studentId}, ${test.testId}, '${student.studentName}', '${test.testTitle}')"
+                                                                    class="text-red-500 hover:text-red-700 text-xs font-medium px-2 py-1 rounded-full hover:bg-red-100 transition duration-150">
+                                                                <i class="fas fa-times mr-1"></i>Kaldır
+                                                            </button>
                                                         </div>
                                                     `).join('')}
                                                 </div>
@@ -8717,11 +8683,7 @@ Teknolojinin hızla geliştiği günümüzde, dijital kitaplar da popüler hale 
 
                             <!-- Footer -->
                             <div class="p-6 border-t border-gray-200 bg-gray-50">
-                                <div class="flex justify-between items-center">
-                                    <div class="text-sm text-gray-600">
-                                        <i class="fas fa-info-circle mr-1"></i>
-                                        Bu liste, öğrencilere atanmış ancak henüz tamamlanmamış testleri gösterir.
-                                    </div>
+                                <div class="flex justify-end">
                                     <button onclick="closePendingTestsModal()" 
                                             class="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">
                                         <i class="fas fa-times mr-2"></i>Kapat
@@ -8732,13 +8694,43 @@ Teknolojinin hızla geliştiği günümüzde, dijital kitaplar da popüler hale 
                     </div>
                 `;
 
-                // Add modal to body
                 document.body.insertAdjacentHTML('beforeend', modalHTML);
-                showNotification('✅ Bekleyen testler yüklendi!', 'success');
+                showNotification('✅ Bekleyen testler başarıyla listelendi!', 'success');
 
             } catch (error) {
                 console.error('Error loading pending tests:', error);
-                showNotification('Bekleyen testler yüklenirken hata oluştu: ' + error.message, 'error');
+                showNotification('Bekleyen testler yüklenirken bir hata oluştu: ' + error.message, 'error');
+            }
+        }
+
+
+       
+        // Remove pending assignment
+        async function removePendingAssignment(studentId, testId, studentName, testTitle) {
+            if (!confirm(`"${testTitle}" testinin "${studentName}" adlı öğrenciden atamasını kaldırmak istediğinizden emin misiniz?`)) {
+                return;
+            }
+
+            try {
+                showNotification('Atama kaldırılıyor...', 'info');
+
+                const { error } = await supabase
+                    .from('test_assignments')
+                    .delete()
+                    .eq('student_id', studentId)
+                    .eq('test_id', testId);
+
+                if (error) throw error;
+
+                showNotification('✅ Atama başarıyla kaldırıldı!', 'success');
+                
+                // Modalı yenile
+                closePendingTestsModal();
+                showPendingTestsModal();
+
+            } catch (error) {
+                console.error('Error removing assignment:', error);
+                showNotification('❌ Atama kaldırılırken hata oluştu: ' + error.message, 'error');
             }
         }
 
@@ -9032,90 +9024,53 @@ Teknolojinin hızla geliştiği günümüzde, dijital kitaplar da popüler hale 
         }
 
         // Load failed tests list
+        // Load failed tests list using the Supabase View for performance and consistency
         async function loadFailedTestsList() {
             try {
                 showNotification('Başarısız testler yükleniyor...', 'info');
 
-                // Get all students
-                const { data: students, error: studentsError } = await supabase
-                    .from('students')
-                    .select('*')
-                    .order('name');
-
-                if (studentsError) throw studentsError;
-
-                // Get all tests
-                const { data: tests, error: testsError } = await supabase
-                    .from('tests')
-                    .select('*')
-                    .order('title');
-
-                if (testsError) throw testsError;
-
-                // Get all test results
-                const { data: results, error: resultsError } = await supabase
-                    .from('test_results')
+                // 1. Doğrudan View'dan başarısız test verilerini çek
+                // NOT: Bu View'ı Supabase'de oluşturduğunuz varsayılmıştır.
+                const { data: rawFailedData, error } = await supabase
+                    .from('failed_tests_view')
                     .select('*');
 
-                if (resultsError) throw resultsError;
+                if (error) throw error;
 
-                // Get all test assignments
-                const { data: assignments, error: assignmentsError } = await supabase
-                    .from('test_assignments')
-                    .select('*');
+                // 2. Veriyi işleyerek gerekli formatı oluştur
+                const failedTestsData = rawFailedData.map(item => ({
+                    resultId: item.result_id,
+                    studentId: item.student_id,
+                    studentName: item.student_name,
+                    studentClass: item.student_class,
+                    testId: item.test_id,
+                    testTitle: item.test_title,
+                    score: item.score_percentage, // View'dan gelen yüzde
+                    maxScore: 100, // Yüzde olduğu için max 100
+                    completedAt: item.result_date,
+                    percentage: item.score_percentage // Zaten yüzde
+                }));
 
-                if (assignmentsError) throw assignmentsError;
-
-                // Build failed tests data (score < 70)
-                const failedTestsData = [];
-                const failedStudentsSet = new Set();
-                let totalScore = 0;
-                let scoreCount = 0;
-
-                for (const result of results) {
-                    // Check if result is failed (score < 70)
-                    if (result.score < 70) {
-                        const student = students.find(s => s.id === result.student_id);
-                        const test = tests.find(t => t.id === result.test_id);
-
-                        if (student && test) {
-                            failedTestsData.push({
-                                resultId: result.id,
-                                studentId: result.student_id,
-                                studentName: student.name,
-                                studentNo: student.student_no,
-                                studentClass: student.class,
-                                testId: result.test_id,
-                                testTitle: test.title,
-                                score: result.score,
-                                maxScore: result.max_score || 100,
-                                completedAt: result.completed_at,
-                                percentage: Math.round((result.score / (result.max_score || 100)) * 100)
-                            });
-
-                            failedStudentsSet.add(result.student_id);
-                            totalScore += result.score;
-                            scoreCount++;
-                        }
-                    }
-                }
-
-                // Store globally for filtering
-                window.allFailedTestsData = failedTestsData;
-                window.currentFailedTestsFilter = 'all';
-                window.currentFailedTestsSearch = '';
-
-                // Update statistics
+                // 3. İstatistikleri hesapla
+                const failedStudentsSet = new Set(failedTestsData.map(f => f.studentId));
                 const failedTestsCount = new Set(failedTestsData.map(f => f.testId)).size;
                 const failedStudentsCount = failedStudentsSet.size;
+                
+                const totalScore = failedTestsData.reduce((sum, f) => sum + f.score, 0);
+                const scoreCount = failedTestsData.length;
                 const avgScore = scoreCount > 0 ? Math.round(totalScore / scoreCount) : 0;
 
+                // 4. İstatistikleri güncelle
                 document.getElementById('failedTestsCount').textContent = failedTestsCount;
                 document.getElementById('failedStudentsCount').textContent = failedStudentsCount;
                 document.getElementById('failedTestsAvgScore').textContent = avgScore + '%';
                 document.getElementById('failedTestsStats').classList.remove('hidden');
 
-                // Display failed tests
+                // 5. Global olarak sakla ve göster
+                window.allFailedTestsData = failedTestsData;
+                window.currentFailedTestsFilter = 'all';
+                window.currentFailedTestsSearch = '';
+
                 displayFailedTests(failedTestsData);
 
                 showNotification('✅ Başarısız testler yüklendi!', 'success');
