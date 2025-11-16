@@ -8595,9 +8595,10 @@ Teknolojinin hızla geliştiği günümüzde, dijital kitaplar da popüler hale 
                         });
                     }
                     
-                    pendingDataMap.get(studentKey).pendingTests.push({
-                        testTitle: item.test_title
-                    });
+                        pendingDataMap.get(studentKey).pendingTests.push({
+                            testId: item.test_id, // Hatanın çözümü: testId'yi ekle
+                            testTitle: item.test_title
+                        });
                     totalPendingAssignments++;
                 }
 
@@ -8668,7 +8669,7 @@ Teknolojinin hızla geliştiği günümüzde, dijital kitaplar da popüler hale 
                                                                 <i class="fas fa-file-alt text-yellow-500"></i>
                                                                 <span class="text-gray-700">${test.testTitle}</span>
                                                             </div>
-                                                            <button onclick="removePendingAssignment(${student.studentId}, ${test.testId}, '${student.studentName}', '${test.testTitle}')"
+                                                            <button onclick="removePendingAssignment(${student.studentId}, ${test.testId}, \`${student.studentName}\`, \`${test.testTitle}\`)"
                                                                     class="text-red-500 hover:text-red-700 text-xs font-medium px-2 py-1 rounded-full hover:bg-red-100 transition duration-150">
                                                                 <i class="fas fa-times mr-1"></i>Kaldır
                                                             </button>
