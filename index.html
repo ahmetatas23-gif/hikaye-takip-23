@@ -1942,7 +1942,7 @@ ON CONFLICT (tc_no) DO NOTHING;
                     .eq('tc_no', tc)
                     .eq('student_no', studentNo)
                     .single();
-				
+
                 if (error) throw error;
 
                 if (data) {
