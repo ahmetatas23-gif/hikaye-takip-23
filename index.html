@@ -86,8 +86,7 @@
         const SUPABASE_URL = 'https://gmzdeptaipfacmfdexnd.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdtemRlcHRhaXBmYWNtZmRleG5kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3Mzk2NzAsImV4cCI6MjA3MjMxNTY3MH0.uFenHsXWA0esrAoAYJ3MK6UoEW-8uNOc8CzYrJVyt5k';
         
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        
+        var supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);       
         // Global state
 let impersonatedStudent = null;
         let currentUser = null;
@@ -1666,22 +1665,22 @@ let impersonatedStudent = null;
             
             try {
                 // Create teachers table
-                await supabase.rpc('create_teachers_table');
+                try { await supabase.rpc('create_teachers_table'); } catch (e) { console.warn('create_teachers_table RPC not found, skipping:', e.message); }
                 
                 // Create students table  
-                await supabase.rpc('create_students_table');
+                try { await supabase.rpc('create_students_table'); } catch (e) { console.warn('create_students_table RPC not found, skipping:', e.message); }
                 
                 // Create tests table
-                await supabase.rpc('create_tests_table');
+                try { await supabase.rpc('create_tests_table'); } catch (e) { console.warn('create_tests_table RPC not found, skipping:', e.message); }
                 
                 // Create test_assignments table
-                await supabase.rpc('create_test_assignments_table');
+                try { await supabase.rpc('create_test_assignments_table'); } catch (e) { console.warn('create_test_assignments_table RPC not found, skipping:', e.message); }
                 
                 // Create test_results table
-                await supabase.rpc('create_test_results_table');
+                try { await supabase.rpc('create_test_results_table'); } catch (e) { console.warn('create_test_results_table RPC not found, skipping:', e.message); }
                 
                 // Create student_badges table
-                await supabase.rpc('create_student_badges_table');
+                try { await supabase.rpc('create_student_badges_table'); } catch (e) { console.warn('create_student_badges_table RPC not found, skipping:', e.message); }
                 
                 console.log('Tablolar başarıyla oluşturuldu!');
                 
