@@ -77,6 +77,26 @@
         .timer-warning { animation: shake 0.5s ease-in-out infinite; }
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
         .border-3 { border-width: 3px; }
+        
+        /* Mobile Specific Fixes */
+        @media (max-width: 640px) {
+            .tab-button, .teacher-tab-button {
+                padding-left: 0.75rem !important;
+                padding-right: 0.75rem !important;
+                font-size: 0.75rem !important;
+                white-space: nowrap;
+            }
+            nav {
+                overflow-x: auto;
+                scrollbar-width: none;
+                -ms-overflow-style: none;
+            }
+            nav::-webkit-scrollbar { display: none; }
+            
+            .stats-grid {
+                grid-template-cols: 1fr !important;
+            }
+        }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -269,10 +289,42 @@ let impersonatedStudent = null;
                 </div>
             </div>
 
+            <!-- New Student Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div class="bg-white rounded-lg shadow p-6 border-l-4 border-blue-500">
+                    <div class="flex items-center">
+                        <div class="p-3 bg-blue-50 rounded-full">
+                            <i class="fas fa-calendar-week text-blue-600 text-xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-500 uppercase tracking-wider">Bu Haftaki Okuma</p>
+                            <div class="flex items-baseline">
+                                <p id="weeklyReadCount" class="text-3xl font-bold text-gray-900">0</p>
+                                <p class="ml-2 text-sm text-gray-500">kitap/test</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg shadow p-6 border-l-4 border-purple-500">
+                    <div class="flex items-center">
+                        <div class="p-3 bg-purple-50 rounded-full">
+                            <i class="fas fa-calendar-alt text-purple-600 text-xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-500 uppercase tracking-wider">Bu Ayki Okuma</p>
+                            <div class="flex items-baseline">
+                                <p id="monthlyReadCount" class="text-3xl font-bold text-gray-900">0</p>
+                                <p class="ml-2 text-sm text-gray-500">kitap/test</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Tabs -->
             <div class="bg-white rounded-lg shadow mb-6">
-                <div class="border-b border-gray-200">
-                    <nav class="-mb-px flex">
+                <div class="border-b border-gray-200 overflow-x-auto">
+                    <nav class="-mb-px flex min-w-max">
                         <button onclick="showTab('tests')" id="testsTab" class="tab-button py-4 px-6 border-b-2 border-blue-500 text-blue-600 font-medium">
                             <i class="fas fa-clipboard-list mr-2"></i>Testlerim
                         </button>
@@ -510,8 +562,8 @@ let impersonatedStudent = null;
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <!-- Teacher Tabs -->
             <div class="bg-white rounded-lg shadow mb-6">
-                <div class="border-b border-gray-200">
-                    <nav class="-mb-px flex">
+                <div class="border-b border-gray-200 overflow-x-auto">
+                    <nav class="-mb-px flex min-w-max">
                         <button onclick="showTeacherTab('dashboard')" id="dashboardTab" class="teacher-tab-button py-4 px-6 border-b-2 border-green-500 text-green-600 font-medium">
                             <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
                         </button>
@@ -564,6 +616,111 @@ let impersonatedStudent = null;
                             </div>
                         </div>
                     </div>
+
+                    <!-- New Teacher Stats Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                        <div class="bg-white rounded-lg shadow-md p-6 border-t-4 border-indigo-500">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-semibold text-gray-500 uppercase">Sınıf Haftalık Toplam Çözülen</p>
+                                    <p id="classWeeklyTotal" class="text-3xl font-bold text-indigo-600 mt-1">0</p>
+                                </div>
+                                <div class="p-3 bg-indigo-100 rounded-lg">
+                                    <i class="fas fa-chart-bar text-indigo-600 text-2xl"></i>
+                                </div>
+                            </div>
+                            <p class="text-xs text-gray-400 mt-4">Son 7 gün içindeki toplam aktivite</p>
+                        </div>
+                        <div class="bg-white rounded-lg shadow-md p-6 border-t-4 border-pink-500">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-semibold text-gray-500 uppercase">Sınıf Aylık Toplam Çözülen</p>
+                                    <p id="classMonthlyTotal" class="text-3xl font-bold text-pink-600 mt-1">0</p>
+                                </div>
+                                <div class="p-3 bg-pink-100 rounded-lg">
+                                    <i class="fas fa-calendar-check text-pink-600 text-2xl"></i>
+                                </div>
+                            </div>
+                            <p class="text-xs text-gray-400 mt-4">Bu ay içindeki toplam aktivite</p>
+                        </div>
+                    </div>
+
+                    <!-- Performance Charts and Leaderboard -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                        <!-- Chart Section -->
+                        <div class="lg:col-span-2 bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <h4 class="font-bold text-gray-800"><i class="fas fa-chart-line mr-2 text-blue-500"></i>Haftalık Okuma Trendi</h4>
+                            </div>
+                            <div class="h-64">
+                                <canvas id="performanceChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Leaderboard Section -->
+                        <div class="bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <h4 class="font-bold text-gray-800"><i class="fas fa-trophy mr-2 text-yellow-500"></i>En Çok Okuyanlar</h4>
+                                <select id="leaderboardPeriod" onchange="updateLeaderboardUI()" class="text-xs border rounded p-1">
+                                    <option value="weekly">Haftalık</option>
+                                    <option value="monthly">Aylık</option>
+                                </select>
+                            </div>
+                            <div id="leaderboardContent" class="space-y-3 max-h-64 overflow-y-auto pr-2">
+                                <!-- Leaderboard items will be injected here -->
+                                <p class="text-center text-gray-400 text-sm py-4">Veriler yükleniyor...</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Student Performance Tracking Panel -->
+                    <div class="bg-white rounded-lg shadow-md p-6 mb-8 border-t-4 border-blue-600">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                            <h4 class="text-xl font-bold text-gray-800 flex items-center">
+                                <i class="fas fa-users-cog mr-3 text-blue-600"></i>Öğrenci Performans İzleme Paneli
+                            </h4>
+                            <div class="flex flex-wrap items-center gap-3">
+                                <div class="relative flex-1 md:flex-none min-w-[200px]">
+                                    <input type="text" id="perfSearchInput" placeholder="Öğrenci ara..." 
+                                           onkeyup="filterPerformanceTable()"
+                                           class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <i class="fas fa-search text-gray-400"></i>
+                                    </div>
+                                </div>
+                                <select id="perfPeriodSelect" onchange="updatePerformanceTable()" 
+                                        class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                                    <option value="weekly">Haftalık Öncelikli</option>
+                                    <option value="monthly">Aylık Öncelikli</option>
+                                </select>
+                                <select id="perfSortOrder" onchange="updatePerformanceTable()" 
+                                        class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                                    <option value="desc">En Çok Çözen</option>
+                                    <option value="asc">En Az Çözen</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-gray-50 text-gray-600 uppercase text-xs font-bold">
+                                        <th class="px-4 py-3 border-b">Öğrenci Adı</th>
+                                        <th class="px-4 py-3 border-b text-center">Sınıf</th>
+                                        <th class="px-4 py-3 border-b text-center">Haftalık (7 Gün)</th>
+                                        <th class="px-4 py-3 border-b text-center">Aylık (Bu Ay)</th>
+                                        <th class="px-4 py-3 border-b text-center">Durum</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="performanceTableBody" class="divide-y divide-gray-100">
+                                    <!-- Veriler JS ile buraya gelecek -->
+                                    <tr>
+                                        <td colspan="5" class="px-4 py-8 text-center text-gray-400">Veriler yükleniyor...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
                 </div>
 
                 <!-- Test Management Content -->
@@ -2119,7 +2276,7 @@ ON CONFLICT (tc_no) DO NOTHING;
                 // Store results globally for filtering
                 window.currentStudentResults = results;
                 
-                updateStudentStats(assignments, results, badges);
+                await updateStudentStats(assignments, results, badges);
                 displayAssignedTests(assignments, results);
                 displayStudentBadges(badges);
                 await loadLeaderboard();
@@ -2130,7 +2287,7 @@ ON CONFLICT (tc_no) DO NOTHING;
         }
 
         // Update student statistics
-        function updateStudentStats(assignments, results, badges) {
+        async function updateStudentStats(assignments, results, badges) {
             document.getElementById('totalTests').textContent = assignments?.length || 0;
             document.getElementById('completedTests').textContent = results?.length || 0;
             
@@ -2139,6 +2296,75 @@ ON CONFLICT (tc_no) DO NOTHING;
                 : 0;
             document.getElementById('averageScore').textContent = avgScore;
             document.getElementById('badgeCount').textContent = badges?.length || 0;
+
+            // Fetch weekly/monthly counts for current student from student_stats view
+            try {
+                const { data, error } = await supabase
+                    .from('student_stats')
+                    .select('weekly_count, monthly_count')
+                    .eq('id', currentUser.id)
+                    .single();
+                
+                if (!error && data) {
+                    const weekly = data.weekly_count || 0;
+                    const monthly = data.monthly_count || 0;
+                    
+                    // Create status badge HTML
+                    let statusHtml = '';
+                    if (weekly >= 5) {
+                        statusHtml = '<span class="ml-2 px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-700">🔥 Çok Aktif</span>';
+                    } else if (weekly > 3) {
+                        statusHtml = '<span class="ml-2 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700">✅ Aktif</span>';
+                    } else {
+                        statusHtml = '<span class="ml-2 px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-700">❗ Daha Çok Okumalısın</span>';
+                    }
+                    
+                    // Update UI with counts and badges in the "Weekly Reading" card
+                    const weeklyReadEl = document.getElementById('weeklyReadCount');
+                    if (weeklyReadEl) {
+                        const parent = weeklyReadEl.closest('.ml-4');
+                        if (parent) {
+                            parent.innerHTML = `
+                                <p class="text-sm font-medium text-gray-500 uppercase tracking-wider">Bu Haftaki Okuma</p>
+                                <div class="flex items-center flex-wrap gap-2">
+                                    <p id="weeklyReadCount" class="text-3xl font-bold text-gray-900">${weekly}</p>
+                                    ${statusHtml}
+                                </div>
+                                <p class="text-[11px] text-gray-500 mt-1 font-medium">
+                                    <i class="fas fa-calendar-alt mr-1"></i>Aylık Toplam: <span class="text-purple-600 font-bold">${monthly}</span>
+                                </p>
+                            `;
+                        }
+                    }
+                    
+                    // Restore basic completed tests count if it was overwritten
+                    const completedTestsEl = document.getElementById('completedTests');
+                    if (completedTestsEl) {
+                        completedTestsEl.textContent = results?.length || 0;
+                    }
+                }
+            } catch (e) { console.error("Error fetching student status:", e); }
+
+            // Calculate weekly and monthly stats
+            const now = new Date();
+            const oneWeekAgo = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7);
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+            const weeklyCount = results?.filter(r => {
+                const dateStr = r.completed_at;
+                if (!dateStr) return false;
+                const completedDate = new Date(dateStr);
+                return !isNaN(completedDate) && completedDate >= oneWeekAgo;
+            }).length || 0;
+            const monthlyCount = results?.filter(r => {
+                const dateStr = r.completed_at;
+                if (!dateStr) return false;
+                const completedDate = new Date(dateStr);
+                return !isNaN(completedDate) && completedDate >= startOfMonth;
+            }).length || 0;
+
+            document.getElementById('weeklyReadCount').textContent = weeklyCount;
+            document.getElementById('monthlyReadCount').textContent = monthlyCount;
         }
 
         // Display assigned tests with one-time completion logic
@@ -3168,10 +3394,10 @@ ON CONFLICT (tc_no) DO NOTHING;
             }, 8000);
         }
 
-        // Load teacher data
+        // Load teacher data - KESİN ÇÖZÜM İÇİN YENİDEN YAZILDI
         async function loadTeacherData() {
             try {
-                // Load statistics
+                // Load core statistics
                 const { data: students } = await supabase.from('students').select('*');
                 const { data: tests } = await supabase.from('tests').select('*');
                 const { data: results } = await supabase.from('test_results').select('*');
@@ -3182,16 +3408,229 @@ ON CONFLICT (tc_no) DO NOTHING;
                 const avgSuccess = results?.length > 0 
                     ? Math.round(results.reduce((sum, r) => sum + r.score, 0) / results.length)
                     : 0;
-                document.getElementById('averageSuccess').textContent = `${avgSuccess}%`;
+                document.getElementById('averageSuccess').textContent = `%${avgSuccess}`;
                 
+                // Calculate time periods for class-wide stats
+                const now = new Date();
+                const oneWeekAgo = new Date(now);
+                oneWeekAgo.setDate(now.getDate() - 7);
+                oneWeekAgo.setHours(0, 0, 0, 0);
+                
+                const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+                startOfMonth.setHours(0, 0, 0, 0);
+
+                // Fetch directly from our new SQL View for weekly and monthly totals
+                const { data: studentStats, error: statsError } = await supabase
+                    .from('student_stats')
+                    .select('weekly_count, monthly_count');
+                
+                if (statsError) console.error('Teacher Dashboard Stats Error:', statsError);
+                
+                const weeklyTotal = studentStats?.reduce((sum, s) => sum + (s.weekly_count || 0), 0) || 0;
+                const monthlyTotal = studentStats?.reduce((sum, s) => sum + (s.monthly_count || 0), 0) || 0;
+                
+                // Fetch all results for other dashboard charts/leaderboards
+                const { data: allResultsData } = await supabase.from('test_results').select('*');
+                const allResults = allResultsData || [];
+
+                // Update Dashboard summary cards
+                if (document.getElementById('classWeeklyTotal')) document.getElementById('classWeeklyTotal').textContent = weeklyTotal;
+                if (document.getElementById('classMonthlyTotal')) document.getElementById('classMonthlyTotal').textContent = monthlyTotal;              
+                
+                // Load sub-sections
                 await loadTestsList();
-                await loadStudentsList();
+                await loadStudentsList(); // Now uses SQL View internally
                 await loadResultsList();
+                await updatePerformanceTable();
+                
+                // Global variables for dashboard data
+                window.dashboardStudents = students || [];
+                window.dashboardResults = allResults || [];
+
+                // Render charts and leaderboard
+                renderPerformanceCharts(window.dashboardResults);
+                updateLeaderboardUI();
                 
             } catch (error) {
                 console.error('Error loading teacher data:', error);
             }
         }
+
+        function renderPerformanceCharts(results) {
+            const ctx = document.getElementById('performanceChart');
+            if (!ctx) return;
+            
+            if (window.myPerformanceChart) {
+                window.myPerformanceChart.destroy();
+            }
+
+            const allResults = Array.isArray(results) ? results : [];
+            const now = new Date();
+            const days = [];
+            const counts = [];
+            
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date(now);
+                d.setDate(now.getDate() - i);
+                const dayName = d.toLocaleDateString('tr-TR', { weekday: 'short' });
+                days.push(dayName);
+                
+                const count = allResults.filter(r => {
+                    const dateStr = r.completed_at;
+                    if (!dateStr) return false;
+                    const rd = new Date(dateStr);
+                    return rd.toDateString() === d.toDateString();
+                }).length;
+                counts.push(count);
+            }
+
+            window.myPerformanceChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: days,
+                    datasets: [{
+                        label: 'Çözülen Test Sayısı',
+                        data: counts,
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { stepSize: 1 } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        function updateLeaderboardUI() {
+            const period = document.getElementById('leaderboardPeriod')?.value || 'weekly';
+            const container = document.getElementById('leaderboardContent');
+            if (!container || !window.dashboardStudents || !window.dashboardStudents.length) return;
+
+            const results = Array.isArray(window.dashboardResults) ? window.dashboardResults : [];
+            const now = new Date();
+            let startDate;
+            if (period === 'weekly') {
+                startDate = new Date(now);
+                startDate.setDate(now.getDate() - 7);
+            } else {
+                startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            }
+            startDate.setHours(0, 0, 0, 0);
+
+            const ranking = window.dashboardStudents.map(s => {
+                const count = results.filter(r => {
+                    if (String(r.student_id).trim() !== String(s.id).trim()) return false;
+                    const dateStr = r.completed_at;
+                    if (!dateStr) return false;
+                    const d = new Date(dateStr);
+                    return d.getTime() >= startDate.getTime();
+                }).length;
+                return { name: s.name, count: count };
+            }).sort((a, b) => b.count - a.count).slice(0, 10);
+
+            container.innerHTML = ranking.map((item, index) => `
+                <div class="flex items-center justify-between p-2 rounded-lg ${index < 3 ? 'bg-yellow-50' : 'hover:bg-gray-50'}">
+                    <div class="flex items-center">
+                        <span class="w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold mr-3 
+                            ${index === 0 ? 'bg-yellow-400 text-white' : index === 1 ? 'bg-gray-300 text-white' : index === 2 ? 'bg-orange-300 text-white' : 'bg-gray-100 text-gray-500'}">
+                            ${index + 1}
+                        </span>
+                        <span class="text-sm font-medium text-gray-700 truncate max-w-[120px]">${item.name}</span>
+                    </div>
+                    <span class="text-sm font-bold text-blue-600">${item.count} Test</span>
+                </div>
+            `).join('') || '<p class="text-center text-gray-400 text-sm py-4">Veri bulunamadı.</p>';
+        }
+
+        
+        // Student Performance Tracking Logic
+        let performanceData = [];
+
+        async function updatePerformanceTable() {
+            try {
+                const period = document.getElementById('perfPeriodSelect').value;
+                const sortOrder = document.getElementById('perfSortOrder').value;
+                
+                // Fetch directly from our SQL View
+                const { data, error } = await supabase
+                    .from('student_stats')
+                    .select('*');
+                
+                if (error) throw error;
+                
+                performanceData = data || [];
+                renderPerformanceTable(performanceData, period, sortOrder);
+            } catch (error) {
+                console.error('Error updating performance table:', error);
+            }
+        }
+
+        function renderPerformanceTable(data, period = 'weekly', sortOrder = 'desc') {
+            const tbody = document.getElementById('performanceTableBody');
+            if (!tbody) return;
+
+            // Sort data
+            const sortedData = [...data].sort((a, b) => {
+                const valA = period === 'weekly' ? (a.weekly_count || 0) : (a.monthly_count || 0);
+                const valB = period === 'weekly' ? (b.weekly_count || 0) : (b.monthly_count || 0);
+                return sortOrder === 'desc' ? valB - valA : valA - valB;
+            });
+
+            tbody.innerHTML = sortedData.map(student => {
+                const weekly = student.weekly_count || 0;
+                const monthly = student.monthly_count || 0;
+                
+                // Determine status badge
+                let statusBadge = '';
+                if (weekly >= 5) {
+                    statusBadge = '<span class="px-2 py-1 rounded-full text-[10px] font-bold bg-green-100 text-green-700">🔥 Çok Aktif</span>';
+                } else if (weekly > 3) {
+                    statusBadge = '<span class="px-2 py-1 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700">✅ Aktif</span>';
+                } else {
+                    statusBadge = '<span class="px-2 py-1 rounded-full text-[10px] font-bold bg-red-100 text-red-700">❗ Daha Çok Okumalısın</span>';
+                }
+
+                return `
+                    <tr class="hover:bg-blue-50 transition-colors cursor-pointer" onclick="impersonateStudent('${student.id}', '${student.name.replace(/'/g, "\\'")}')">
+                        <td class="px-4 py-3">
+                            <div class="font-medium text-gray-900">${student.name}</div>
+                            <div class="text-xs text-gray-500">No: ${student.student_no}</div>
+                        </td>
+                        <td class="px-4 py-3 text-center text-sm text-gray-600">${student.class}</td>
+                        <td class="px-4 py-3 text-center">
+                            <span class="font-bold text-indigo-600">${weekly}</span>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <span class="font-bold text-pink-600">${monthly}</span>
+                        </td>
+                        <td class="px-4 py-3 text-center">${statusBadge}</td>
+                    </tr>
+                `;
+            }).join('') || '<tr><td colspan="5" class="px-4 py-8 text-center text-gray-400">Eşleşen öğrenci bulunamadı.</td></tr>';
+        }
+
+        function filterPerformanceTable() {
+            const searchTerm = document.getElementById('perfSearchInput').value.toLowerCase();
+            const period = document.getElementById('perfPeriodSelect').value;
+            const sortOrder = document.getElementById('perfSortOrder').value;
+            
+            const filtered = performanceData.filter(s => 
+                s.name.toLowerCase().includes(searchTerm) || 
+                s.student_no.toString().includes(searchTerm) ||
+                s.class.toLowerCase().includes(searchTerm)
+            );
+            
+            renderPerformanceTable(filtered, period, sortOrder);
+        }
+
 
         // Tab functions
         function showTab(tabName) {
@@ -3475,51 +3914,82 @@ ON CONFLICT (tc_no) DO NOTHING;
             }
         }
 
-        // Load students list for teacher
+        // Load students list for teacher - SQL VIEW (student_stats) İLE KESİN ÇÖZÜM
         async function loadStudentsList() {
             try {
-                const { data: students, error } = await supabase
-                    .from('students')
+                // Fetch directly from our new SQL View
+                const { data: studentStats, error } = await supabase
+                    .from('student_stats')
                     .select('*')
                     .order('name');
 
-                if (error) throw error;
-
-                const container = document.getElementById('studentsList');
-                container.innerHTML = '';
-
-                if (!students || students.length === 0) {
-                    container.innerHTML = '<p class="text-gray-500 text-center py-8">Henüz öğrenci bulunmuyor.</p>';
+                if (error) {
+                    console.error('Error fetching student stats view:', error);
+                    // Fallback to basic student list if view doesn't exist yet
+                    const { data: basicStudents } = await supabase.from('students').select('*').order('name');
+                    renderStudentsList(basicStudents || []);
                     return;
                 }
 
-                students.forEach(student => {
-                    const studentCard = document.createElement('div');
-                    studentCard.className = 'bg-white border border-gray-200 rounded-lg p-4 cursor-pointer hover:shadow-lg transition duration-200';
+                renderStudentsList(studentStats);
+            } catch (error) {
+                console.error('Error in loadStudentsList:', error);
+            }
+        }
+
+        function renderStudentsList(students) {
+            try {
+            const container = document.getElementById('studentsList');
+            container.innerHTML = '';
+
+            if (!students || students.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-center py-8">Henüz öğrenci bulunmuyor.</p>';
+                return;
+            }
+
+            students.forEach(student => {
+                const weeklyCount = student.weekly_count || 0;
+                const monthlyCount = student.monthly_count || 0;
+                const studentCard = document.createElement('div');
+                    studentCard.className = 'bg-white border border-gray-200 rounded-lg p-4 cursor-pointer hover:shadow-lg transition duration-200 mb-3';
                     studentCard.setAttribute('onclick', `impersonateStudent('${student.id}', '${student.name.replace(/'/g, "\\'")}')`);
                     studentCard.innerHTML = `
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <h4 class="font-semibold text-gray-900">${student.name} <i class="fas fa-external-link-alt text-xs text-blue-500 ml-2"></i></h4>
-                                <p class="text-gray-600 text-sm">Öğrenci No: ${student.student_no}</p>
-                                <p class="text-gray-600 text-sm">Sınıf: ${student.class}</p>
-                                <p class="text-gray-600 text-sm">TC: ${student.tc_no}</p>
+                        <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+                            <div class="flex-1">
+                                <div class="flex flex-wrap items-center gap-2 mb-2">
+                                    <h4 class="font-bold text-gray-900 text-lg">${student.name}</h4>
+                                    <i class="fas fa-external-link-alt text-xs text-blue-500"></i>
+                                    <div class="flex gap-2 ml-2">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800 border border-blue-200">
+                                            <i class="fas fa-calendar-week mr-1"></i> Haftalık: ${weeklyCount}
+                                        </span>
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-100 text-purple-800 border border-purple-200">
+                                            <i class="fas fa-calendar-alt mr-1"></i> Aylık: ${monthlyCount}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm text-gray-500">
+                                    <span><i class="fas fa-id-card mr-1"></i> No: ${student.student_no}</span>
+                                    <span><i class="fas fa-school mr-1"></i> Sınıf: ${student.class}</span>
+                                    <span><i class="fas fa-fingerprint mr-1"></i> TC: ${student.tc_no}</span>
+                                </div>
                             </div>
-                            <div class="flex space-x-2">
-                                <button onclick="event.stopPropagation(); editStudent(${student.id}, '${student.name.replace(/'/g, "\\'")}', '${student.tc_no}', '${student.student_no}', '${student.class}')" class="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition duration-200">
-                                    <i class="fas fa-edit mr-1"></i>Düzenle
+                            <div class="flex items-center gap-2 border-t md:border-t-0 pt-3 md:pt-0">
+                                <button onclick="event.stopPropagation(); editStudent(${student.id}, '${student.name.replace(/'/g, "\\'")}', '${student.tc_no}', '${student.student_no}', '${student.class}')" 
+                                        class="flex-1 md:flex-none px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition duration-200 flex items-center justify-center">
+                                    <i class="fas fa-edit mr-2"></i>Düzenle
                                 </button>
-                                <button onclick="event.stopPropagation(); deleteStudent(${student.id})" class="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition duration-200">
-                                    <i class="fas fa-trash mr-1"></i>Sil
+                                <button onclick="event.stopPropagation(); deleteStudent(${student.id})" 
+                                        class="flex-1 md:flex-none px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition duration-200 flex items-center justify-center">
+                                    <i class="fas fa-trash mr-2"></i>Sil
                                 </button>
                             </div>
                         </div>
                     `;
                     container.appendChild(studentCard);
                 });
-
             } catch (error) {
-                console.error('Error loading students:', error);
+                console.error('Error loading students list:', error);
             }
         }
 
@@ -8522,6 +8992,7 @@ Teknolojinin hızla geliştiği günümüzde, dijital kitaplar da popüler hale 
                         break;
                     case 'results':
                         await loadResultsList();
+                await updatePerformanceTable();
                         break;
                     case 'library':
                         // Reload library if student is selected
