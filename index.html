@@ -98,6 +98,244 @@
             }
         }
     </style>
+
+    <style>
+        .shadow-soft {
+            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+        }
+        .progress-bar-fill {
+            transition: width 1s ease-in-out;
+            background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);
+        }
+        .day-indicator {
+            width: 48px;
+            height: 48px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            transition: all 0.2s;
+        }
+        .day-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-top: 4px;
+        }
+        /* Apple-esque Table Styles */
+        .apple-table {
+            border-collapse: separate;
+            border-spacing: 0 8px;
+            width: 100%;
+        }
+        .apple-table tr {
+            background-color: white;
+            transition: all 0.2s ease;
+        }
+        .apple-table tr:hover {
+            transform: scale(1.002);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        .apple-table td {
+            padding: 16px;
+            border-top: 1px solid #f3f4f6;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .apple-table td:first-child {
+            border-left: 1px solid #f3f4f6;
+            border-top-left-radius: 12px;
+            border-bottom-left-radius: 12px;
+        }
+        .apple-table td:last-child {
+            border-right: 1px solid #f3f4f6;
+            border-top-right-radius: 12px;
+            border-bottom-right-radius: 12px;
+        }
+        .pill-tag {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-size: 12px;
+            font-weight: 600;
+            gap: 4px;
+            min-width: 45px;
+        }
+        .pill-success { background-color: #10b981; color: white; }
+        .pill-pending { background-color: #fef3c7; color: #92400e; }
+        .pill-failed { background-color: #fee2e2; color: #b91c1c; }
+        .pill-empty { background-color: #f3f4f6; color: #9ca3af; }
+        
+        /* Gelişmiş Matris Tablosu Stilleri */
+        .matrix-table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        .matrix-table thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .matrix-table th {
+            padding: 12px 8px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        .matrix-table tbody tr {
+            border-bottom: 1px solid #e5e7eb;
+            transition: all 0.2s ease;
+        }
+        .matrix-table tbody tr:hover {
+            background-color: #f9fafb;
+            box-shadow: inset 0 0 10px rgba(102, 126, 234, 0.05);
+        }
+        .matrix-table td {
+            padding: 10px 8px;
+            font-size: 13px;
+            text-align: center;
+        }
+        .matrix-table td:first-child {
+            text-align: left;
+            padding-left: 16px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+        .student-name-cell {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 180px;
+        }
+        .student-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        .day-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            gap: 2px;
+        }
+        .day-pill.success {
+            background-color: #d1fae5;
+            color: #065f46;
+            border: 1px solid #6ee7b7;
+        }
+        .day-pill.failed {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+        .day-pill.pending {
+            background-color: #fef3c7;
+            color: #92400e;
+            border: 1px solid #fcd34d;
+        }
+        .day-pill.empty {
+            background-color: #f3f4f6;
+            color: #9ca3af;
+            border: 1px solid #d1d5db;
+        }
+        .activity-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            gap: 4px;
+        }
+        .badge-very-active {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff8787 100%);
+            color: white;
+        }
+        .badge-active {
+            background: linear-gradient(135deg, #51cf66 0%, #69db7c 100%);
+            color: white;
+        }
+        .badge-inactive {
+            background: linear-gradient(135deg, #ffd43b 0%, #ffe066 100%);
+            color: #1f2937;
+        }
+        .reading-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .reading-on-track {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+        .reading-behind {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+        
+        /* Durum Rozetleri */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 700;
+            white-space: nowrap;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        .status-badge:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+        }
+        .badge-very-active {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff8787 100%);
+            color: white;
+        }
+        .badge-very-active i {
+            animation: flameFlicker 1.5s ease-in-out infinite;
+        }
+        @keyframes flameFlicker {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            25% { transform: scale(1.1) rotate(-2deg); }
+            50% { transform: scale(0.95) rotate(2deg); }
+            75% { transform: scale(1.05) rotate(-1deg); }
+        }
+        .badge-active {
+            background: linear-gradient(135deg, #51cf66 0%, #69db7c 100%);
+            color: white;
+        }
+        .badge-inactive {
+            background: linear-gradient(135deg, #ffd43b 0%, #ffe066 100%);
+            color: #1f2937;
+        }
+    </style>
+
 </head>
 <body class="bg-gray-50">
     <!-- Supabase Configuration -->
@@ -289,32 +527,94 @@ let impersonatedStudent = null;
                 </div>
             </div>
 
-            <!-- New Student Stats Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <div class="bg-white rounded-lg shadow p-6 border-l-4 border-blue-500">
-                    <div class="flex items-center">
-                        <div class="p-3 bg-blue-50 rounded-full">
-                            <i class="fas fa-calendar-week text-blue-600 text-xl"></i>
+            <!-- Modern Reading & Test Status Card -->
+            <div class="bg-white rounded-2xl shadow-soft p-8 mb-8 border border-gray-100 transition-all hover:shadow-md">
+                <div class="flex flex-col lg:flex-row gap-12">
+                    <!-- Left Section: Personal Performance Tracking -->
+                    <div class="flex-[1.5]">
+                        <div class="flex items-center justify-between mb-8">
+                            <div>
+                                <h3 class="text-xl font-bold text-gray-900">Bu Haftaki Okuma</h3>
+                                <p class="text-gray-500 text-sm mt-1">Kişisel performans izleme panelin</p>
+                            </div>
+                            <span class="text-xs font-bold text-gray-400 bg-gray-50 px-4 py-2 rounded-xl border border-gray-100">
+                                <span id="currentWeekRange">--</span>
+                            </span>
                         </div>
-                        <div class="ml-4">
-                            <p class="text-sm font-medium text-gray-500 uppercase tracking-wider">Bu Haftaki Okuma</p>
-                            <div class="flex items-baseline">
-                                <p id="weeklyReadCount" class="text-3xl font-bold text-gray-900">0</p>
-                                <p class="ml-2 text-sm text-gray-500">kitap/test</p>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left apple-table">
+                                <thead>
+                                    <tr class="text-gray-400 uppercase text-[10px] font-bold tracking-widest">
+                                        <th class="px-2 py-2 text-center">Pzt</th>
+                                        <th class="px-2 py-2 text-center">Sal</th>
+                                        <th class="px-2 py-2 text-center">Çar</th>
+                                        <th class="px-2 py-2 text-center">Per</th>
+                                        <th class="px-2 py-2 text-center">Cum</th>
+                                        <th class="px-2 py-2 text-center">Cmt</th>
+                                        <th class="px-2 py-2 text-center">Paz</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr id="studentWeeklyStatusRow">
+                                        <!-- Days will be injected here by JS -->
+                                        <td colspan="7" class="py-4 text-center text-gray-300 text-xs">Yükleniyor...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="mt-6 flex items-center justify-between">
+                            <div id="studentStatusBadgeContainer">
+                                <!-- Status badge will be injected here -->
+                            </div>
+                            <div class="flex gap-6">
+                                <div class="text-center">
+                                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Haftalık</p>
+                                    <p id="studentWeeklyTotal" class="text-lg font-black text-gray-900">0 Test</p>
+                                </div>
+                                <div class="text-center">
+                                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Aylık</p>
+                                    <div class="px-3 py-1 bg-gray-50 rounded-lg border border-gray-100 text-gray-500 font-bold">
+                                        <span id="studentMonthlyTotal">0</span> Test
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-                <div class="bg-white rounded-lg shadow p-6 border-l-4 border-purple-500">
-                    <div class="flex items-center">
-                        <div class="p-3 bg-purple-50 rounded-full">
-                            <i class="fas fa-calendar-alt text-purple-600 text-xl"></i>
+
+                    <!-- Divider for Desktop -->
+                    <div class="hidden lg:block w-px bg-gray-100 self-stretch"></div>
+
+                    <!-- Right Section: Test Status & Summary -->
+                    <div class="flex-1">
+                        <div class="flex items-center justify-between mb-8">
+                            <h3 class="text-xl font-bold text-gray-900">Test Durumu ve Özet</h3>
                         </div>
-                        <div class="ml-4">
-                            <p class="text-sm font-medium text-gray-500 uppercase tracking-wider">Bu Ayki Okuma</p>
-                            <div class="flex items-baseline">
-                                <p id="monthlyReadCount" class="text-3xl font-bold text-gray-900">0</p>
-                                <p class="ml-2 text-sm text-gray-500">kitap/test</p>
+
+                        <div class="space-y-6">
+                            <div class="flex items-center gap-5">
+                                <div class="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-500 border border-blue-100">
+                                    <i class="fas fa-book-open text-2xl"></i>
+                                </div>
+                                <div>
+                                    <h4 id="currentBookTitle" class="font-bold text-gray-900 text-lg leading-tight">Haftalık Hedef</h4>
+                                    <p id="currentBookAuthor" class="text-sm text-gray-500 font-medium">Sıradaki okuma materyali</p>
+                                </div>
+                            </div>
+
+                            
+
+                            <div class="grid grid-cols-2 gap-2 pt-2">
+                                <div class="bg-green-50 rounded-xl p-3 border border-green-100 text-center">
+                                    <p class="text-[10px] font-bold text-green-600 uppercase">Başarılı</p>
+                                    <p id="summarySuccessCount" class="text-lg font-black text-green-700">0</p>
+                                </div>
+
+                                <div class="bg-red-50 rounded-xl p-3 border border-red-100 text-center">
+                                    <p class="text-[10px] font-bold text-red-600 uppercase">Hata</p>
+                                    <p id="summaryFailedCount" class="text-lg font-black text-red-700">0</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -673,48 +973,64 @@ let impersonatedStudent = null;
                         </div>
                     </div>
                     <!-- Student Performance Tracking Panel -->
-                    <div class="bg-white rounded-lg shadow-md p-6 mb-8 border-t-4 border-blue-600">
-                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-                            <h4 class="text-xl font-bold text-gray-800 flex items-center">
-                                <i class="fas fa-users-cog mr-3 text-blue-600"></i>Öğrenci Performans İzleme Paneli
-                            </h4>
+                    <div class="bg-white rounded-2xl shadow-soft p-8 mb-8 border border-gray-100">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+                            <div>
+                                <h4 class="text-2xl font-bold text-gray-900 flex items-center">
+                                    Öğrenci Performans İzleme Paneli
+                                </h4>
+                                <p class="text-gray-500 text-sm mt-1">Öğrencilerinizin günlük ve genel performans takibi</p>
+                            </div>
                             <div class="flex flex-wrap items-center gap-3">
-                                <div class="relative flex-1 md:flex-none min-w-[200px]">
+                                <div class="relative flex-1 md:flex-none min-w-[240px]">
                                     <input type="text" id="perfSearchInput" placeholder="Öğrenci ara..." 
                                            onkeyup="filterPerformanceTable()"
-                                           class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
+                                           class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 text-sm">
                                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                         <i class="fas fa-search text-gray-400"></i>
                                     </div>
                                 </div>
                                 <select id="perfPeriodSelect" onchange="updatePerformanceTable()" 
-                                        class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                                    <option value="weekly">Haftalık Öncelikli</option>
-                                    <option value="monthly">Aylık Öncelikli</option>
+                                        class="bg-gray-50 border-none rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none font-medium text-gray-700">
+                                    <option value="weekly">Haftalık Görünüm</option>
+                                    <option value="monthly">Aylık Görünüm</option>
                                 </select>
                                 <select id="perfSortOrder" onchange="updatePerformanceTable()" 
-                                        class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                                    <option value="desc">En Çok Çözen</option>
-                                    <option value="asc">En Az Çözen</option>
+                                        class="bg-gray-50 border-none rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none font-medium text-gray-700">
+                                    <option value="desc">En Yüksek</option>
+                                    <option value="asc">En Düşük</option>
                                 </select>
                             </div>
                         </div>
 
                         <div class="overflow-x-auto">
-                            <table class="w-full text-left border-collapse">
-                                <thead>
-                                    <tr class="bg-gray-50 text-gray-600 uppercase text-xs font-bold">
-                                        <th class="px-4 py-3 border-b">Öğrenci Adı</th>
-                                        <th class="px-4 py-3 border-b text-center">Sınıf</th>
-                                        <th class="px-4 py-3 border-b text-center">Haftalık (7 Gün)</th>
-                                        <th class="px-4 py-3 border-b text-center">Aylık (Bu Ay)</th>
-                                        <th class="px-4 py-3 border-b text-center">Durum</th>
+                            <table class="matrix-table">
+                                <thead id="performanceTableHead">
+                                    <tr id="performanceTableHeaderRow">
+                                        <th>Öğrenci Adı</th>
+                                        <th>Pzt</th>
+                                        <th>Sal</th>
+                                        <th>Çar</th>
+                                        <th>Per</th>
+                                        <th>Cum</th>
+                                        <th>Cmt</th>
+                                        <th>Paz</th>
+                                        <th id="periodTotalHeader">Haftalık<br>Toplam</th>
+                                        <th>Başarılı</th>
+                                        <th>Hatalı</th>
+                                        <th>Okuma<br>Durumu</th>
+                                        <th>Aktiflik</th>
                                     </tr>
                                 </thead>
-                                <tbody id="performanceTableBody" class="divide-y divide-gray-100">
+                                <tbody id="performanceTableBody">
                                     <!-- Veriler JS ile buraya gelecek -->
                                     <tr>
-                                        <td colspan="5" class="px-4 py-8 text-center text-gray-400">Veriler yükleniyor...</td>
+                                        <td colspan="13" class="px-4 py-12 text-center text-gray-400">
+                                            <div class="flex flex-col items-center">
+                                                <i class="fas fa-spinner fa-spin text-2xl mb-3 text-blue-500"></i>
+                                                <span>Veriler yüklen iyor...</span>
+                                            </div>
+                                        </td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -2287,6 +2603,7 @@ ON CONFLICT (tc_no) DO NOTHING;
         }
 
         // Update student statistics
+                // Update student statistics
         async function updateStudentStats(assignments, results, badges) {
             document.getElementById('totalTests').textContent = assignments?.length || 0;
             document.getElementById('completedTests').textContent = results?.length || 0;
@@ -2297,74 +2614,104 @@ ON CONFLICT (tc_no) DO NOTHING;
             document.getElementById('averageScore').textContent = avgScore;
             document.getElementById('badgeCount').textContent = badges?.length || 0;
 
-            // Fetch weekly/monthly counts for current student from student_stats view
             try {
-                const { data, error } = await supabase
-                    .from('student_stats')
-                    .select('weekly_count, monthly_count')
-                    .eq('id', currentUser.id)
+                // 1. Fetch current week range
+                const now = new Date();
+                const day = now.getDay();
+                const diffToMon = now.getDate() - day + (day === 0 ? -6 : 1);
+                const firstDay = new Date(now.setDate(diffToMon));
+                const lastDay = new Date(now.setDate(diffToMon + 6));
+                const options = { day: 'numeric', month: 'long' };
+                document.getElementById('currentWeekRange').textContent = `${firstDay.toLocaleDateString('tr-TR', options)} - ${lastDay.toLocaleDateString('tr-TR', options)}`;
+
+                // 2. Fetch stats from new SQL View
+                const { data: statsData, error: statsError } = await supabase
+                    .from('student_weekly_monthly_stats')
+                    .select('weekly_total_tests, weekly_successful_tests, weekly_failed_tests, monthly_total_tests, monthly_successful_tests, monthly_failed_tests')
+                    .eq('student_id', currentUser.id)
                     .single();
                 
-                if (!error && data) {
-                    const weekly = data.weekly_count || 0;
-                    const monthly = data.monthly_count || 0;
+                let successCount = 0;
+                let failedCount = 0;
+                let weekly = 0;
+                
+                if (!statsError && statsData) {
+                    weekly = statsData.weekly_total_tests || 0;
+                    successCount = statsData.weekly_successful_tests || 0;
+                    failedCount = statsData.weekly_failed_tests || 0;
+                    const monthly = statsData.monthly_total_tests || 0;
                     
-                    // Create status badge HTML
-                    let statusHtml = '';
-                    if (weekly >= 5) {
-                        statusHtml = '<span class="ml-2 px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-700">🔥 Çok Aktif</span>';
-                    } else if (weekly > 3) {
-                        statusHtml = '<span class="ml-2 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700">✅ Aktif</span>';
-                    } else {
-                        statusHtml = '<span class="ml-2 px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-700">❗ Daha Çok Okumalısın</span>';
-                    }
+                    // Aylık toplamı güncelle
+                    document.getElementById('studentMonthlyTotal').textContent = monthly;
+
                     
-                    // Update UI with counts and badges in the "Weekly Reading" card
-                    const weeklyReadEl = document.getElementById('weeklyReadCount');
-                    if (weeklyReadEl) {
-                        const parent = weeklyReadEl.closest('.ml-4');
-                        if (parent) {
-                            parent.innerHTML = `
-                                <p class="text-sm font-medium text-gray-500 uppercase tracking-wider">Bu Haftaki Okuma</p>
-                                <div class="flex items-center flex-wrap gap-2">
-                                    <p id="weeklyReadCount" class="text-3xl font-bold text-gray-900">${weekly}</p>
-                                    ${statusHtml}
-                                </div>
-                                <p class="text-[11px] text-gray-500 mt-1 font-medium">
-                                    <i class="fas fa-calendar-alt mr-1"></i>Aylık Toplam: <span class="text-purple-600 font-bold">${monthly}</span>
-                                </p>
-                            `;
-                        }
-                    }
-                    
-                    // Restore basic completed tests count if it was overwritten
-                    const completedTestsEl = document.getElementById('completedTests');
-                    if (completedTestsEl) {
-                        completedTestsEl.textContent = results?.length || 0;
+                    // Update Current Book Info from assignments
+                    const uncompleted = assignments?.filter(a => !results?.find(r => r.test_id === a.test_id));
+                    if (uncompleted && uncompleted.length > 0) {
+                        const currentTest = uncompleted[0].tests;
+                        document.getElementById('currentBookTitle').textContent = currentTest.title || "Sıradaki Test";
+                        document.getElementById('currentBookAuthor').textContent = currentTest.description || "Henüz tamamlanmadı";
+                    } else if (assignments && assignments.length > 0) {
+                        const lastTest = assignments[assignments.length - 1].tests;
+                        document.getElementById('currentBookTitle').textContent = lastTest.title;
+                        document.getElementById('currentBookAuthor').textContent = "Tüm testler tamamlandı! 🎉";
                     }
                 }
-            } catch (e) { console.error("Error fetching student status:", e); }
 
-            // Calculate weekly and monthly stats
-            const now = new Date();
-            const oneWeekAgo = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7);
-            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+                // 3. Update Weekly Test Status (Personal Tracking)
+                const daysShort = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
+                const rowContainer = document.getElementById('studentWeeklyStatusRow');
+                if (rowContainer) {
+                    const today = new Date().getDay(); 
+                    const currentDayIdx = today === 0 ? 6 : today - 1; 
+                    
+                    const startOfWeek = new Date();
+                    const diff = startOfWeek.getDate() - currentDayIdx;
+                    startOfWeek.setDate(diff);
+                    startOfWeek.setHours(0,0,0,0);
+                    
+                    const weekResults = (results || []).filter(r => new Date(r.completed_at) >= startOfWeek);
 
-            const weeklyCount = results?.filter(r => {
-                const dateStr = r.completed_at;
-                if (!dateStr) return false;
-                const completedDate = new Date(dateStr);
-                return !isNaN(completedDate) && completedDate >= oneWeekAgo;
-            }).length || 0;
-            const monthlyCount = results?.filter(r => {
-                const dateStr = r.completed_at;
-                if (!dateStr) return false;
-                const completedDate = new Date(dateStr);
-                return !isNaN(completedDate) && completedDate >= startOfMonth;
-            }).length || 0;
+                    rowContainer.innerHTML = daysShort.map((dayName, idx) => {
+                        let content = '<span class="pill-tag pill-empty">-</span>';
+                        const dayResults = weekResults.filter(r => {
+                            const d = new Date(r.completed_at).getDay();
+                            return (idx === 6 ? 0 : idx + 1) === d;
+                        });
+                        
+                        if (dayResults.length > 0) {
+                            const daySuccess = dayResults.filter(r => r.score >= 70).length;
+                            const dayFailed = dayResults.length - daySuccess;
+                            
+                            if (daySuccess >= dayFailed) {
+                                content = `<span class="pill-tag pill-success">${dayResults.length} ✓</span>`;
+                            } else {
+                                content = `<span class="pill-tag pill-failed">${dayResults.length} ✕</span>`;
+                            }
+                        } else if (idx === currentDayIdx) {
+                            content = '<span class="pill-tag pill-pending">!</span>';
+                        }
+                        return `<td class="px-2 py-4 text-center">${content}</td>`;
+                    }).join('');
 
-            document.getElementById('weeklyReadCount').textContent = weeklyCount;
-            document.getElementById('monthlyReadCount').textContent = monthlyCount;
+                    // Update Summary Counts from SQL View
+                    document.getElementById('summarySuccessCount').textContent = successCount;
+                    document.getElementById('summaryFailedCount').textContent = failedCount;
+                    
+                    // Update Totals and Badge from SQL View
+                    document.getElementById('studentWeeklyTotal').textContent = `${weekly} Test`;
+                    
+                    let badgeHtml = '';
+                    if (weekly >= 6) {
+                        badgeHtml = '<span class="status-badge badge-very-active"><i class="fas fa-fire"></i> Çok Aktif</span>';
+                    } else if (weekly >= 4) {
+                        badgeHtml = '<span class="status-badge badge-active"><i class="fas fa-check-circle"></i> Aktif</span>';
+                    } else {
+                        badgeHtml = '<span class="status-badge badge-inactive"><i class="fas fa-exclamation-circle"></i> Harekete Geç</span>';
+                    }
+                    document.getElementById('studentStatusBadgeContainer').innerHTML = badgeHtml;
+                }
+            } catch (e) { console.error("Error updating modern card:", e); }
         }
 
         // Display assigned tests with one-time completion logic
@@ -3444,7 +3791,7 @@ ON CONFLICT (tc_no) DO NOTHING;
                 await updatePerformanceTable();
                 
                 // Global variables for dashboard data
-                window.dashboardStudents = students || [];
+                window.dashboardStudents = studentStats || [];
                 window.dashboardResults = allResults || [];
 
                 // Render charts and leaderboard
@@ -3556,20 +3903,38 @@ ON CONFLICT (tc_no) DO NOTHING;
 
         async function updatePerformanceTable() {
             try {
-                const period = document.getElementById('perfPeriodSelect').value;
-                const sortOrder = document.getElementById('perfSortOrder').value;
+                const periodSelect = document.getElementById('perfPeriodSelect');
+                const sortOrderSelect = document.getElementById('perfSortOrder');
                 
-                // Fetch directly from our SQL View
+                const period = periodSelect ? periodSelect.value : 'weekly';
+                const sortOrder = sortOrderSelect ? sortOrderSelect.value : 'desc';
+                
+                // Tablo başlığını periyoda göre güncelle
+                const periodHeader = document.getElementById('periodTotalHeader');
+                if (periodHeader) {
+                    periodHeader.innerHTML = period === 'weekly' ? 'Haftalık<br>Toplam' : 'Aylık<br>Toplam';
+                }
+                
+                // Fetch from new SQL View with weekly stats
                 const { data, error } = await supabase
-                    .from('student_stats')
+                    .from('student_weekly_monthly_stats')
                     .select('*');
                 
                 if (error) throw error;
                 
                 performanceData = data || [];
+                
+                // Clear loading state if it exists
+                const tbody = document.getElementById('performanceTableBody');
+                if (tbody) tbody.innerHTML = '';
+                
                 renderPerformanceTable(performanceData, period, sortOrder);
             } catch (error) {
                 console.error('Error updating performance table:', error);
+                const tbody = document.getElementById('performanceTableBody');
+                if (tbody) {
+                    tbody.innerHTML = '<tr><td colspan="13" class="px-4 py-12 text-center text-red-400">Hata: ' + error.message + '</td></tr>';
+                }
             }
         }
 
@@ -3579,53 +3944,121 @@ ON CONFLICT (tc_no) DO NOTHING;
 
             // Sort data
             const sortedData = [...data].sort((a, b) => {
-                const valA = period === 'weekly' ? (a.weekly_count || 0) : (a.monthly_count || 0);
-                const valB = period === 'weekly' ? (b.weekly_count || 0) : (b.monthly_count || 0);
+                const valA = period === 'weekly' ? (a.weekly_total_tests || 0) : (a.monthly_total_tests || 0);
+                const valB = period === 'weekly' ? (b.weekly_total_tests || 0) : (b.monthly_total_tests || 0);
                 return sortOrder === 'desc' ? valB - valA : valA - valB;
             });
 
             tbody.innerHTML = sortedData.map(student => {
-                const weekly = student.weekly_count || 0;
-                const monthly = student.monthly_count || 0;
+                const weekly = student.weekly_total_tests || 0;
+                const monthly = student.monthly_total_tests || 0;
                 
-                // Determine status badge
-                let statusBadge = '';
+                // Aktiflik Rozeti
+                let activityBadge = '';
                 if (weekly >= 5) {
-                    statusBadge = '<span class="px-2 py-1 rounded-full text-[10px] font-bold bg-green-100 text-green-700">🔥 Çok Aktif</span>';
-                } else if (weekly > 3) {
-                    statusBadge = '<span class="px-2 py-1 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700">✅ Aktif</span>';
+                    activityBadge = '<span class="activity-badge badge-very-active">🔥 Çok Aktif</span>';
+                } else if (weekly >= 3) {
+                    activityBadge = '<span class="activity-badge badge-active">✅ Aktif</span>';
                 } else {
-                    statusBadge = '<span class="px-2 py-1 rounded-full text-[10px] font-bold bg-red-100 text-red-700">❗ Daha Çok Okumalısın</span>';
+                    activityBadge = '<span class="activity-badge badge-inactive">⚡ Harekete Geç</span>';
                 }
+                
+                // Okuma Durumu
+                let readingStatus = '';
+                if (weekly >= 5) {
+                    readingStatus = '<span class="reading-status reading-on-track"><i class="fas fa-check-circle"></i>Hedefinde</span>';
+                } else if (weekly >= 3) {
+                    readingStatus = '<span class="reading-status reading-on-track"><i class="fas fa-arrow-up"></i>İyi Gidiyor</span>';
+                } else {
+                    readingStatus = '<span class="reading-status reading-behind"><i class="fas fa-exclamation-circle"></i>Geride</span>';
+                }
+                
+                // Günlük Veriler (7 gün) - SQL View'dan
+                const daysMap = {
+                    0: { success: student.mon_successful || 0, failed: student.mon_failed || 0 },
+                    1: { success: student.tue_successful || 0, failed: student.tue_failed || 0 },
+                    2: { success: student.wed_successful || 0, failed: student.wed_failed || 0 },
+                    3: { success: student.thu_successful || 0, failed: student.thu_failed || 0 },
+                    4: { success: student.fri_successful || 0, failed: student.fri_failed || 0 },
+                    5: { success: student.sat_successful || 0, failed: student.sat_failed || 0 },
+                    6: { success: student.sun_successful || 0, failed: student.sun_failed || 0 }
+                };
+                
+                const dailyHtml = Object.entries(daysMap).map(([idx, dayData]) => {
+                    let pillClass = 'empty';
+                    let content = '-';
+                    const total = dayData.success + dayData.failed;
+                    
+                    if (total > 0) {
+                        if (dayData.success >= dayData.failed) {
+                            pillClass = 'success';
+                            content = `${total} ✓`;
+                        } else {
+                            pillClass = 'failed';
+                            content = `${total} ✕`;
+                        }
+                    }
+                    return `<td><span class="day-pill ${pillClass}">${content}</span></td>`;
+                }).join('');
+                
+                // SQL View sütun isimlerini güvenli bir şekilde al
+                const sName = student.student_name || student.name || 'İsimsiz Öğrenci';
+                const sId = student.student_id || student.id;
+                const sNo = student.student_no || '-';
+                
+                // Öğrenci Avatarı (split hatasını önlemek için kontrol ekle)
+                const initials = sName.split(' ').filter(n => n).map(n => n[0]).join('').toUpperCase().slice(0, 2);
+                const successCount = student.weekly_successful_tests || 0;
+                const failedCount = student.weekly_failed_tests || 0;
 
+                // Periyoda göre toplam, başarılı ve hatalı sayılarını seç
+                const periodSelect = document.getElementById('perfPeriodSelect');
+                const period = periodSelect ? periodSelect.value : 'weekly';
+                
+                let displayTotal = weekly;
+                let displaySuccess = successCount;
+                let displayFailed = failedCount;
+                
+                if (period === 'monthly') {
+                    displayTotal = student.monthly_total_tests || 0;
+                    displaySuccess = student.monthly_successful_tests || 0;
+                    displayFailed = student.monthly_failed_tests || 0;
+                }
+                
                 return `
-                    <tr class="hover:bg-blue-50 transition-colors cursor-pointer" onclick="impersonateStudent('${student.id}', '${student.name.replace(/'/g, "\\'")}')">
-                        <td class="px-4 py-3">
-                            <div class="font-medium text-gray-900">${student.name}</div>
-                            <div class="text-xs text-gray-500">No: ${student.student_no}</div>
+                    <tr onclick="impersonateStudent('${sId}', '${sName.replace(/'/g, "\\'")}')">  
+                        <td>
+                            <div class="student-name-cell">
+                                <div class="student-avatar">${initials}</div>
+                                <div>
+                                    <div style="font-weight: 600; color: #1f2937;">${sName}</div>
+                                    <div style="font-size: 10px; color: #9ca3af;">No: ${sNo}</div>
+                                </div>
+                            </div>
                         </td>
-                        <td class="px-4 py-3 text-center text-sm text-gray-600">${student.class}</td>
-                        <td class="px-4 py-3 text-center">
-                            <span class="font-bold text-indigo-600">${weekly}</span>
-                        </td>
-                        <td class="px-4 py-3 text-center">
-                            <span class="font-bold text-pink-600">${monthly}</span>
-                        </td>
-                        <td class="px-4 py-3 text-center">${statusBadge}</td>
+                        ${dailyHtml}
+                        <td><strong>${displayTotal}</strong></td>
+                        <td><strong style="color: #10b981;">${displaySuccess}</strong></td>
+                        <td><strong style="color: #ef4444;">${displayFailed}</strong></td>
+                        <td>${readingStatus}</td>
+                        <td>${activityBadge}</td>
                     </tr>
                 `;
-            }).join('') || '<tr><td colspan="5" class="px-4 py-8 text-center text-gray-400">Eşleşen öğrenci bulunamadı.</td></tr>';
+            }).join('') || '<tr><td colspan="13" class="px-4 py-12 text-center text-gray-400">Eşleşen öğrenci bulunamadı.</td></tr>';
         }
 
         function filterPerformanceTable() {
             const searchTerm = document.getElementById('perfSearchInput').value.toLowerCase();
-            const period = document.getElementById('perfPeriodSelect').value;
-            const sortOrder = document.getElementById('perfSortOrder').value;
+            const periodSelect = document.getElementById('perfPeriodSelect');
+            const sortOrderSelect = document.getElementById('perfSortOrder');
+            
+            const period = periodSelect ? periodSelect.value : 'weekly';
+            const sortOrder = sortOrderSelect ? sortOrderSelect.value : 'desc';
             
             const filtered = performanceData.filter(s => 
-                s.name.toLowerCase().includes(searchTerm) || 
-                s.student_no.toString().includes(searchTerm) ||
-                s.class.toLowerCase().includes(searchTerm)
+                ((s.student_name || s.name || '').toLowerCase().includes(searchTerm)) || 
+                ((s.student_no || '').toString().includes(searchTerm)) ||
+                ((s.class || '').toLowerCase().includes(searchTerm))
             );
             
             renderPerformanceTable(filtered, period, sortOrder);
@@ -5259,6 +5692,244 @@ ON CONFLICT (tc_no) DO NOTHING;
             word-wrap: break-word;
         }
     </style>
+
+    <style>
+        .shadow-soft {
+            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+        }
+        .progress-bar-fill {
+            transition: width 1s ease-in-out;
+            background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);
+        }
+        .day-indicator {
+            width: 48px;
+            height: 48px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            transition: all 0.2s;
+        }
+        .day-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-top: 4px;
+        }
+        /* Apple-esque Table Styles */
+        .apple-table {
+            border-collapse: separate;
+            border-spacing: 0 8px;
+            width: 100%;
+        }
+        .apple-table tr {
+            background-color: white;
+            transition: all 0.2s ease;
+        }
+        .apple-table tr:hover {
+            transform: scale(1.002);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        .apple-table td {
+            padding: 16px;
+            border-top: 1px solid #f3f4f6;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .apple-table td:first-child {
+            border-left: 1px solid #f3f4f6;
+            border-top-left-radius: 12px;
+            border-bottom-left-radius: 12px;
+        }
+        .apple-table td:last-child {
+            border-right: 1px solid #f3f4f6;
+            border-top-right-radius: 12px;
+            border-bottom-right-radius: 12px;
+        }
+        .pill-tag {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-size: 12px;
+            font-weight: 600;
+            gap: 4px;
+            min-width: 45px;
+        }
+        .pill-success { background-color: #10b981; color: white; }
+        .pill-pending { background-color: #fef3c7; color: #92400e; }
+        .pill-failed { background-color: #fee2e2; color: #b91c1c; }
+        .pill-empty { background-color: #f3f4f6; color: #9ca3af; }
+        
+        /* Gelişmiş Matris Tablosu Stilleri */
+        .matrix-table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        .matrix-table thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .matrix-table th {
+            padding: 12px 8px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        .matrix-table tbody tr {
+            border-bottom: 1px solid #e5e7eb;
+            transition: all 0.2s ease;
+        }
+        .matrix-table tbody tr:hover {
+            background-color: #f9fafb;
+            box-shadow: inset 0 0 10px rgba(102, 126, 234, 0.05);
+        }
+        .matrix-table td {
+            padding: 10px 8px;
+            font-size: 13px;
+            text-align: center;
+        }
+        .matrix-table td:first-child {
+            text-align: left;
+            padding-left: 16px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+        .student-name-cell {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 180px;
+        }
+        .student-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        .day-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            gap: 2px;
+        }
+        .day-pill.success {
+            background-color: #d1fae5;
+            color: #065f46;
+            border: 1px solid #6ee7b7;
+        }
+        .day-pill.failed {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+        .day-pill.pending {
+            background-color: #fef3c7;
+            color: #92400e;
+            border: 1px solid #fcd34d;
+        }
+        .day-pill.empty {
+            background-color: #f3f4f6;
+            color: #9ca3af;
+            border: 1px solid #d1d5db;
+        }
+        .activity-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            gap: 4px;
+        }
+        .badge-very-active {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff8787 100%);
+            color: white;
+        }
+        .badge-active {
+            background: linear-gradient(135deg, #51cf66 0%, #69db7c 100%);
+            color: white;
+        }
+        .badge-inactive {
+            background: linear-gradient(135deg, #ffd43b 0%, #ffe066 100%);
+            color: #1f2937;
+        }
+        .reading-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .reading-on-track {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+        .reading-behind {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+        
+        /* Durum Rozetleri */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 700;
+            white-space: nowrap;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        .status-badge:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+        }
+        .badge-very-active {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff8787 100%);
+            color: white;
+        }
+        .badge-very-active i {
+            animation: flameFlicker 1.5s ease-in-out infinite;
+        }
+        @keyframes flameFlicker {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            25% { transform: scale(1.1) rotate(-2deg); }
+            50% { transform: scale(0.95) rotate(2deg); }
+            75% { transform: scale(1.05) rotate(-1deg); }
+        }
+        .badge-active {
+            background: linear-gradient(135deg, #51cf66 0%, #69db7c 100%);
+            color: white;
+        }
+        .badge-inactive {
+            background: linear-gradient(135deg, #ffd43b 0%, #ffe066 100%);
+            color: #1f2937;
+        }
+    </style>
+
 </head>
 <body>
     <h1>📊 Öğrenci Test Performans Raporu</h1>
@@ -5682,7 +6353,7 @@ ON CONFLICT (tc_no) DO NOTHING;
             // Apply search filter
             if (searchTerm) {
                 filteredResults = filteredResults.filter(result => 
-                    result.students.name.toLowerCase().includes(searchTerm) ||
+                    result.student(s.student_name || s.name || '').toLowerCase().includes(searchTerm) ||
                     result.tests.title.toLowerCase().includes(searchTerm) ||
                     result.students.student_no.toLowerCase().includes(searchTerm)
                 );
