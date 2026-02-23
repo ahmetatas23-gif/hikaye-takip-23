@@ -534,13 +534,20 @@ let impersonatedStudent = null;
                     <div class="flex-[1.5]">
                         <div class="flex items-center justify-between mb-8">
                             <div>
-                                <h3 class="text-xl font-bold text-gray-900">Bu Haftaki Okuma</h3>
-                                <p class="text-gray-500 text-sm mt-1">Kişisel performans izleme panelin</p>
+	                                <h3 id="studentPerfTitle" class="text-xl font-bold text-gray-900">Bu Haftaki Okuma</h3>
+	                                <p class="text-gray-500 text-sm mt-1">Kişisel performans izleme panelin</p>
+	                            </div>
+                <div class="flex items-center gap-3">
+                                <select id="studentPeriodSelect" onchange="handleStudentPeriodChange()" 
+                                        class="bg-gray-50 border border-gray-100 rounded-xl px-3 py-2 text-xs font-bold text-gray-600 outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="current">Bu Hafta</option>
+                                    <option value="last">Geçen Hafta</option>
+                                </select>
+                                <span class="text-xs font-bold text-gray-400 bg-gray-50 px-4 py-2 rounded-xl border border-gray-100">
+                                    <span id="currentWeekRange">--</span>
+                                </span>
                             </div>
-                            <span class="text-xs font-bold text-gray-400 bg-gray-50 px-4 py-2 rounded-xl border border-gray-100">
-                                <span id="currentWeekRange">--</span>
-                            </span>
-                        </div>
+	                        </div>
                         
                         <div class="overflow-x-auto">
                             <table class="w-full text-left apple-table">
@@ -690,7 +697,58 @@ let impersonatedStudent = null;
 
                 <!-- Leaderboard Tab -->
                 <div id="leaderboardContent" class="hidden p-6">
-                    <div id="leaderboardList" class="space-y-3"></div>
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <!-- Left: Stars (Haftalık & Aylık Yıldızlar) -->
+                        <div class="lg:col-span-1">
+                            <div class="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-2xl p-6 text-white shadow-xl sticky top-6">
+                                <!-- Tabs for Weekly/Monthly -->
+                                <div class="flex p-1 bg-white/10 rounded-xl mb-6 backdrop-blur-sm">
+                                    <button onclick="switchStarTab('weekly')" id="starTabWeekly" class="flex-1 py-2 text-xs font-bold rounded-lg transition-all duration-200 bg-white text-indigo-600 shadow-sm">
+                                        HAFTANIN YILDIZLARI
+                                    </button>
+                                    <button onclick="switchStarTab('monthly')" id="starTabMonthly" class="flex-1 py-2 text-xs font-bold rounded-lg transition-all duration-200 text-white hover:bg-white/5">
+                                        AYIN YILDIZLARI
+                                    </button>
+                                </div>
+
+                                <div id="starTitleArea" class="flex items-center justify-between mb-6">
+                                    <h3 id="starListTitle" class="text-xl font-bold flex items-center">
+                                        <i class="fas fa-star mr-2 text-yellow-400"></i>Haftanın Yıldızları
+                                    </h3>
+                                    <span class="text-xs bg-white/20 px-2 py-1 rounded-full backdrop-blur-sm" id="starPeriodName">Bu Hafta</span>
+                                </div>
+                                
+                                <div id="starListContent" class="space-y-4">
+                                    <!-- Stars will be injected here -->
+                                    <div class="flex flex-col items-center justify-center py-12 text-white/50">
+                                        <i class="fas fa-circle-notch fa-spin text-3xl mb-4"></i>
+                                        <p>Yıldızlar hesaplanıyor...</p>
+                                    </div>
+                                </div>
+
+                                <div class="mt-8 p-4 bg-white/10 rounded-xl backdrop-blur-sm border border-white/10">
+                                    <h4 class="text-sm font-bold mb-2 flex items-center">
+                                        <i class="fas fa-info-circle mr-2"></i>Nasıl Yıldız Olunur?
+                                    </h4>
+                                    <p id="starHintText" class="text-xs text-indigo-100 leading-relaxed">
+                                        Bu hafta en çok test çözen ve en yüksek puanı alan ilk 5 öğrenci "Haftanın Yıldızı" seçilir.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right: Full Leaderboard -->
+                        <div class="lg:col-span-2">
+                            <div class="flex items-center justify-between mb-6">
+                                <h3 class="text-xl font-bold text-gray-900">Genel Başarı Sıralaması</h3>
+                                <div class="flex items-center space-x-2 text-sm text-gray-500">
+                                    <i class="fas fa-users"></i>
+                                    <span id="leaderboardStudentCount">--</span> Öğrenci
+                                </div>
+                            </div>
+                            <div id="leaderboardList" class="space-y-3"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -992,7 +1050,8 @@ let impersonatedStudent = null;
                                 </div>
                                 <select id="perfPeriodSelect" onchange="updatePerformanceTable()" 
                                         class="bg-gray-50 border-none rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none font-medium text-gray-700">
-                                    <option value="weekly">Haftalık Görünüm</option>
+                                    <option value="current_week">Bu Hafta</option>
+                                    <option value="last_week">Geçen Hafta</option>
                                     <option value="monthly">Aylık Görünüm</option>
                                 </select>
                                 <select id="perfSortOrder" onchange="updatePerformanceTable()" 
@@ -1003,6 +1062,9 @@ let impersonatedStudent = null;
                             </div>
                         </div>
 
+                        <div class="mb-3 text-sm text-gray-600 font-medium">
+                            <span id="periodDateRange">16 Şubat - 22 Şubat 2026</span>
+                        </div>
                         <div class="overflow-x-auto">
                             <table class="matrix-table">
                                 <thead id="performanceTableHead">
@@ -2384,17 +2446,17 @@ ON CONFLICT (tc_no) DO NOTHING;
         }
 
         // Navigation functions
-        function showStudentLogin() {
+        window.showStudentLogin = function() {
             document.getElementById('loginScreen').classList.add('hidden');
             document.getElementById('studentLoginScreen').classList.remove('hidden');
         }
 
-        function showTeacherLogin() {
+        window.showTeacherLogin = function() {
             document.getElementById('loginScreen').classList.add('hidden');
             document.getElementById('teacherLoginScreen').classList.remove('hidden');
         }
 
-        function showMainLogin() {
+        window.showMainLogin = function() {
             document.getElementById('studentLoginScreen').classList.add('hidden');
             document.getElementById('teacherLoginScreen').classList.add('hidden');
             document.getElementById('loginScreen').classList.remove('hidden');
@@ -2595,6 +2657,7 @@ ON CONFLICT (tc_no) DO NOTHING;
                 await updateStudentStats(assignments, results, badges);
                 displayAssignedTests(assignments, results);
                 displayStudentBadges(badges);
+                // Liderlik tablosunu yükle (Ayın Yıldızları dahil)
                 await loadLeaderboard();
 
             } catch (error) {
@@ -2604,48 +2667,107 @@ ON CONFLICT (tc_no) DO NOTHING;
 
         // Update student statistics
                 // Update student statistics
-        async function updateStudentStats(assignments, results, badges) {
-            document.getElementById('totalTests').textContent = assignments?.length || 0;
-            document.getElementById('completedTests').textContent = results?.length || 0;
+        async function updateStudentStats(assignments, results, badges, forcedPeriod = null) {
+            // Global verileri sakla (refresh için)
+            window.lastAssignments = assignments;
+            window.lastResults = results;
+            window.lastBadges = badges;
+
+            if (document.getElementById('totalTests')) document.getElementById('totalTests').textContent = assignments?.length || 0;
+            if (document.getElementById('completedTests')) document.getElementById('completedTests').textContent = results?.length || 0;
             
             const avgScore = results?.length > 0 
                 ? Math.round(results.reduce((sum, r) => sum + r.score, 0) / results.length)
                 : 0;
-            document.getElementById('averageScore').textContent = avgScore;
-            document.getElementById('badgeCount').textContent = badges?.length || 0;
+            if (document.getElementById('averageScore')) document.getElementById('averageScore').textContent = avgScore;
+            if (document.getElementById('badgeCount')) document.getElementById('badgeCount').textContent = badges?.length || 0;
 
             try {
-                // 1. Fetch current week range
-                const now = new Date();
-                const day = now.getDay();
-                const diffToMon = now.getDate() - day + (day === 0 ? -6 : 1);
-                const firstDay = new Date(now.setDate(diffToMon));
-                const lastDay = new Date(now.setDate(diffToMon + 6));
-                const options = { day: 'numeric', month: 'long' };
-                document.getElementById('currentWeekRange').textContent = `${firstDay.toLocaleDateString('tr-TR', options)} - ${lastDay.toLocaleDateString('tr-TR', options)}`;
+                const periodSelect = document.getElementById('studentPeriodSelect');
+                const selectedPeriod = forcedPeriod || (periodSelect ? periodSelect.value : 'current');
 
-                // 2. Fetch stats from new SQL View
+                // 1. Tarih hesapla (Basit ve güvenilir yöntem)
+                const today = new Date();
+                const dayOfWeek = today.getDay();
+                const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+                
+                let weekStart = new Date(today);
+                weekStart.setDate(today.getDate() - daysFromMonday);
+                weekStart.setHours(0, 0, 0, 0);
+                
+                let weekEnd = new Date(weekStart);
+                weekEnd.setDate(weekStart.getDate() + 6);
+                weekEnd.setHours(23, 59, 59, 999);
+                
+                // Geçen hafta için 7 gün çıkar
+                if (selectedPeriod === 'last') {
+                    weekStart.setDate(weekStart.getDate() - 7);
+                    weekEnd.setDate(weekEnd.getDate() - 7);
+                }
+                
+                // Arayüzü güncelle
+                const titleElem = document.getElementById('studentPerfTitle');
+                if (titleElem) {
+                    titleElem.textContent = selectedPeriod === 'last' ? 'Geçen Haftaki Okuma' : 'Bu Haftaki Okuma';
+                }
+                
+                const options = { day: 'numeric', month: 'long' };
+                const dateRangeText = `${weekStart.toLocaleDateString('tr-TR', options)} - ${weekEnd.toLocaleDateString('tr-TR', options)}`;
+                const dateRangeElem = document.getElementById('currentWeekRange');
+                if (dateRangeElem) {
+                    dateRangeElem.textContent = dateRangeText;
+                    console.log('Date range updated to:', dateRangeText);
+                }
+
+                // 2. Supabase'den veri çek - SQL View her zaman tüm verileri içerir, biz filtreleyiz
                 const { data: statsData, error: statsError } = await supabase
-                    .from('student_weekly_monthly_stats')
-                    .select('weekly_total_tests, weekly_successful_tests, weekly_failed_tests, monthly_total_tests, monthly_successful_tests, monthly_failed_tests')
+                    .from('student_all_period_stats')
+                    .select('*')
                     .eq('student_id', currentUser.id)
                     .single();
+                
+                console.log('Supabase statsData fetched:', statsData, 'selectedPeriod:', selectedPeriod);
                 
                 let successCount = 0;
                 let failedCount = 0;
                 let weekly = 0;
+                let dailyStats = {};
                 
                 if (!statsError && statsData) {
-                    weekly = statsData.weekly_total_tests || 0;
-                    successCount = statsData.weekly_successful_tests || 0;
-                    failedCount = statsData.weekly_failed_tests || 0;
+                    console.log('Processing statsData for period:', selectedPeriod);
+                    if (selectedPeriod === 'last') {
+                        weekly = statsData.last_weekly_total_tests || 0;
+                        successCount = statsData.last_weekly_successful_tests || 0;
+                        failedCount = statsData.last_weekly_failed_tests || 0;
+                        console.log('Last week selected - weekly:', weekly, 'success:', successCount, 'failed:', failedCount);
+                        dailyStats = {
+                            0: statsData.last_mon_total || 0,
+                            1: statsData.last_tue_total || 0,
+                            2: statsData.last_wed_total || 0,
+                            3: statsData.last_thu_total || 0,
+                            4: statsData.last_fri_total || 0,
+                            5: statsData.last_sat_total || 0,
+                            6: statsData.last_sun_total || 0
+                        };
+                    } else {
+                        weekly = statsData.current_weekly_total_tests || 0;
+                        successCount = statsData.current_weekly_successful_tests || 0;
+                        failedCount = statsData.current_weekly_failed_tests || 0;
+                        console.log('Current week selected - weekly:', weekly, 'success:', successCount, 'failed:', failedCount);
+                        dailyStats = {
+                            0: statsData.current_mon_total || 0,
+                            1: statsData.current_tue_total || 0,
+                            2: statsData.current_wed_total || 0,
+                            3: statsData.current_thu_total || 0,
+                            4: statsData.current_fri_total || 0,
+                            5: statsData.current_sat_total || 0,
+                            6: statsData.current_sun_total || 0
+                        };
+                    }
                     const monthly = statsData.monthly_total_tests || 0;
-                    
-                    // Aylık toplamı güncelle
                     document.getElementById('studentMonthlyTotal').textContent = monthly;
 
-                    
-                    // Update Current Book Info from assignments
+                    // Update Current Book Info
                     const uncompleted = assignments?.filter(a => !results?.find(r => r.test_id === a.test_id));
                     if (uncompleted && uncompleted.length > 0) {
                         const currentTest = uncompleted[0].tests;
@@ -2658,47 +2780,31 @@ ON CONFLICT (tc_no) DO NOTHING;
                     }
                 }
 
-                // 3. Update Weekly Test Status (Personal Tracking)
+                // 3. Update Weekly Test Status (Öğretmen panelindeki gibi SQL View verilerini kullan)
                 const daysShort = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
                 const rowContainer = document.getElementById('studentWeeklyStatusRow');
                 if (rowContainer) {
                     const today = new Date().getDay(); 
                     const currentDayIdx = today === 0 ? 6 : today - 1; 
-                    
-                    const startOfWeek = new Date();
-                    const diff = startOfWeek.getDate() - currentDayIdx;
-                    startOfWeek.setDate(diff);
-                    startOfWeek.setHours(0,0,0,0);
-                    
-                    const weekResults = (results || []).filter(r => new Date(r.completed_at) >= startOfWeek);
 
                     rowContainer.innerHTML = daysShort.map((dayName, idx) => {
                         let content = '<span class="pill-tag pill-empty">-</span>';
-                        const dayResults = weekResults.filter(r => {
-                            const d = new Date(r.completed_at).getDay();
-                            return (idx === 6 ? 0 : idx + 1) === d;
-                        });
+                        const count = dailyStats[idx] || 0;
                         
-                        if (dayResults.length > 0) {
-                            const daySuccess = dayResults.filter(r => r.score >= 70).length;
-                            const dayFailed = dayResults.length - daySuccess;
-                            
-                            if (daySuccess >= dayFailed) {
-                                content = `<span class="pill-tag pill-success">${dayResults.length} ✓</span>`;
-                            } else {
-                                content = `<span class="pill-tag pill-failed">${dayResults.length} ✕</span>`;
-                            }
-                        } else if (idx === currentDayIdx) {
+                        if (count > 0) {
+                            // Basitlik ve performans için SQL View verisini yansıt
+                            content = `<span class="pill-tag pill-success">${count} ✓</span>`;
+                        } else if (selectedPeriod === 'current' && idx === currentDayIdx) {
                             content = '<span class="pill-tag pill-pending">!</span>';
                         }
                         return `<td class="px-2 py-4 text-center">${content}</td>`;
                     }).join('');
 
-                    // Update Summary Counts from SQL View
+                    // Update Summary Counts
                     document.getElementById('summarySuccessCount').textContent = successCount;
                     document.getElementById('summaryFailedCount').textContent = failedCount;
                     
-                    // Update Totals and Badge from SQL View
+                    // Update Totals and Badge
                     document.getElementById('studentWeeklyTotal').textContent = `${weekly} Test`;
                     
                     let badgeHtml = '';
@@ -2712,6 +2818,41 @@ ON CONFLICT (tc_no) DO NOTHING;
                     document.getElementById('studentStatusBadgeContainer').innerHTML = badgeHtml;
                 }
             } catch (e) { console.error("Error updating modern card:", e); }
+        }
+
+        async function handleStudentPeriodChange() {
+            const periodSelect = document.getElementById('studentPeriodSelect');
+            if (!periodSelect) return;
+            
+            const selectedPeriod = periodSelect.value;
+            console.log('Student period manual change triggered:', selectedPeriod);
+            
+            // Başlığı ve tarih aralığını anında güncellemek için updateStudentStats'ı zorunlu periyotla çağır
+            if (window.lastAssignments && window.lastResults) {
+                await updateStudentStats(window.lastAssignments, window.lastResults, window.lastBadges || [], selectedPeriod);
+            } else {
+                // Eğer veriler henüz yoksa, her şeyi yeniden yükle
+                await refreshStudentStats();
+            }
+        }
+
+        async function refreshStudentStats() {
+            // Verileri yeniden yükle ve arayüzü güncelle
+            if (currentUser && currentUser.id) {
+                try {
+                    // Öğrenci verilerini yeniden çekmek en güvenli yoldur - Tablo adı test_assignments olmalı
+                    const { data: assignments } = await supabase.from('test_assignments').select('*, tests(*)').eq('student_id', currentUser.id);
+                    const { data: results } = await supabase.from('test_results').select('*').eq('student_id', currentUser.id);
+                    const { data: badges } = await supabase.from('student_badges').select('*').eq('student_id', currentUser.id);
+                    
+                    const periodSelect = document.getElementById('studentPeriodSelect');
+                    const currentPeriod = periodSelect ? periodSelect.value : 'current';
+                    
+                    await updateStudentStats(assignments || [], results || [], badges || [], currentPeriod);
+                } catch (error) {
+                    console.error("Error refreshing student stats:", error);
+                }
+            }
         }
 
         // Display assigned tests with one-time completion logic
@@ -3816,17 +3957,22 @@ ON CONFLICT (tc_no) DO NOTHING;
             const days = [];
             const counts = [];
             
+            // Son 7 günü hesapla
             for (let i = 6; i >= 0; i--) {
                 const d = new Date(now);
                 d.setDate(now.getDate() - i);
                 const dayName = d.toLocaleDateString('tr-TR', { weekday: 'short' });
                 days.push(dayName);
                 
+                // O güne ait test sonuçlarını filtrele
                 const count = allResults.filter(r => {
                     const dateStr = r.completed_at;
                     if (!dateStr) return false;
                     const rd = new Date(dateStr);
-                    return rd.toDateString() === d.toDateString();
+                    // Tarih karşılaştırmasını güvenli yap (UTC/Yerel saat farkını önlemek için)
+                    return rd.getFullYear() === d.getFullYear() && 
+                           rd.getMonth() === d.getMonth() && 
+                           rd.getDate() === d.getDate();
                 }).length;
                 counts.push(count);
             }
@@ -3861,26 +4007,10 @@ ON CONFLICT (tc_no) DO NOTHING;
             const container = document.getElementById('leaderboardContent');
             if (!container || !window.dashboardStudents || !window.dashboardStudents.length) return;
 
-            const results = Array.isArray(window.dashboardResults) ? window.dashboardResults : [];
-            const now = new Date();
-            let startDate;
-            if (period === 'weekly') {
-                startDate = new Date(now);
-                startDate.setDate(now.getDate() - 7);
-            } else {
-                startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-            }
-            startDate.setHours(0, 0, 0, 0);
-
             const ranking = window.dashboardStudents.map(s => {
-                const count = results.filter(r => {
-                    if (String(r.student_id).trim() !== String(s.id).trim()) return false;
-                    const dateStr = r.completed_at;
-                    if (!dateStr) return false;
-                    const d = new Date(dateStr);
-                    return d.getTime() >= startDate.getTime();
-                }).length;
-                return { name: s.name, count: count };
+                const count = period === 'weekly' ? (s.weekly_total_tests || 0) : (s.monthly_total_tests || 0);
+                const name = s.student_name || s.name || 'İsimsiz Öğrenci';
+                return { name: name, count: count };
             }).sort((a, b) => b.count - a.count).slice(0, 10);
 
             container.innerHTML = ranking.map((item, index) => `
@@ -3906,18 +4036,22 @@ ON CONFLICT (tc_no) DO NOTHING;
                 const periodSelect = document.getElementById('perfPeriodSelect');
                 const sortOrderSelect = document.getElementById('perfSortOrder');
                 
-                const period = periodSelect ? periodSelect.value : 'weekly';
+                const period = periodSelect ? periodSelect.value : 'current_week';
                 const sortOrder = sortOrderSelect ? sortOrderSelect.value : 'desc';
                 
                 // Tablo başlığını periyoda göre güncelle
                 const periodHeader = document.getElementById('periodTotalHeader');
                 if (periodHeader) {
-                    periodHeader.innerHTML = period === 'weekly' ? 'Haftalık<br>Toplam' : 'Aylık<br>Toplam';
+                    if (period === 'monthly') {
+                        periodHeader.innerHTML = 'Aylık<br>Toplam';
+                    } else {
+                        periodHeader.innerHTML = 'Haftalık<br>Toplam';
+                    }
                 }
                 
                 // Fetch from new SQL View with weekly stats
                 const { data, error } = await supabase
-                    .from('student_weekly_monthly_stats')
+                    .from('student_all_period_stats')
                     .select('*');
                 
                 if (error) throw error;
@@ -3928,6 +4062,7 @@ ON CONFLICT (tc_no) DO NOTHING;
                 const tbody = document.getElementById('performanceTableBody');
                 if (tbody) tbody.innerHTML = '';
                 
+                console.log('Updating performance table with period:', period, 'sortOrder:', sortOrder);
                 renderPerformanceTable(performanceData, period, sortOrder);
             } catch (error) {
                 console.error('Error updating performance table:', error);
@@ -3938,26 +4073,47 @@ ON CONFLICT (tc_no) DO NOTHING;
             }
         }
 
-        function renderPerformanceTable(data, period = 'weekly', sortOrder = 'desc') {
-            const tbody = document.getElementById('performanceTableBody');
-            if (!tbody) return;
+	        function renderPerformanceTable(data, period = 'current_week', sortOrder = 'desc') {
+	            const tbody = document.getElementById('performanceTableBody');
+	            if (!tbody) return;
+
+            const selectedPeriod = period;
+            console.log('renderPerformanceTable called with period:', selectedPeriod, 'sortOrder:', sortOrder);
 
             // Sort data
             const sortedData = [...data].sort((a, b) => {
-                const valA = period === 'weekly' ? (a.weekly_total_tests || 0) : (a.monthly_total_tests || 0);
-                const valB = period === 'weekly' ? (b.weekly_total_tests || 0) : (b.monthly_total_tests || 0);
-                return sortOrder === 'desc' ? valB - valA : valA - valB;
+                let valA = 0, valB = 0;
+                if (selectedPeriod === 'current_week') {
+                    valA = a.current_weekly_total_tests || 0;
+                    valB = b.current_weekly_total_tests || 0;
+                } else if (selectedPeriod === 'last_week') {
+                    valA = a.last_weekly_total_tests || 0;
+                    valB = b.last_weekly_total_tests || 0;
+                } else if (selectedPeriod === 'monthly') {
+                    valA = a.monthly_total_tests || 0;
+                    valB = b.monthly_total_tests || 0;
+                }
+                const result = sortOrder === 'desc' ? valB - valA : valA - valB;
+                return result;
             });
 
-            tbody.innerHTML = sortedData.map(student => {
-                const weekly = student.weekly_total_tests || 0;
-                const monthly = student.monthly_total_tests || 0;
+	            const rows = sortedData.map(student => {
+	                // Periyoda göre toplam, başarılı ve hatalı sayılarını seç (rozetler için)
+                
+                let badgeTotal = 0;
+                if (selectedPeriod === 'current_week') {
+                    badgeTotal = student.current_weekly_total_tests || 0;
+                } else if (selectedPeriod === 'last_week') {
+                    badgeTotal = student.last_weekly_total_tests || 0;
+                } else if (selectedPeriod === 'monthly') {
+                    badgeTotal = student.monthly_total_tests || 0;
+                }
                 
                 // Aktiflik Rozeti
                 let activityBadge = '';
-                if (weekly >= 5) {
+                if (badgeTotal >= 6) {
                     activityBadge = '<span class="activity-badge badge-very-active">🔥 Çok Aktif</span>';
-                } else if (weekly >= 3) {
+                } else if (badgeTotal >= 4) {
                     activityBadge = '<span class="activity-badge badge-active">✅ Aktif</span>';
                 } else {
                     activityBadge = '<span class="activity-badge badge-inactive">⚡ Harekete Geç</span>';
@@ -3965,26 +4121,70 @@ ON CONFLICT (tc_no) DO NOTHING;
                 
                 // Okuma Durumu
                 let readingStatus = '';
-                if (weekly >= 5) {
+                if (badgeTotal >= 6) {
                     readingStatus = '<span class="reading-status reading-on-track"><i class="fas fa-check-circle"></i>Hedefinde</span>';
-                } else if (weekly >= 3) {
+                } else if (badgeTotal >= 4) {
                     readingStatus = '<span class="reading-status reading-on-track"><i class="fas fa-arrow-up"></i>İyi Gidiyor</span>';
                 } else {
                     readingStatus = '<span class="reading-status reading-behind"><i class="fas fa-exclamation-circle"></i>Geride</span>';
                 }
                 
-                // Günlük Veriler (7 gün) - SQL View'dan
-                const daysMap = {
-                    0: { success: student.mon_successful || 0, failed: student.mon_failed || 0 },
-                    1: { success: student.tue_successful || 0, failed: student.tue_failed || 0 },
-                    2: { success: student.wed_successful || 0, failed: student.wed_failed || 0 },
-                    3: { success: student.thu_successful || 0, failed: student.thu_failed || 0 },
-                    4: { success: student.fri_successful || 0, failed: student.fri_failed || 0 },
-                    5: { success: student.sat_successful || 0, failed: student.sat_failed || 0 },
-                    6: { success: student.sun_successful || 0, failed: student.sun_failed || 0 }
-                };
+                // SQL View sütun isimlerini güvenli bir şekilde al
+                const sName = student.student_name || student.name || 'İsimsiz Öğrenci';
+                const sId = student.student_id || student.id;
+                const sNo = student.student_no || '-';
                 
-                const dailyHtml = Object.entries(daysMap).map(([idx, dayData]) => {
+                // Öğrenci Avatarı
+                const initials = sName.split(' ').filter(n => n).map(n => n[0]).join('').toUpperCase().slice(0, 2);
+
+	                let displayTotal = 0;
+                let displaySuccess = 0;
+                let displayFailed = 0;
+                let daysMapToUse = {};
+                
+                if (selectedPeriod === 'current_week') {
+                    displayTotal = student.current_weekly_total_tests || 0;
+                    displaySuccess = student.current_weekly_successful_tests || 0;
+                    displayFailed = student.current_weekly_failed_tests || 0;
+                    daysMapToUse = {
+                        0: { success: student.current_mon_total || 0, failed: 0 },
+                        1: { success: student.current_tue_total || 0, failed: 0 },
+                        2: { success: student.current_wed_total || 0, failed: 0 },
+                        3: { success: student.current_thu_total || 0, failed: 0 },
+                        4: { success: student.current_fri_total || 0, failed: 0 },
+                        5: { success: student.current_sat_total || 0, failed: 0 },
+                        6: { success: student.current_sun_total || 0, failed: 0 }
+                    };
+                } else if (selectedPeriod === 'last_week') {
+                    displayTotal = student.last_weekly_total_tests || 0;
+                    displaySuccess = student.last_weekly_successful_tests || 0;
+                    displayFailed = student.last_weekly_failed_tests || 0;
+                    daysMapToUse = {
+                        0: { success: student.last_mon_total || 0, failed: 0 },
+                        1: { success: student.last_tue_total || 0, failed: 0 },
+                        2: { success: student.last_wed_total || 0, failed: 0 },
+                        3: { success: student.last_thu_total || 0, failed: 0 },
+                        4: { success: student.last_fri_total || 0, failed: 0 },
+                        5: { success: student.last_sat_total || 0, failed: 0 },
+                        6: { success: student.last_sun_total || 0, failed: 0 }
+                    };
+                } else if (selectedPeriod === 'monthly') {
+                    displayTotal = student.monthly_total_tests || 0;
+                    displaySuccess = student.monthly_successful_tests || 0;
+                    displayFailed = student.monthly_failed_tests || 0;
+                    daysMapToUse = {
+                        0: { success: student.current_mon_total || 0, failed: 0 },
+                        1: { success: student.current_tue_total || 0, failed: 0 },
+                        2: { success: student.current_wed_total || 0, failed: 0 },
+                        3: { success: student.current_thu_total || 0, failed: 0 },
+                        4: { success: student.current_fri_total || 0, failed: 0 },
+                        5: { success: student.current_sat_total || 0, failed: 0 },
+                        6: { success: student.current_sun_total || 0, failed: 0 }
+                    };
+                }
+                
+                // Günlük Veriler (7 gün) - Periyoda göre seçilmiş daysMapToUse'dan
+                const dailyHtml = Object.entries(daysMapToUse).map(([idx, dayData]) => {
                     let pillClass = 'empty';
                     let content = '-';
                     const total = dayData.success + dayData.failed;
@@ -4001,32 +4201,8 @@ ON CONFLICT (tc_no) DO NOTHING;
                     return `<td><span class="day-pill ${pillClass}">${content}</span></td>`;
                 }).join('');
                 
-                // SQL View sütun isimlerini güvenli bir şekilde al
-                const sName = student.student_name || student.name || 'İsimsiz Öğrenci';
-                const sId = student.student_id || student.id;
-                const sNo = student.student_no || '-';
-                
-                // Öğrenci Avatarı (split hatasını önlemek için kontrol ekle)
-                const initials = sName.split(' ').filter(n => n).map(n => n[0]).join('').toUpperCase().slice(0, 2);
-                const successCount = student.weekly_successful_tests || 0;
-                const failedCount = student.weekly_failed_tests || 0;
-
-                // Periyoda göre toplam, başarılı ve hatalı sayılarını seç
-                const periodSelect = document.getElementById('perfPeriodSelect');
-                const period = periodSelect ? periodSelect.value : 'weekly';
-                
-                let displayTotal = weekly;
-                let displaySuccess = successCount;
-                let displayFailed = failedCount;
-                
-                if (period === 'monthly') {
-                    displayTotal = student.monthly_total_tests || 0;
-                    displaySuccess = student.monthly_successful_tests || 0;
-                    displayFailed = student.monthly_failed_tests || 0;
-                }
-                
                 return `
-                    <tr onclick="impersonateStudent('${sId}', '${sName.replace(/'/g, "\\'")}')">  
+                    <tr onclick="impersonateStudent('${sId}', '${sName.replace(/'/g, "\'")}')">  
                         <td>
                             <div class="student-name-cell">
                                 <div class="student-avatar">${initials}</div>
@@ -4044,7 +4220,9 @@ ON CONFLICT (tc_no) DO NOTHING;
                         <td>${activityBadge}</td>
                     </tr>
                 `;
-            }).join('') || '<tr><td colspan="13" class="px-4 py-12 text-center text-gray-400">Eşleşen öğrenci bulunamadı.</td></tr>';
+            });
+            
+            tbody.innerHTML = rows.join('') || '<tr><td colspan="13" class="px-4 py-12 text-center text-gray-400">Eşleşen öğrenci bulunamadı.</td></tr>';
         }
 
         function filterPerformanceTable() {
@@ -4052,7 +4230,7 @@ ON CONFLICT (tc_no) DO NOTHING;
             const periodSelect = document.getElementById('perfPeriodSelect');
             const sortOrderSelect = document.getElementById('perfSortOrder');
             
-            const period = periodSelect ? periodSelect.value : 'weekly';
+            const period = periodSelect ? periodSelect.value : 'current_week';
             const sortOrder = sortOrderSelect ? sortOrderSelect.value : 'desc';
             
             const filtered = performanceData.filter(s => 
@@ -4074,15 +4252,24 @@ ON CONFLICT (tc_no) DO NOTHING;
                 const tabContent = document.getElementById(`${tab}Content`);
                 
                 if (tab === tabName) {
-                    tabButton.classList.add('border-blue-500', 'text-blue-600');
-                    tabButton.classList.remove('border-transparent', 'text-gray-500');
-                    tabContent.classList.remove('hidden');
+                    if (tabButton) {
+                        tabButton.classList.add('border-blue-500', 'text-blue-600');
+                        tabButton.classList.remove('border-transparent', 'text-gray-500');
+                    }
+                    if (tabContent) tabContent.classList.remove('hidden');
                 } else {
-                    tabButton.classList.remove('border-blue-500', 'text-blue-600');
-                    tabButton.classList.add('border-transparent', 'text-gray-500');
-                    tabContent.classList.add('hidden');
+                    if (tabButton) {
+                        tabButton.classList.remove('border-blue-500', 'text-blue-600');
+                        tabButton.classList.add('border-transparent', 'text-gray-500');
+                    }
+                    if (tabContent) tabContent.classList.add('hidden');
                 }
             });
+
+            // Liderlik tablosu seçildiğinde verileri yükle
+            if (tabName === 'leaderboard') {
+                loadLeaderboard();
+            }
         }
 
         function showTeacherTab(tabName) {
@@ -6502,22 +6689,104 @@ ON CONFLICT (tc_no) DO NOTHING;
                 container.appendChild(badgeDiv);
             });
         }
+        // Global leaderboard data to avoid re-fetching
+        window.currentLeaderboardData = [];
+        window.currentStarMode = 'weekly'; // Default
+
+        function switchStarTab(mode) {
+            window.currentStarMode = mode;
+            const weeklyBtn = document.getElementById('starTabWeekly');
+            const monthlyBtn = document.getElementById('starTabMonthly');
+            
+            if (mode === 'weekly') {
+                weeklyBtn.classList.add('bg-white', 'text-indigo-600', 'shadow-sm');
+                weeklyBtn.classList.remove('text-white', 'hover:bg-white/5');
+                monthlyBtn.classList.remove('bg-white', 'text-indigo-600', 'shadow-sm');
+                monthlyBtn.classList.add('text-white', 'hover:bg-white/5');
+                document.getElementById('starListTitle').innerHTML = '<i class="fas fa-star mr-2 text-yellow-400"></i>Haftanın Yıldızları';
+                document.getElementById('starPeriodName').textContent = 'Bu Hafta';
+                document.getElementById('starHintText').textContent = 'Bu hafta en çok test çözen ve en yüksek puanı alan ilk 5 öğrenci "Haftanın Yıldızı" seçilir.';
+            } else {
+                monthlyBtn.classList.add('bg-white', 'text-indigo-600', 'shadow-sm');
+                monthlyBtn.classList.remove('text-white', 'hover:bg-white/5');
+                weeklyBtn.classList.remove('bg-white', 'text-indigo-600', 'shadow-sm');
+                weeklyBtn.classList.add('text-white', 'hover:bg-white/5');
+                document.getElementById('starListTitle').innerHTML = '<i class="fas fa-medal mr-2 text-yellow-400"></i>Ayın Yıldızları';
+                const monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+                document.getElementById('starPeriodName').textContent = monthNames[new Date().getMonth()];
+                document.getElementById('starHintText').textContent = 'Bu ay en çok test çözen ve en yüksek puanı alan ilk 3 öğrenci "Ayın Yıldızı" seçilir.';
+            }
+            
+            renderStarList();
+        }
+
+        async function renderStarList() {
+            const starsContainer = document.getElementById('starListContent');
+            if (!starsContainer) return;
+            
+            starsContainer.innerHTML = '';
+            const data = window.currentLeaderboardData;
+            
+            if (!data || data.length === 0) {
+                starsContainer.innerHTML = '<div class="text-center py-8 text-white/50">Veri bulunamadı.</div>';
+                return;
+            }
+
+            // In a real scenario, we'd fetch separate weekly/monthly stats. 
+            // For now, we'll use the same data but different limits to simulate the UI.
+            const limit = window.currentStarMode === 'weekly' ? 5 : 3;
+            const topStudents = data.slice(0, limit);
+
+            topStudents.forEach((student, index) => {
+                const colors = [
+                    'from-yellow-300 to-yellow-500', // 1. Altın
+                    'from-gray-200 to-gray-400',    // 2. Gümüş
+                    'from-orange-300 to-orange-500', // 3. Bronz
+                    'from-blue-300 to-blue-500',    // 4. Mavi
+                    'from-green-300 to-green-500'   // 5. Yeşil
+                ];
+                const icons = ['👑', '🥈', '🥉', '4', '5'];
+                
+                const starDiv = document.createElement('div');
+                starDiv.className = 'flex items-center space-x-4 bg-white/10 p-4 rounded-xl border border-white/10 backdrop-blur-sm transition-all duration-300 hover:bg-white/20';
+                starDiv.innerHTML = `
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br ${colors[index]} flex items-center justify-center text-xl shadow-lg font-bold">
+                        ${icons[index]}
+                    </div>
+                    <div class="flex-1">
+                        <div class="font-bold text-white truncate text-sm">${student.student_name}</div>
+                        <div class="text-[10px] text-indigo-200 uppercase tracking-wider">${student.successful_tests_count} Başarılı Test</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="font-bold text-yellow-400 text-base">${Math.round(student.average_score)}</div>
+                        <div class="text-[9px] text-indigo-300 uppercase font-bold">Puan</div>
+                    </div>
+                `;
+                starsContainer.appendChild(starDiv);
+            });
+        }
+
         // Load leaderboard by querying the 'leaderboard_stats' view (Optimized)
         async function loadLeaderboard() {
             try {
                 // 1. Doğrudan 'leaderboard_stats' görünümünü sorgula
-                // Sıralama (ORDER BY) ve limit (limit(15)) veritabanında yapıldığı için çok hızlıdır.
                 const { data: leaderboard, error } = await supabase
                     .from('leaderboard_stats')
                     .select('*')
-                    .order('successful_tests_count', { ascending: false }) // Ana sıralama: Başarılı test sayısı
-                    .order('average_score', { ascending: false })        // İkincil sıralama: Ortalama puan
-                    .limit(28); // Sadece ilk 15 öğrenciyi getir
+                    .order('successful_tests_count', { ascending: false })
+                    .order('average_score', { ascending: false })
+                    .limit(28);
 
                 if (error) {
-                    // Eğer görünüm bulunamazsa veya bir hata olursa, eski yöntemi dene (güvenlik ağı)
                     console.warn("leaderboard_stats görünümü sorgulanamadı, eski yönteme geçiliyor. Hata:", error.message);
-                    return await loadLeaderboardLegacy(); // Eski fonksiyonu çağır (adını değiştirdik)
+                    return await loadLeaderboardLegacy();
+                }
+
+                window.currentLeaderboardData = leaderboard;
+
+                // Öğrenci sayısını güncelle
+                if (document.getElementById('leaderboardStudentCount')) {
+                    document.getElementById('leaderboardStudentCount').textContent = leaderboard.length;
                 }
 
                 const container = document.getElementById('leaderboardList');
@@ -6528,11 +6797,13 @@ ON CONFLICT (tc_no) DO NOTHING;
                         <div class="text-center py-12">
                             <i class="fas fa-trophy text-6xl text-gray-300 mb-4"></i>
                             <p class="text-gray-500 text-lg">Henüz liderlik tablosu verisi bulunmuyor.</p>
-                            <p class="text-gray-400 text-sm mt-2">İlk testler tamamlandığında liderlik tablosu burada görünecek.</p>
                         </div>
                     `;
                     return;
                 }
+
+                // Yıldızlar Listesini Render Et
+                renderStarList();
 
                 // Arayüzü oluşturma (UI Rendering)
                 addLeaderboardHeader(container);
@@ -6643,9 +6914,42 @@ ON CONFLICT (tc_no) DO NOTHING;
 
         // Güvenlik ağı olarak eski fonksiyonu yeniden adlandırarak saklayalım
         async function loadLeaderboardLegacy() {
-            // Bu fonksiyon, eski kodunuzun içeriğini barındırır.
-            // Sadece bir sorun olursa devreye girmesi için burada tutulur.
-            console.log("Eski liderlik tablosu yükleme metodu çalıştırıldı.");
+            try {
+                // Eğer view yoksa, ham verilerden hesapla
+                const { data: results, error } = await supabase.from('test_results').select('*, students(name)');
+                if (error) throw error;
+
+                // Öğrenci bazlı grupla
+                const stats = {};
+                results.forEach(r => {
+                    const id = r.student_id;
+                    if (!stats[id]) {
+                        stats[id] = { student_id: id, student_name: r.students?.name || 'İsimsiz', scores: [], successful: 0 };
+                    }
+                    stats[id].scores.push(r.score);
+                    if (r.score >= 70) stats[id].successful++;
+                });
+
+                const leaderboard = Object.values(stats).map(s => ({
+                    ...s,
+                    average_score: s.scores.reduce((a, b) => a + b, 0) / s.scores.length,
+                    successful_tests_count: s.successful
+                })).sort((a, b) => b.successful_tests_count - a.successful_tests_count || b.average_score - a.average_score);
+
+                // UI Güncelleme (Basitleştirilmiş)
+                const container = document.getElementById('leaderboardList');
+                if (container) {
+                    container.innerHTML = '<p class="text-center py-4 text-gray-500">Liderlik tablosu (Legacy Modu)</p>';
+                    leaderboard.slice(0, 15).forEach((s, i) => {
+                        const div = document.createElement('div');
+                        div.className = 'p-4 bg-white border rounded-lg mb-2 flex justify-between items-center';
+                        div.innerHTML = `<span>${i+1}. ${s.student_name}</span> <b>${s.successful_tests_count} Başarılı</b>`;
+                        container.appendChild(div);
+                    });
+                }
+            } catch (err) {
+                console.error("Legacy leaderboard error:", err);
+            }
         }
 
         // Modal functions
