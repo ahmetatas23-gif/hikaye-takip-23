@@ -657,8 +657,20 @@ let impersonatedStudent = null;
                         </button>
                     </div>
 
-                    <!-- Filter Buttons -->
+                    <!-- Search & Filter -->
                     <div class="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                        <!-- Arama Kutusu -->
+                        <div class="relative mb-3">
+                            <input type="text" id="studentTestSearchInput"
+                                   placeholder="Test adı ile ara..."
+                                   oninput="filterStudentTests()"
+                                   class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-sm">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-search text-gray-400"></i>
+                            </div>
+                        </div>
+
+                        <!-- Filtre Butonları -->
                         <div class="flex flex-wrap gap-3">
                             <button onclick="setStudentTestFilter('all')" id="filterAllStudentTests" 
                                     class="student-test-filter-btn px-4 py-2 text-sm rounded-lg bg-blue-100 text-blue-800 border border-blue-200 font-medium">
@@ -2885,7 +2897,6 @@ ON CONFLICT (tc_no) DO NOTHING;
             // Use stored data if not provided
             if (!assignments) assignments = allStudentTestsData;
             if (!results) {
-                // Get results from global state or fetch them
                 results = window.currentStudentResults || [];
             }
             
@@ -2904,36 +2915,63 @@ ON CONFLICT (tc_no) DO NOTHING;
                 return;
             }
 
-            // Filter assignments based on current filter
+            // Arama terimi
+            const searchTerm = (document.getElementById('studentTestSearchInput')?.value || '').toLowerCase().trim();
+
+            // Filtrele
             let filteredAssignments = [...assignments];
             
             switch (currentStudentTestFilter) {
                 case 'waiting':
-                    // Only assignments without results
                     filteredAssignments = assignments.filter(assignment => {
                         const result = results?.find(r => r.test_id === assignment.test_id);
                         return !result;
                     });
                     break;
                 case 'successful':
-                    // Only assignments with results >= 70
                     filteredAssignments = assignments.filter(assignment => {
                         const result = results?.find(r => r.test_id === assignment.test_id);
-                        return result && result.score >= 80;
+                        return result && result.score >= 70;
                     });
                     break;
                 case 'low_score':
-                    // Only assignments with results < 70
                     filteredAssignments = assignments.filter(assignment => {
                         const result = results?.find(r => r.test_id === assignment.test_id);
-                        return result && result.score < 50;
+                        return result && result.score < 70;
                     });
                     break;
                 case 'all':
                 default:
-                    // Show all assignments
                     break;
             }
+
+            // Arama filtresi uygula
+            if (searchTerm) {
+                filteredAssignments = filteredAssignments.filter(assignment =>
+                    (assignment.tests?.title || '').toLowerCase().includes(searchTerm) ||
+                    (assignment.tests?.description || '').toLowerCase().includes(searchTerm)
+                );
+            }
+
+            // SIRALAMA: Bekleyenler (en son atanan) en üste, tamamlananlar alta
+            filteredAssignments.sort((a, b) => {
+                const aResult = results?.find(r => r.test_id === a.test_id);
+                const bResult = results?.find(r => r.test_id === b.test_id);
+                const aWaiting = !aResult;
+                const bWaiting = !bResult;
+
+                // Önce bekleyenler
+                if (aWaiting && !bWaiting) return -1;
+                if (!aWaiting && bWaiting) return 1;
+
+                // İkisi de bekleyense en son atanan üste
+                if (aWaiting && bWaiting) {
+                    return new Date(b.assigned_at) - new Date(a.assigned_at);
+                }
+
+                // İkisi de tamamlanmışsa tamamlanma tarihine göre (en yeni üste)
+                return new Date(b.assigned_at) - new Date(a.assigned_at);
+            });
 
             if (filteredAssignments.length === 0) {
                 const filterMessages = {
@@ -2942,11 +2980,14 @@ ON CONFLICT (tc_no) DO NOTHING;
                     'low_score': 'Düşük puan alan test bulunmuyor.',
                     'all': 'Test bulunmuyor.'
                 };
+                const msg = searchTerm
+                    ? `"${searchTerm}" ile eşleşen test bulunamadı.`
+                    : filterMessages[currentStudentTestFilter];
                 
                 container.innerHTML = `
                     <div class="text-center py-12">
                         <i class="fas fa-search text-6xl text-gray-300 mb-4"></i>
-                        <p class="text-gray-500 text-lg">${filterMessages[currentStudentTestFilter]}</p>
+                        <p class="text-gray-500 text-lg">${msg}</p>
                         <p class="text-gray-400 text-sm mt-2">Farklı bir filtre seçerek diğer testleri görebilirsiniz.</p>
                     </div>
                 `;
@@ -2957,8 +2998,8 @@ ON CONFLICT (tc_no) DO NOTHING;
             filteredAssignments.forEach(assignment => {
                 const result = results?.find(r => r.test_id === assignment.test_id);
                 const isCompleted = !!result;
-                const passed = result && result.score >= 80;
-                const failed = result && result.score < 50;
+                const passed = result && result.score >= 70;
+                const failed = result && result.score < 70;
 
                 // Determine status and styling
                 let statusBadge, statusColor, buttonContent, buttonAction, buttonClass;
@@ -3016,9 +3057,9 @@ ON CONFLICT (tc_no) DO NOTHING;
                                     <div class="text-xs text-blue-600">Soru</div>
                                 </div>
                                 ${result ? `
-                                    <div class="bg-${result.score >= 80 ? 'green' : 'red'}-50 rounded-lg p-3 text-center">
-                                        <div class="text-lg font-bold text-${result.score >= 80 ? 'green' : 'red'}-800">${result.score}</div>
-                                        <div class="text-xs text-${result.score >= 80 ? 'green' : 'red'}-600">Puan</div>
+                                    <div class="bg-${result.score >= 70 ? 'green' : 'red'}-50 rounded-lg p-3 text-center">
+                                        <div class="text-lg font-bold text-${result.score >= 70 ? 'green' : 'red'}-800">${result.score}</div>
+                                        <div class="text-xs text-${result.score >= 70 ? 'green' : 'red'}-600">Puan</div>
                                     </div>
                                 ` : `
                                     <div class="bg-gray-50 rounded-lg p-3 text-center">
@@ -3130,7 +3171,7 @@ ON CONFLICT (tc_no) DO NOTHING;
                 }
 
                 if (existingResult) {
-                    if (existingResult.score >= 80) {
+                    if (existingResult.score >= 70) {
                         showNotification('Bu testi zaten başarıyla tamamladınız. Tekrar çözemezsiniz.', 'warning');
                     } else {
                         showNotification('Bu testi zaten tamamladınız. Öğretmeninizin tekrar atamasını bekleyin.', 'warning');
@@ -3582,19 +3623,14 @@ ON CONFLICT (tc_no) DO NOTHING;
                 if (question.type === 'multiple_choice') {
                     isCorrect = parseInt(userAnswer) === question.correct;
                 } else if (question.type === 'fill_blank') {
-                    // Handle both word selection and text input formats
-                    if (question.options && question.options.length > 0) {
-                        // Multiple choice format for fill_blank
-                        if (userAnswer !== undefined && userAnswer !== null && userAnswer !== '') {
-                            isCorrect = parseInt(userAnswer) === parseInt(question.correct);
-                        } else {
-                            isCorrect = false;
-                        }
-                    } else if (typeof userAnswer === 'string') {
-                        // Text input format
-                        isCorrect = userAnswer.toLowerCase().trim() === String(question.correct).toLowerCase().trim();
-                    } else {
+                    if (userAnswer === undefined || userAnswer === null || userAnswer === '') {
                         isCorrect = false;
+                    } else if (question.options && question.options.length > 0 && !isNaN(parseInt(userAnswer)) && question.options[parseInt(userAnswer)] !== undefined) {
+                        // Eski format: index ile kaydedilmiş cevap
+                        isCorrect = parseInt(userAnswer) === parseInt(question.correct);
+                    } else {
+                        // Yeni format: kelime olarak kaydedilmiş cevap (selectFillBlankWord)
+                        isCorrect = String(userAnswer).trim().toLowerCase() === String(question.correct).trim().toLowerCase();
                     }
                 } else if (question.type === 'true_false') {
                     // Handle both boolean and string formats
@@ -3702,7 +3738,7 @@ ON CONFLICT (tc_no) DO NOTHING;
                     .eq('student_id', currentUser.id);
 
                 const totalTestCount = results?.length || 0;
-                const successfulTestCount = results?.filter(r => r.score >= 80).length || 0;
+                const successfulTestCount = results?.filter(r => r.score >= 70).length || 0;
                 const hasHighScore = results?.some(r => r.score >= 90) || false;
                 const hasPerfectScore = results?.some(r => r.score === 100) || false;
                 const newBadges = [];
@@ -3762,7 +3798,7 @@ ON CONFLICT (tc_no) DO NOTHING;
         // Show test result
         function showTestResult(score, correct, total, earnedPoints = null, totalPoints = null) {
             const resultContent = document.getElementById('testResultContent');
-            const passed = score >= 80;
+            const passed = score >= 70;
             const testDuration = Math.floor((new Date() - currentTest.startTime) / 1000);
             const minutes = Math.floor(testDuration / 60);
             const seconds = testDuration % 60;
@@ -3784,7 +3820,7 @@ ON CONFLICT (tc_no) DO NOTHING;
                             ${score}%
                         </div>
                         <p class="text-sm text-gray-600 mb-1">
-                            ${passed ? 'Başarı puanına (%80+) ulaştınız!' : 'Başarı puanına ulaşamadınız.'}
+                            ${passed ? 'Başarı puanına (%70+) ulaştınız!' : 'Başarı puanına ulaşamadınız.'}
                         </p>
                         <p class="text-xs text-gray-500">
                             Süre: ${minutes}dk ${seconds}sn
@@ -3794,10 +3830,10 @@ ON CONFLICT (tc_no) DO NOTHING;
                     <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 mb-4 border border-blue-100">
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
                             <div class="bg-white rounded-lg p-3 shadow-sm">
-                                <div class="text-2xl font-bold ${score >= 90 ? 'text-green-600' : score >= 80 ? 'text-blue-600' : 'text-red-600'}">${score}%</div>
+                                <div class="text-2xl font-bold ${score >= 90 ? 'text-green-600' : score >= 70 ? 'text-blue-600' : 'text-red-600'}">${score}%</div>
                                 <div class="text-xs text-gray-600 font-medium">Başarı Oranı</div>
                                 <div class="text-xs text-gray-500">
-                                    ${score >= 90 ? '🌟' : score >= 80 ? '✅' : '❌'}
+                                    ${score >= 90 ? '🌟' : score >= 70 ? '✅' : '❌'}
                                 </div>
                             </div>
                             <div class="bg-white rounded-lg p-3 shadow-sm">
@@ -3839,8 +3875,12 @@ ON CONFLICT (tc_no) DO NOTHING;
                                 if (question.type === 'multiple_choice') {
                                     isCorrect = parseInt(userAnswer) === question.correct;
                                 } else if (question.type === 'fill_blank') {
-                                    if (typeof userAnswer === 'string') {
-                                        isCorrect = userAnswer.toLowerCase().trim() === question.correct.toLowerCase().trim();
+                                    if (userAnswer === undefined || userAnswer === null || userAnswer === '') {
+                                        isCorrect = false;
+                                    } else if (question.options && question.options.length > 0 && !isNaN(parseInt(userAnswer)) && question.options[parseInt(userAnswer)] !== undefined) {
+                                        isCorrect = parseInt(userAnswer) === parseInt(question.correct);
+                                    } else {
+                                        isCorrect = String(userAnswer).trim().toLowerCase() === String(question.correct).trim().toLowerCase();
                                     }
                                 } else if (question.type === 'true_false') {
                                     isCorrect = (userAnswer === 'true') === question.correct;
@@ -4514,7 +4554,7 @@ ON CONFLICT (tc_no) DO NOTHING;
 
                     const totalAssignments = assignments?.length || 0;
                     const completedAssignments = results?.length || 0;
-                    const successfulAssignments = results?.filter(r => r.score >= 80).length || 0;
+                    const successfulAssignments = results?.filter(r => r.score >= 70).length || 0;
 
                     console.log(`Test ${test.id} stats:`, {
                         totalAssignments,
@@ -4827,7 +4867,7 @@ ON CONFLICT (tc_no) DO NOTHING;
 
                 // Calculate comprehensive statistics
                 const totalResults = results?.length || 0;
-                const passedResults = results?.filter(r => r.score >= 80).length || 0;
+                const passedResults = results?.filter(r => r.score >= 70).length || 0;
                 const excellentResults = results?.filter(r => r.score >= 90).length || 0;
                 const perfectResults = results?.filter(r => r.score === 100).length || 0;
                 const averageScore = totalResults > 0 ? Math.round(results.reduce((sum, r) => sum + r.score, 0) / totalResults) : 0;
@@ -4856,15 +4896,21 @@ ON CONFLICT (tc_no) DO NOTHING;
                     
                     console.log(`Student ${student.name}: ${studentTestResults.length} results, ${studentAssignments.length} assignments`);
                     
+                    // Tamamlanan test ID'leri
+                    const completedTestIds = new Set(studentTestResults.map(r => r.test_id));
+                    
+                    // Bekleyen: atanmış ama henüz çözülmemiş
+                    const pendingCount = studentAssignments.filter(a => !completedTestIds.has(a.test_id)).length;
+
                     // Calculate detailed performance metrics
                     const scores = studentTestResults.map(r => r.score);
                     const averageScore = scores.length > 0 ? Math.round(scores.reduce((sum, score) => sum + score, 0) / scores.length) : 0;
                     const highestScore = scores.length > 0 ? Math.max(...scores) : 0;
                     const lowestScore = scores.length > 0 ? Math.min(...scores) : 0;
-                    const passedTests = studentTestResults.filter(r => r.score >= 80).length;
+                    const passedTests = studentTestResults.filter(r => r.score >= 70).length;
                     const excellentTests = studentTestResults.filter(r => r.score >= 90).length;
                     const perfectScores = studentTestResults.filter(r => r.score === 100).length;
-                    const failedTests = studentTestResults.filter(r => r.score < 50).length;
+                    const failedTests = studentTestResults.filter(r => r.score < 70).length;
                     
                     // Calculate improvement trend (last 3 tests vs first 3 tests)
                     let improvementTrend = 'stable';
@@ -4910,9 +4956,9 @@ ON CONFLICT (tc_no) DO NOTHING;
                         assignments: studentAssignments,
                         
                         // Basic metrics
-                        totalTests: studentTestResults.length,
-                        totalAssignments: studentAssignments.length,
-                        pendingTests: studentAssignments.length - studentTestResults.length,
+                        totalTests: studentTestResults.length,          // Çözülen test sayısı
+                        totalAssignments: studentAssignments.length,    // Atanan test sayısı
+                        pendingTests: pendingCount,                     // Atanmış ama çözülmemiş
                         
                         // Score metrics
                         averageScore: averageScore,
@@ -4983,20 +5029,23 @@ ON CONFLICT (tc_no) DO NOTHING;
                         </div>
                         <div class="bg-white rounded-lg p-4 text-center shadow-sm">
                             <div class="text-2xl font-bold text-purple-600">${totalResults}</div>
-                            <div class="text-sm text-gray-600 font-medium">Toplam Test</div>
+                            <div class="text-sm text-gray-600 font-medium">Çözülen Test</div>
+                            <div class="text-xs text-gray-500 mt-1">Tüm tamamlananlar</div>
                         </div>
                         <div class="bg-white rounded-lg p-4 text-center shadow-sm">
                             <div class="text-2xl font-bold text-yellow-600">${passedResults}</div>
                             <div class="text-sm text-gray-600 font-medium">Başarılı (≥70)</div>
-                            <div class="text-xs text-gray-500 mt-1">${totalResults > 0 ? Math.round((passedResults/totalResults)*100) : 0}%</div>
+                            <div class="text-xs text-gray-500 mt-1">${totalResults > 0 ? Math.round((passedResults/totalResults)*100) : 0}% başarı oranı</div>
                         </div>
                         <div class="bg-white rounded-lg p-4 text-center shadow-sm">
                             <div class="text-2xl font-bold text-indigo-600">${averageScore}</div>
                             <div class="text-sm text-gray-600 font-medium">Sınıf Ortalaması</div>
+                            <div class="text-xs text-gray-500 mt-1">Puan ortalaması</div>
                         </div>
                         <div class="bg-white rounded-lg p-4 text-center shadow-sm">
                             <div class="text-2xl font-bold text-orange-600">${pendingAssignments}</div>
                             <div class="text-sm text-gray-600 font-medium">Bekleyen Test</div>
+                            <div class="text-xs text-gray-500 mt-1">Atanmış, çözülmemiş</div>
                         </div>
                         <div class="bg-white rounded-lg p-4 text-center shadow-sm">
                             <div class="text-2xl font-bold text-emerald-600">${improvingStudents}</div>
@@ -5023,7 +5072,7 @@ ON CONFLICT (tc_no) DO NOTHING;
                                 <div class="text-xs text-purple-600">🏆 Tam Puan</div>
                             </div>
                             <div class="text-center">
-                                <div class="text-3xl font-bold text-green-600">${excellentResults}</div>
+                                <div class="text-3xl font-bold text-green-600">${excellentResults - perfectResults}</div>
                                 <div class="text-sm text-gray-600">Harika (90-99)</div>
                                 <div class="text-xs text-green-600">⭐ Mükemmel</div>
                             </div>
@@ -5034,7 +5083,7 @@ ON CONFLICT (tc_no) DO NOTHING;
                             </div>
                             <div class="text-center">
                                 <div class="text-3xl font-bold text-red-600">${totalResults - passedResults}</div>
-                                <div class="text-sm text-gray-600">Gelişmeli (<70)</div>
+                                <div class="text-sm text-gray-600">Başarısız (<70)</div>
                                 <div class="text-xs text-red-600">📚 Çalışmalı</div>
                             </div>
                         </div>
@@ -5290,12 +5339,12 @@ ON CONFLICT (tc_no) DO NOTHING;
                             <div class="bg-white rounded-xl p-4 text-center shadow-sm border border-blue-100">
                                 <div class="text-2xl font-bold text-blue-600">${studentData.totalTests}</div>
                                 <div class="text-xs text-gray-600 font-medium">Çözülen Test</div>
-                                <div class="text-xs text-blue-500 mt-1">📊 Toplam</div>
+                                <div class="text-xs text-blue-500 mt-1">📊 Tamamlanan</div>
                             </div>
                             <div class="bg-white rounded-xl p-4 text-center shadow-sm border border-green-100">
                                 <div class="text-2xl font-bold text-green-600">${studentData.passedTests}</div>
                                 <div class="text-xs text-gray-600 font-medium">Başarılı (≥70)</div>
-                                <div class="text-xs text-green-500 mt-1">✅ %${studentData.passRate}</div>
+                                <div class="text-xs text-green-500 mt-1">✅ %${studentData.totalTests > 0 ? Math.round((studentData.passedTests / studentData.totalTests) * 100) : 0}</div>
                             </div>
                             <div class="bg-white rounded-xl p-4 text-center shadow-sm border border-purple-100">
                                 <div class="text-2xl font-bold text-purple-600">${studentData.perfectScores}</div>
@@ -5314,19 +5363,19 @@ ON CONFLICT (tc_no) DO NOTHING;
                                 <div class="text-xs text-gray-600 font-medium">En Yüksek</div>
                                 <div class="text-xs text-emerald-500 mt-1">📈 Zirve</div>
                             </div>
-                            <div class="bg-white rounded-xl p-4 text-center shadow-sm border border-red-100">
-                                <div class="text-2xl font-bold text-red-600">${studentData.lowestScore || 0}</div>
+                            <div class="bg-white rounded-xl p-4 text-center shadow-sm border border-gray-100">
+                                <div class="text-2xl font-bold text-gray-600">${studentData.lowestScore || 0}</div>
                                 <div class="text-xs text-gray-600 font-medium">En Düşük</div>
-                                <div class="text-xs text-red-500 mt-1">📉 Minimum</div>
+                                <div class="text-xs text-gray-500 mt-1">📉 Minimum</div>
                             </div>
                             <div class="bg-white rounded-xl p-4 text-center shadow-sm border border-orange-100">
                                 <div class="text-2xl font-bold text-orange-600">${studentData.pendingTests}</div>
                                 <div class="text-xs text-gray-600 font-medium">Bekleyen</div>
-                                <div class="text-xs text-orange-500 mt-1">⏰ Atanmış</div>
+                                <div class="text-xs text-orange-500 mt-1">⏰ Çözülmemiş</div>
                             </div>
                             <div class="bg-white rounded-xl p-4 text-center shadow-sm border border-red-100">
                                 <div class="text-2xl font-bold text-red-600">${studentData.failedTests}</div>
-                                <div class="text-xs text-gray-600 font-medium">Gelişmeli (<70)</div>
+                                <div class="text-xs text-gray-600 font-medium">Başarısız (<70)</div>
                                 <div class="text-xs text-red-500 mt-1">📚 Çalışmalı</div>
                             </div>
                         </div>
@@ -5457,7 +5506,7 @@ ON CONFLICT (tc_no) DO NOTHING;
                                         <div class="bg-white border-2 ${
                                             result.score === 100 ? 'border-purple-200 bg-purple-50' :
                                             result.score >= 90 ? 'border-green-200 bg-green-50' :
-                                            result.score >= 80 ? 'border-blue-200 bg-blue-50' : 'border-red-200 bg-red-50'
+                                            result.score >= 70 ? 'border-blue-200 bg-blue-50' : 'border-red-200 bg-red-50'
                                         } rounded-xl p-4 hover:shadow-md transition-all duration-200">
                                             <div class="flex justify-between items-start mb-3">
                                                 <div class="flex-1">
@@ -5465,7 +5514,7 @@ ON CONFLICT (tc_no) DO NOTHING;
                                                         <span class="text-lg">
                                                             ${result.score === 100 ? '🏆' :
                                                               result.score >= 90 ? '⭐' :
-                                                              result.score >= 80 ? '✅' : '📚'}
+                                                              result.score >= 70 ? '✅' : '📚'}
                                                         </span>
                                                         <h6 class="font-bold text-gray-900 text-sm">${result.test?.title || 'Unknown Test'}</h6>
                                                     </div>
@@ -5493,16 +5542,16 @@ ON CONFLICT (tc_no) DO NOTHING;
                                                     <div class="text-3xl font-bold ${
                                                         result.score === 100 ? 'text-purple-600' :
                                                         result.score >= 90 ? 'text-green-600' :
-                                                        result.score >= 80 ? 'text-blue-600' : 'text-red-600'
+                                                        result.score >= 70 ? 'text-blue-600' : 'text-red-600'
                                                     }">${result.score}</div>
                                                     <div class="text-xs font-medium ${
                                                         result.score === 100 ? 'text-purple-600' :
                                                         result.score >= 90 ? 'text-green-600' :
-                                                        result.score >= 80 ? 'text-blue-600' : 'text-red-600'
+                                                        result.score >= 70 ? 'text-blue-600' : 'text-red-600'
                                                     }">
                                                         ${result.score === 100 ? 'Mükemmel' :
                                                           result.score >= 90 ? 'Harika' :
-                                                          result.score >= 80 ? 'Başarılı' : 'Gelişmeli'}
+                                                          result.score >= 70 ? 'Başarılı' : 'Gelişmeli'}
                                                     </div>
                                                     <div class="text-xs text-gray-500 mt-1">
                                                         ${(() => {
@@ -5529,7 +5578,7 @@ ON CONFLICT (tc_no) DO NOTHING;
                                                 <div class="h-2 rounded-full transition-all duration-300 ${
                                                     result.score === 100 ? 'bg-purple-500' :
                                                     result.score >= 90 ? 'bg-green-500' :
-                                                    result.score >= 80 ? 'bg-blue-500' : 'bg-red-500'
+                                                    result.score >= 70 ? 'bg-blue-500' : 'bg-red-500'
                                                 }" style="width: ${result.score}%"></div>
                                             </div>
                                             
@@ -5540,8 +5589,12 @@ ON CONFLICT (tc_no) DO NOTHING;
                                                     <i class="fas fa-clipboard-check mr-2"></i>
                                                     Detaylı Sonuçlar
                                                 </button>
+                                                <button onclick="downloadResultPDF(${result.id}, ${student.id}, '${student.name.replace(/'/g, "\\'")}', '${result.test?.title?.replace(/'/g, "\\'") || "Test"}')"
+                                                        class="px-3 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition duration-200 flex items-center justify-center" title="PDF İndir">
+                                                    <i class="fas fa-file-pdf mr-1"></i>PDF
+                                                </button>
                                                 <button onclick="deleteTestResult(${result.id}, '${student.name.replace(/'/g, "\\'")}', '${result.test?.title?.replace(/'/g, "\\'") || "Test"}')" 
-                                                        class="px-3 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition duration-200 flex items-center justify-center">
+                                                        class="px-3 py-2 bg-gray-500 text-white text-sm rounded-lg hover:bg-gray-600 transition duration-200 flex items-center justify-center" title="Sil">
                                                     <i class="fas fa-trash"></i>
                                                 </button>
                                             </div>
@@ -5840,8 +5893,8 @@ ON CONFLICT (tc_no) DO NOTHING;
                     const completedTestIds = studentResults.map(r => r.test_id);
                     
                     // Calculate statistics
-                    const successfulTests = studentResults.filter(r => r.score >= 80).length;
-                    const failedTests = studentResults.filter(r => r.score < 50).length;
+                    const successfulTests = studentResults.filter(r => r.score >= 70).length;
+                    const failedTests = studentResults.filter(r => r.score < 70).length;
                     
                     // Find assigned and unsolved tests
                     const studentAssignments = assignments.filter(a => a.student_id === student.id);
@@ -5884,8 +5937,8 @@ ON CONFLICT (tc_no) DO NOTHING;
                 csvContent += `Sistemdeki Toplam Test Sayısı,${totalActiveTests}\n`;
                 csvContent += `Çözülen Toplam Test,${results.length}\n`;
                 
-                const totalSuccessful = results.filter(r => r.score >= 80).length;
-                const totalFailed = results.filter(r => r.score < 50).length;
+                const totalSuccessful = results.filter(r => r.score >= 70).length;
+                const totalFailed = results.filter(r => r.score < 70).length;
                 csvContent += `Başarılı Test Sayısı (≥70),${totalSuccessful}\n`;
                 csvContent += `Başarısız Test Sayısı (<70),${totalFailed}\n`;
                 
@@ -6289,8 +6342,8 @@ ON CONFLICT (tc_no) DO NOTHING;
                     const completedTestIds = studentResults.map(r => r.test_id);
                     
                     // Calculate statistics
-                    const successfulTests = studentResults.filter(r => r.score >= 80).length;
-                    const failedTests = studentResults.filter(r => r.score < 50).length;
+                    const successfulTests = studentResults.filter(r => r.score >= 70).length;
+                    const failedTests = studentResults.filter(r => r.score < 70).length;
                     
                     // Find assigned and unsolved tests
                     const studentAssignments = assignments.filter(a => a.student_id === student.id);
@@ -6338,8 +6391,8 @@ ON CONFLICT (tc_no) DO NOTHING;
         <div class="summary-item"><strong>Toplam Öğrenci Sayısı:</strong> ${students.length}</div>
         <div class="summary-item"><strong>Sistemdeki Toplam Test Sayısı:</strong> ${totalActiveTests}</div>
         <div class="summary-item"><strong>Çözülen Toplam Test:</strong> ${results.length}</div>
-        <div class="summary-item"><strong>Başarılı Test Sayısı (≥70):</strong> ${results.filter(r => r.score >= 80).length}</div>
-        <div class="summary-item"><strong>Başarısız Test Sayısı (<70):</strong> ${results.filter(r => r.score < 50).length}</div>
+        <div class="summary-item"><strong>Başarılı Test Sayısı (≥70):</strong> ${results.filter(r => r.score >= 70).length}</div>
+        <div class="summary-item"><strong>Başarısız Test Sayısı (<70):</strong> ${results.filter(r => r.score < 70).length}</div>
         <div class="summary-item"><strong>Sınıf Ortalaması:</strong> ${results.length > 0 ? Math.round(results.reduce((sum, r) => sum + r.score, 0) / results.length) : 0}</div>
         <div class="summary-item"><strong>Toplam Bekleyen Test:</strong> ${assignments.length - results.length}</div>
     </div>
@@ -6413,7 +6466,7 @@ ON CONFLICT (tc_no) DO NOTHING;
                                     <div class="text-sm text-gray-600">Tamamlanan Test</div>
                                 </div>
                                 <div>
-                                    <div class="text-2xl font-bold text-yellow-600">${results?.filter(r => r.score >= 80).length || 0}</div>
+                                    <div class="text-2xl font-bold text-yellow-600">${results?.filter(r => r.score >= 70).length || 0}</div>
                                     <div class="text-sm text-gray-600">Başarılı Sonuç</div>
                                 </div>
                             </div>
@@ -6452,7 +6505,7 @@ ON CONFLICT (tc_no) DO NOTHING;
                                         <div class="text-2xl">
                                             ${result.score === 100 ? '🏆' :
                                               result.score >= 90 ? '⭐' :
-                                              result.score >= 80 ? '✅' : '📚'}
+                                              result.score >= 70 ? '✅' : '📚'}
                                         </div>
                                         <div>
                                             <h4 class="font-semibold text-gray-900">${student.name}</h4>
@@ -6478,16 +6531,16 @@ ON CONFLICT (tc_no) DO NOTHING;
                                     <div class="text-3xl font-bold ${
                                         result.score === 100 ? 'text-purple-600' :
                                         result.score >= 90 ? 'text-green-600' :
-                                        result.score >= 80 ? 'text-blue-600' : 'text-red-600'
+                                        result.score >= 70 ? 'text-blue-600' : 'text-red-600'
                                     }">${result.score}</div>
                                     <div class="text-sm font-medium ${
                                         result.score === 100 ? 'text-purple-600' :
                                         result.score >= 90 ? 'text-green-600' :
-                                        result.score >= 80 ? 'text-blue-600' : 'text-red-600'
+                                        result.score >= 70 ? 'text-blue-600' : 'text-red-600'
                                     }">
                                         ${result.score === 100 ? 'Mükemmel' :
                                           result.score >= 90 ? 'Harika' :
-                                          result.score >= 80 ? 'Başarılı' : 'Gelişmeli'}
+                                          result.score >= 70 ? 'Başarılı' : 'Gelişmeli'}
                                     </div>
                                 </div>
                             </div>
@@ -6548,7 +6601,7 @@ ON CONFLICT (tc_no) DO NOTHING;
             Object.values(resultsByTest).forEach(testGroup => {
                 const testResults = testGroup.results;
                 const testAverage = Math.round(testResults.reduce((sum, r) => sum + r.score, 0) / testResults.length);
-                const testPassRate = Math.round((testResults.filter(r => r.score >= 80).length / testResults.length) * 100);
+                const testPassRate = Math.round((testResults.filter(r => r.score >= 70).length / testResults.length) * 100);
 
                 // Test group header
                 const testGroupDiv = document.createElement('div');
@@ -6603,7 +6656,7 @@ ON CONFLICT (tc_no) DO NOTHING;
                         performanceColor = 'text-green-600 bg-green-50 border-green-200';
                         performanceIcon = '⭐';
                         rankIcon = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '🌟';
-                    } else if (result.score >= 80) {
+                    } else if (result.score >= 70) {
                         performanceLevel = 'Başarılı';
                         performanceColor = 'text-blue-600 bg-blue-50 border-blue-200';
                         performanceIcon = '👍';
@@ -6644,7 +6697,7 @@ ON CONFLICT (tc_no) DO NOTHING;
                                     <div class="text-3xl font-bold ${
                                         result.score === 100 ? 'text-purple-600' :
                                         result.score >= 90 ? 'text-green-600' :
-                                        result.score >= 80 ? 'text-blue-600' : 'text-red-600'
+                                        result.score >= 70 ? 'text-blue-600' : 'text-red-600'
                                     }">${result.score}</div>
                                     <div class="text-xs text-gray-600 font-medium">puan</div>
                                 </div>
@@ -6692,10 +6745,10 @@ ON CONFLICT (tc_no) DO NOTHING;
             // Apply category filter
             switch (filterType) {
                 case 'passed':
-                    filteredResults = filteredResults.filter(result => result.score >= 80);
+                    filteredResults = filteredResults.filter(result => result.score >= 70);
                     break;
                 case 'failed':
-                    filteredResults = filteredResults.filter(result => result.score < 50);
+                    filteredResults = filteredResults.filter(result => result.score < 70);
                     break;
                 case 'excellent':
                     filteredResults = filteredResults.filter(result => result.score >= 90);
@@ -6763,7 +6816,7 @@ ON CONFLICT (tc_no) DO NOTHING;
                 .eq('student_id', currentUser.id);
             
             const totalTestCount = results?.length || 0;
-            const successfulTestCount = results?.filter(r => r.score >= 80).length || 0;
+            const successfulTestCount = results?.filter(r => r.score >= 70).length || 0;
             const maxScore = results?.length > 0 ? Math.max(...results.map(r => r.score)) : 0;
             const hasHighScore = results?.some(r => r.score >= 90) || false;
             const hasPerfectScore = results?.some(r => r.score === 100) || false;
@@ -7247,7 +7300,7 @@ ON CONFLICT (tc_no) DO NOTHING;
                         stats[id] = { student_id: id, student_name: r.students?.name || 'İsimsiz', scores: [], successful: 0 };
                     }
                     stats[id].scores.push(r.score);
-                    if (r.score >= 80) stats[id].successful++;
+                    if (r.score >= 70) stats[id].successful++;
                 });
 
                 const leaderboard = Object.values(stats).map(s => ({
@@ -7921,7 +7974,7 @@ Teknolojinin hızla geliştiği günümüzde, dijital kitaplar da popüler hale 
                                 🗑️ Kaldır
                             </button>
                         `;
-                    } else if (result.score >= 80) {
+                    } else if (result.score >= 70) {
                         status = `Başarılı (${result.score})`;
                         statusColor = 'bg-green-100 text-green-800 border-green-200';
                         statusIcon = '🟢';
@@ -7963,12 +8016,12 @@ Teknolojinin hızla geliştiği günümüzde, dijital kitaplar da popüler hale 
                             shouldShow = assignment && !result;
                             break;
                         case 'completed':
-                            // Show only students who have result with score >= 80
-                            shouldShow = result && result.score >= 80;
+                            // Show only students who have result with score >= 70
+                            shouldShow = result && result.score >= 70;
                             break;
                         case 'failed':
-                            // Show only students who have result with score < 50
-                            shouldShow = result && result.score < 50;
+                            // Show only students who have result with score < 70
+                            shouldShow = result && result.score < 70;
                             break;
                         case 'not_assigned':
                             // Show only students who don't have assignment
@@ -9520,6 +9573,8 @@ Teknolojinin hızla geliştiği günümüzde, dijital kitaplar da popüler hale 
 
         // Clear student test filters
         function clearStudentTestFilters() {
+            const searchInput = document.getElementById('studentTestSearchInput');
+            if (searchInput) searchInput.value = '';
             setStudentTestFilter('all');
         }
 
@@ -9775,7 +9830,7 @@ Teknolojinin hızla geliştiği günümüzde, dijital kitaplar da popüler hale 
                     const isAssigned = assignedTestIds.includes(test.id);
                     
                     if (result) {
-                        if (result.score >= 80) successCount++;
+                        if (result.score >= 70) successCount++;
                         else failedCount++;
                     } else if (isAssigned) {
                         pendingCount++;
@@ -9808,7 +9863,7 @@ Teknolojinin hızla geliştiği günümüzde, dijital kitaplar da popüler hale 
                     let clickable = true;
                     
                     if (result) {
-                        if (result.score >= 80) {
+                        if (result.score >= 70) {
                             status = 'success';
                             bgColor = 'bg-green-50';
                             borderColor = 'border-green-400';
@@ -10112,19 +10167,14 @@ Teknolojinin hızla geliştiği günümüzde, dijital kitaplar da popüler hale 
                     if (question.type === 'multiple_choice') {
                         isCorrect = parseInt(userAnswer) === parseInt(correctAnswer);
                     } else if (question.type === 'fill_blank') {
-                        // Handle both word selection and text input formats
-                        if (question.options && question.options.length > 0) {
-                            // Multiple choice format for fill_blank
-                            if (userAnswer !== undefined && userAnswer !== null && userAnswer !== '') {
-                                isCorrect = parseInt(userAnswer) === parseInt(correctAnswer);
-                            } else {
-                                isCorrect = false;
-                            }
-                        } else if (typeof userAnswer === 'string') {
-                            // Text input format
-                            isCorrect = userAnswer.toLowerCase().trim() === String(correctAnswer).toLowerCase().trim();
-                        } else {
+                        if (userAnswer === undefined || userAnswer === null || userAnswer === '') {
                             isCorrect = false;
+                        } else if (question.options && question.options.length > 0 && !isNaN(parseInt(userAnswer)) && question.options[parseInt(userAnswer)] !== undefined) {
+                            // Eski format: index ile kaydedilmiş
+                            isCorrect = parseInt(userAnswer) === parseInt(correctAnswer);
+                        } else {
+                            // Yeni format: kelime olarak kaydedilmiş
+                            isCorrect = String(userAnswer).trim().toLowerCase() === String(correctAnswer).trim().toLowerCase();
                         }
                     } else if (question.type === 'true_false') {
                         // Handle both boolean and string formats
@@ -10151,7 +10201,7 @@ Teknolojinin hızla geliştiği günümüzde, dijital kitaplar da popüler hale 
                 });
                 
                 const score = result.score;
-                const passed = score >= 80;
+                const passed = score >= 70;
 
                 // Create modal HTML (student result view style)
                 const modalHTML = `
@@ -10207,10 +10257,10 @@ Teknolojinin hızla geliştiği günümüzde, dijital kitaplar da popüler hale 
                                     <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 mb-4 border border-blue-100">
                                         <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
                                             <div class="bg-white rounded-lg p-3 shadow-sm">
-                                                <div class="text-2xl font-bold ${score >= 90 ? 'text-green-600' : score >= 80 ? 'text-blue-600' : 'text-red-600'}">${score}%</div>
+                                                <div class="text-2xl font-bold ${score >= 90 ? 'text-green-600' : score >= 70 ? 'text-blue-600' : 'text-red-600'}">${score}%</div>
                                                 <div class="text-xs text-gray-600 font-medium">Başarı Oranı</div>
                                                 <div class="text-xs text-gray-500">
-                                                    ${score >= 90 ? '🌟' : score >= 80 ? '✅' : '❌'}
+                                                    ${score >= 90 ? '🌟' : score >= 70 ? '✅' : '❌'}
                                                 </div>
                                             </div>
                                             <div class="bg-white rounded-lg p-3 shadow-sm">
@@ -10285,22 +10335,24 @@ Teknolojinin hızla geliştiği günümüzde, dijital kitaplar da popüler hale 
                                                         `${String.fromCharCode(65 + userAnswer)}) ${question.options[userAnswer]}` : 'Cevaplanmadı';
                                                     correctAnswerDisplay = `${String.fromCharCode(65 + correctAnswer)}) ${question.options[correctAnswer]}`;
                                                 } else if (question.type === 'fill_blank') {
-                                                    if (question.options && question.options.length > 0) {
-                                                        // Check if userAnswer is defined and not null
-                                                        if (userAnswer !== undefined && userAnswer !== null && userAnswer !== '') {
-                                                            isCorrect = parseInt(userAnswer) === parseInt(correctAnswer);
-                                                            userAnswerDisplay = question.options[userAnswer] ? 
-                                                                `${String.fromCharCode(65 + parseInt(userAnswer))}) ${question.options[userAnswer]}` : 'Cevaplanmadı';
-                                                        } else {
-                                                            isCorrect = false;
-                                                            userAnswerDisplay = 'Cevaplanmadı';
-                                                        }
+                                                    if (userAnswer === undefined || userAnswer === null || userAnswer === '') {
+                                                        isCorrect = false;
+                                                        userAnswerDisplay = 'Cevaplanmadı';
+                                                        correctAnswerDisplay = String(correctAnswer);
+                                                    } else if (question.options && question.options.length > 0 && !isNaN(parseInt(userAnswer)) && question.options[parseInt(userAnswer)] !== undefined) {
+                                                        // Eski format: index ile kaydedilmiş cevap
+                                                        const answerIndex = parseInt(userAnswer);
+                                                        isCorrect = answerIndex === parseInt(correctAnswer);
+                                                        userAnswerDisplay = question.options[answerIndex] || 'Cevaplanmadı';
                                                         correctAnswerDisplay = typeof correctAnswer === 'number' ? 
-                                                            `${String.fromCharCode(65 + correctAnswer)}) ${question.options[correctAnswer]}` : correctAnswer;
+                                                            (question.options[correctAnswer] || String(correctAnswer)) : String(correctAnswer);
                                                     } else {
-                                                        isCorrect = userAnswer && userAnswer.toLowerCase().trim() === String(correctAnswer).toLowerCase().trim();
-                                                        userAnswerDisplay = userAnswer || 'Cevaplanmadı';
-                                                        correctAnswerDisplay = correctAnswer;
+                                                        // Yeni format: kelime olarak kaydedilmiş cevap (selectFillBlankWord)
+                                                        const userWord = String(userAnswer).trim();
+                                                        const correctWord = String(correctAnswer).trim();
+                                                        isCorrect = userWord.toLowerCase() === correctWord.toLowerCase();
+                                                        userAnswerDisplay = userWord;
+                                                        correctAnswerDisplay = correctWord;
                                                     }
                                                 } else if (question.type === 'true_false') {
                                                     // Handle both boolean and string formats for true_false questions
@@ -10425,6 +10477,185 @@ Teknolojinin hızla geliştiği günümüzde, dijital kitaplar da popüler hale 
             const modal = document.getElementById('detailedResultsModal');
             if (modal) {
                 modal.remove();
+            }
+        }
+
+        // PDF İndir - tek test sonucu
+        async function downloadResultPDF(resultId, studentId, studentName, testTitle) {
+            try {
+                showNotification('PDF hazırlanıyor...', 'info');
+
+                // Verileri çek
+                const { data: result, error: resultError } = await supabase
+                    .from('test_results').select('*').eq('id', resultId).single();
+                if (resultError) throw resultError;
+
+                const { data: test, error: testError } = await supabase
+                    .from('tests').select('*').eq('id', result.test_id).single();
+                if (testError) throw testError;
+
+                const questions = JSON.parse(test.questions || '[]');
+                let answersData = result.answers ? JSON.parse(result.answers) : {};
+                let studentAnswers = [];
+                if (answersData.answers) {
+                    if (Array.isArray(answersData.answers)) {
+                        studentAnswers = answersData.answers;
+                    } else {
+                        for (let i = 0; i < questions.length; i++) {
+                            studentAnswers[i] = answersData.answers[i] !== undefined ? answersData.answers[i] : answersData.answers[String(i)];
+                        }
+                    }
+                } else if (Array.isArray(answersData)) {
+                    studentAnswers = answersData;
+                } else {
+                    for (let i = 0; i < questions.length; i++) {
+                        studentAnswers[i] = answersData[i] !== undefined ? answersData[i] : answersData[String(i)];
+                    }
+                }
+
+                // Puan hesapla
+                let totalPoints = 0, earnedPoints = 0, correctCount = 0;
+                const questionDetails = questions.map((q, idx) => {
+                    const userAnswer = studentAnswers[idx];
+                    const qPoints = q.points || 10;
+                    totalPoints += qPoints;
+                    const correctAnswer = q.correct !== undefined ? q.correct : q.correct_answer;
+                    let isCorrect = false;
+                    let userDisplay = 'Cevaplanmadı';
+                    let correctDisplay = '';
+
+                    if (q.type === 'multiple_choice') {
+                        isCorrect = parseInt(userAnswer) === parseInt(correctAnswer);
+                        userDisplay = (userAnswer !== undefined && userAnswer !== null && userAnswer !== '' && q.options?.[parseInt(userAnswer)])
+                            ? `${String.fromCharCode(65 + parseInt(userAnswer))}) ${q.options[parseInt(userAnswer)]}` : 'Cevaplanmadı';
+                        correctDisplay = q.options?.[parseInt(correctAnswer)]
+                            ? `${String.fromCharCode(65 + parseInt(correctAnswer))}) ${q.options[parseInt(correctAnswer)]}` : String(correctAnswer);
+                    } else if (q.type === 'fill_blank') {
+                        if (userAnswer === undefined || userAnswer === null || userAnswer === '') {
+                            isCorrect = false; userDisplay = 'Cevaplanmadı';
+                        } else if (q.options?.length > 0 && !isNaN(parseInt(userAnswer)) && q.options[parseInt(userAnswer)] !== undefined) {
+                            isCorrect = parseInt(userAnswer) === parseInt(correctAnswer);
+                            userDisplay = q.options[parseInt(userAnswer)];
+                        } else {
+                            isCorrect = String(userAnswer).trim().toLowerCase() === String(correctAnswer).trim().toLowerCase();
+                            userDisplay = String(userAnswer);
+                        }
+                        correctDisplay = String(correctAnswer);
+                    } else if (q.type === 'true_false') {
+                        const uBool = userAnswer === true || userAnswer === 'true';
+                        const cBool = correctAnswer === true || correctAnswer === 'true';
+                        isCorrect = (userAnswer !== undefined && userAnswer !== null && userAnswer !== '') && uBool === cBool;
+                        userDisplay = userAnswer === true || userAnswer === 'true' ? 'Doğru' : (userAnswer === false || userAnswer === 'false') ? 'Yanlış' : 'Cevaplanmadı';
+                        correctDisplay = cBool ? 'Doğru' : 'Yanlış';
+                    } else {
+                        isCorrect = userAnswer && String(userAnswer).trim().toLowerCase() === String(correctAnswer).trim().toLowerCase();
+                        userDisplay = userAnswer || 'Cevaplanmadı';
+                        correctDisplay = String(correctAnswer);
+                    }
+
+                    if (isCorrect) { correctCount++; earnedPoints += qPoints; }
+                    return { q, idx, isCorrect, userDisplay, correctDisplay, qPoints };
+                });
+
+                const score = result.score;
+                const passed = score >= 70;
+                const completedDate = new Date(result.completed_at).toLocaleDateString('tr-TR', {
+                    year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                });
+                const typeLabel = { multiple_choice: 'Çoktan Seçmeli', fill_blank: 'Boşluk Doldurma', true_false: 'Doğru/Yanlış' };
+
+                // Soru satırları HTML
+                const questionsHtml = questionDetails.map(({ q, idx, isCorrect, userDisplay, correctDisplay, qPoints }) => `
+                    <tr style="border-bottom: 1px solid #e5e7eb; background: ${isCorrect ? '#f0fdf4' : '#fef2f2'};">
+                        <td style="padding:10px 8px; font-weight:600; color:${isCorrect ? '#166534' : '#991b1b'}; white-space:nowrap;">
+                            ${isCorrect ? '✅' : '❌'} Soru ${idx + 1}
+                        </td>
+                        <td style="padding:10px 8px; font-size:11px; color:#6b7280;">${typeLabel[q.type] || q.type}</td>
+                        <td style="padding:10px 8px; font-size:12px; color:#1f2937;">${(q.question || '').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</td>
+                        <td style="padding:10px 8px; font-size:12px; font-weight:600; color:${isCorrect ? '#166534' : '#991b1b'};">${userDisplay}</td>
+                        <td style="padding:10px 8px; font-size:12px; color:#166534; font-weight:600;">${correctDisplay}</td>
+                        <td style="padding:10px 8px; text-align:center; font-weight:700; color:${isCorrect ? '#166534' : '#991b1b'};">${isCorrect ? qPoints : 0}/${qPoints}</td>
+                    </tr>
+                `).join('');
+
+                const html = `<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>${studentName} - ${testTitle}</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 30px; color: #1f2937; font-size: 13px; }
+  .header { background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white; padding: 24px; border-radius: 12px; margin-bottom: 24px; }
+  .header h1 { margin: 0 0 6px 0; font-size: 20px; }
+  .header p { margin: 3px 0; opacity: 0.9; font-size: 13px; }
+  .summary { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
+  .stat-box { flex: 1; min-width: 100px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: 14px; text-align: center; }
+  .stat-box .val { font-size: 28px; font-weight: 800; }
+  .stat-box .lbl { font-size: 11px; color: #6b7280; margin-top: 3px; }
+  .result-banner { padding: 14px 18px; border-radius: 10px; margin-bottom: 24px; font-size: 15px; font-weight: 700; }
+  .pass { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+  .fail { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  thead tr { background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white; }
+  thead th { padding: 10px 8px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+  .footer { margin-top: 28px; text-align: center; font-size: 11px; color: #9ca3af; border-top: 1px solid #e5e7eb; padding-top: 14px; }
+  @media print { body { margin: 15px; } .header { -webkit-print-color-adjust: exact; print-color-adjust: exact; } thead tr { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+</style>
+</head>
+<body>
+  <div class="header">
+    <h1>📋 Test Sonuç Raporu</h1>
+    <p><strong>Öğrenci:</strong> ${studentName}</p>
+    <p><strong>Test:</strong> ${testTitle}</p>
+    <p><strong>Tarih:</strong> ${completedDate}</p>
+  </div>
+
+  <div class="${passed ? 'result-banner pass' : 'result-banner fail'}">
+    ${passed ? '🎉 BAŞARILI' : '❌ BAŞARISIZ'} &nbsp;|&nbsp; Puan: ${score} / 100 &nbsp;|&nbsp; ${passed ? 'Geçme sınırı aşıldı (≥70)' : 'Geçme sınırı aşılamadı (<70)'}
+  </div>
+
+  <div class="summary">
+    <div class="stat-box"><div class="val" style="color:#4f46e5">${score}</div><div class="lbl">Başarı Puanı</div></div>
+    <div class="stat-box"><div class="val" style="color:#16a34a">${correctCount}</div><div class="lbl">Doğru Cevap</div></div>
+    <div class="stat-box"><div class="val" style="color:#dc2626">${questions.length - correctCount}</div><div class="lbl">Yanlış Cevap</div></div>
+    <div class="stat-box"><div class="val" style="color:#7c3aed">${earnedPoints}</div><div class="lbl">Kazanılan Puan</div></div>
+    <div class="stat-box"><div class="val" style="color:#6b7280">${totalPoints}</div><div class="lbl">Toplam Puan</div></div>
+    <div class="stat-box"><div class="val" style="color:#0891b2">${questions.length}</div><div class="lbl">Soru Sayısı</div></div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Soru</th>
+        <th>Tür</th>
+        <th>Soru Metni</th>
+        <th>Verilen Cevap</th>
+        <th>Doğru Cevap</th>
+        <th style="text-align:center">Puan</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${questionsHtml}
+    </tbody>
+  </table>
+
+  <div class="footer">
+    Türkçe Okuma Anlama Test Sistemi &nbsp;|&nbsp; Oluşturulma: ${new Date().toLocaleDateString('tr-TR')}
+  </div>
+</body>
+</html>`;
+
+                const printWin = window.open('', '_blank');
+                printWin.document.write(html);
+                printWin.document.close();
+                setTimeout(() => {
+                    printWin.print();
+                    showNotification('✅ PDF yazdırma penceresi açıldı!', 'success');
+                }, 600);
+
+            } catch (error) {
+                console.error('PDF error:', error);
+                showNotification('❌ PDF oluşturulurken hata: ' + error.message, 'error');
             }
         }
 
@@ -11891,21 +12122,73 @@ function renderQuestionsAnalysis() {
     
     // Soru analizini hesapla
     let questionsAnalysis = questions.map((q, qIdx) => {
-        const optionStats = { 0: [], 1: [], 2: [], 3: [] };
+        const optionStats = {};
         let correctCount = 0;
         
-        results.forEach(r => {
-            const answers = JSON.parse(r.answers || '{}');
-            const studentAnswers = answers.answers || [];
-            const selectedIdx = studentAnswers[qIdx];
-            
-            if (selectedIdx !== undefined && optionStats[selectedIdx] !== undefined) {
-                optionStats[selectedIdx].push({
-                    name: r.students?.name || 'İsimsiz',
-                    isCorrect: selectedIdx === q.correct
-                });
-                if (selectedIdx === q.correct) correctCount++;
+        // Başlangıç seçeneklerini ayarla
+        if (q.type === 'multiple_choice') {
+            (q.options || []).forEach((_, i) => optionStats[i] = []);
+        } else if (q.type === 'true_false') {
+            optionStats[true] = [];
+            optionStats[false] = [];
+        } else if (q.type === 'fill_blank') {
+            // fill_blank için seçenekleri kelime bazlı ön-doldur
+            if (q.options && q.options.length > 0) {
+                q.options.forEach(opt => { optionStats[String(opt).trim()] = []; });
             }
+        }
+        
+        results.forEach(r => {
+            let answers = {};
+            try {
+                answers = typeof r.answers === 'string' ? JSON.parse(r.answers) : (r.answers || {});
+            } catch(e) { console.error("Answer parse error", e); }
+            
+            const studentAnswers = answers.answers || [];
+            const userAnswer = studentAnswers[qIdx];
+            
+            if (userAnswer === undefined || userAnswer === null || userAnswer === '') {
+                const emptyKey = "(Boş)";
+                if (!optionStats[emptyKey]) optionStats[emptyKey] = [];
+                optionStats[emptyKey].push({
+                    name: r.students?.name || 'İsimsiz',
+                    isCorrect: false
+                });
+                return;
+            }
+
+            let isCorrect = false;
+            let statsKey = userAnswer;
+
+            if (q.type === 'multiple_choice') {
+                isCorrect = parseInt(userAnswer) === parseInt(q.correct);
+                statsKey = parseInt(userAnswer);
+            } else if (q.type === 'fill_blank') {
+                // Cevap kelime mi (yeni format) yoksa index mi (eski format) olduğunu belirle
+                const correctWord = String(q.correct).trim();
+                let userWord;
+                if (q.options && q.options.length > 0 && !isNaN(parseInt(userAnswer)) && q.options[parseInt(userAnswer)] !== undefined) {
+                    // Eski format: index kaydedilmiş -> kelimeye çevir
+                    userWord = String(q.options[parseInt(userAnswer)]).trim();
+                } else {
+                    // Yeni format: kelime kaydedilmiş
+                    userWord = String(userAnswer).trim();
+                }
+                isCorrect = userWord.toLowerCase() === correctWord.toLowerCase();
+                statsKey = userWord; // Her zaman kelime bazlı key kullan
+            } else if (q.type === 'true_false') {
+                const userBool = userAnswer === true || userAnswer === 'true';
+                const correctBool = q.correct === true || q.correct === 'true';
+                isCorrect = userBool === correctBool;
+                statsKey = userBool;
+            }
+
+            if (!optionStats[statsKey]) optionStats[statsKey] = [];
+            optionStats[statsKey].push({
+                name: r.students?.name || 'İsimsiz',
+                isCorrect: isCorrect
+            });
+            if (isCorrect) correctCount++;
         });
         
         const successRate = results.length > 0 ? (correctCount / results.length) * 100 : 0;
@@ -11939,66 +12222,128 @@ function renderQuestionsAnalysis() {
 
 function renderQuestionCard(analysis) {
     const { index, question, optionStats, correctCount, successRate, wrongCount } = analysis;
-    const totalResponses = correctCount + wrongCount;
+    const totalResponses = currentAnalysisData.results.length;
     
-    // Başarı oranına göre renk
     let successClass = 'high';
-    if (successRate < 50) successClass = 'low'; else if (successRate < 80) successClass = 'medium';
+    if (successRate < 50) successClass = 'low'; 
     else if (successRate < 80) successClass = 'medium';
     
     const cardClass = successRate >= 80 ? 'high-success' : 'low-success';
     
+    let optionsHtml = '';
+    const typeLabel = {
+        'multiple_choice': 'Çoktan Seçmeli',
+        'true_false': 'Doğru/Yanlış',
+        'fill_blank': 'Boşluk Doldurma'
+    }[question.type] || question.type;
+
+    if (question.type === 'multiple_choice') {
+        optionsHtml = (question.options || []).map((option, oIdx) => {
+            const students = optionStats[oIdx] || [];
+            const count = students.length;
+            const percent = totalResponses > 0 ? (count / totalResponses) * 100 : 0;
+            const isCorrect = parseInt(oIdx) === parseInt(question.correct);
+            return renderAnalysisOptionItem(oIdx, option, count, percent, isCorrect, students, 'multiple_choice');
+        }).join('');
+    } else if (question.type === 'true_false') {
+        optionsHtml = [true, false].map((val, i) => {
+            const students = optionStats[val] || [];
+            const count = students.length;
+            const percent = totalResponses > 0 ? (count / totalResponses) * 100 : 0;
+            const isCorrect = val === (question.correct === true || question.correct === 'true');
+            return renderAnalysisOptionItem(i, val ? "Doğru" : "Yanlış", count, percent, isCorrect, students);
+        }).join('');
+    } else if (question.type === 'fill_blank') {
+        // Tüm kelime bazlı bucket'ları göster
+        const correctVal = String(question.correct || '').trim();
+        
+        // optionStats'taki tüm anahtarları al (kelime bazlı)
+        let allKeys = Object.keys(optionStats);
+        
+        // Doğru cevap anahtarda yoksa başa ekle (sıfır cevaplı da olsa gösterilsin)
+        if (!allKeys.some(k => k.toLowerCase() === correctVal.toLowerCase())) {
+            allKeys.unshift(correctVal);
+        }
+        
+        // Doğru cevabı en üste al
+        allKeys.sort((a, b) => {
+            const aCorrect = a.toLowerCase() === correctVal.toLowerCase();
+            const bCorrect = b.toLowerCase() === correctVal.toLowerCase();
+            if (aCorrect) return -1;
+            if (bCorrect) return 1;
+            return 0;
+        });
+        
+        optionsHtml = allKeys.map((key, i) => {
+            if (key === '(Boş)') return ''; // Boş cevaplar aşağıda ayrıca eklenir
+            const students = optionStats[key] || [];
+            const count = students.length;
+            const percent = totalResponses > 0 ? (count / totalResponses) * 100 : 0;
+            const isCorrect = key.toLowerCase() === correctVal.toLowerCase();
+            
+            if (count === 0 && !isCorrect) return ''; // Kimse seçmediyse ve doğru değilse gösterme
+            
+            return renderAnalysisOptionItem(i, key, count, percent, isCorrect, students);
+        }).join('');
+    }
+    
+    // Boş cevapları her soru tipi için alta ekle
+    if (optionStats["(Boş)"] && optionStats["(Boş)"].length > 0) {
+        const students = optionStats["(Boş)"];
+        const count = students.length;
+        const percent = totalResponses > 0 ? (count / totalResponses) * 100 : 0;
+        optionsHtml += renderAnalysisOptionItem(-1, "(Boş / Cevaplanmadı)", count, percent, false, students);
+    }
+    
     return `
         <div class="question-card ${cardClass}">
             <div class="question-header">
-                <span class="question-number">Soru ${index + 1}</span>
+                <span class="question-number">Soru ${index + 1} (${typeLabel})</span>
                 <span class="success-rate ${successClass}">%${Math.round(successRate)} Başarı</span>
             </div>
-            
             <p class="question-text">${question.question}</p>
-            
             <div class="options-container">
-                ${question.options.map((option, oIdx) => {
-                    const students = optionStats[oIdx] || [];
-                    const count = students.length;
-                    const percent = totalResponses > 0 ? (count / totalResponses) * 100 : 0;
-                    const isCorrect = oIdx === question.correct;
-                    const isDistractor = !isCorrect && percent > 30;
-                    
-                    let barClass = 'normal';
-                    let labelClass = 'normal';
-                    let badgeClass = 'normal';
-                    
-                    if (isCorrect) {
-                        barClass = 'correct';
-                        labelClass = 'correct';
-                        badgeClass = 'correct';
-                    } else if (isDistractor) {
-                        barClass = 'wrong';
-                        labelClass = 'distractor';
-                        badgeClass = 'distractor';
-                    }
-                    
-                    return `
-                        <div class="option-item">
-                            <div class="option-header">
-                                <span class="option-label ${labelClass}">
-                                    ${isCorrect ? '<i class="fas fa-check-circle"></i>' : ''}
-                                    ${String.fromCharCode(65 + oIdx)}) ${option}
-                                </span>
-                                <span class="option-stats">${count} kişi (%${Math.round(percent)})</span>
-                            </div>
-                            <div class="option-bar">
-                                <div class="option-bar-fill ${barClass}" style="width: ${percent}%"></div>
-                            </div>
-                            <div class="students-list">
-                                ${students.map(s => `
-                                    <span class="student-badge ${badgeClass}">${s.name}</span>
-                                `).join('')}
-                            </div>
-                        </div>
-                    `;
-                }).join('')}
+                ${optionsHtml}
+            </div>
+        </div>
+    `;
+}
+
+function renderAnalysisOptionItem(idx, label, count, percent, isCorrect, students, questionType = '') {
+    const isDistractor = !isCorrect && percent > 30;
+    let barClass = 'normal';
+    let labelClass = 'normal';
+    let badgeClass = 'normal';
+    
+    if (isCorrect) {
+        barClass = 'correct';
+        labelClass = 'correct';
+        badgeClass = 'correct';
+    } else if (isDistractor) {
+        barClass = 'wrong';
+        labelClass = 'distractor';
+        badgeClass = 'distractor';
+    }
+    
+    // Sadece çoktan seçmeli seçenekleri için A, B, C... öneki ekle
+    const labelPrefix = (questionType === 'multiple_choice' && idx >= 0 && idx < 26) ? String.fromCharCode(65 + idx) + ") " : "";
+
+    return `
+        <div class="option-item">
+            <div class="option-header">
+                <span class="option-label ${labelClass}">
+                    ${isCorrect ? '<i class="fas fa-check-circle"></i>' : ''}
+                    ${labelPrefix}${label}
+                </span>
+                <span class="option-stats">${count} kişi (%${Math.round(percent)})</span>
+            </div>
+            <div class="option-bar">
+                <div class="option-bar-fill ${barClass}" style="width: ${percent}%"></div>
+            </div>
+            <div class="students-list">
+                ${students.map(s => `
+                    <span class="student-badge ${badgeClass}">${s.name}</span>
+                `).join('')}
             </div>
         </div>
     `;
