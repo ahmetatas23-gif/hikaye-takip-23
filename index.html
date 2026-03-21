@@ -1780,13 +1780,15 @@ let impersonatedStudent = null;
             <div class="p-4">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="text-lg font-semibold text-gray-900">Test Sonucu</h3>
-                    <button onclick="closeModal('testResultModal')" class="text-gray-400 hover:text-gray-600">
+                    <button onclick="closeResultAndGoHome()" class="text-gray-400 hover:text-gray-600">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
                 <div id="testResultContent"></div>
                 <div class="flex justify-center mt-4">
-                    <button onclick="closeModal('testResultModal')" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Tamam</button>
+                    <button onclick="closeResultAndGoHome()" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                        Tamam &nbsp;<span id="resultCountdown" class="text-blue-200 text-sm font-normal">(120)</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -2038,10 +2040,14 @@ let impersonatedStudent = null;
 
     <script>
         // Initialize the application
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
             console.log('Türkçe Okuma Anlama Test Sistemi yüklendi!');
             
-	        // Load remembered credentials
+            // Önce oturumu geri yüklemeyi dene (sayfa yenileme)
+            const restored = await restoreSession();
+            if (restored) return;
+
+	        // Load remembered credentials (form doldurma)
 	        loadRememberedCredentials();
 	        
 	        // Test Supabase connection
@@ -2142,25 +2148,76 @@ let impersonatedStudent = null;
             }
         }
 
+        // Oturum kaydet (sayfa yenilenmesine karşı)
+        function saveSession(user) {
+            try {
+                sessionStorage.setItem('currentSession', JSON.stringify({
+                    user: user,
+                    timestamp: Date.now()
+                }));
+            } catch(e) {}
+        }
+
+        // Oturumu temizle
+        function clearSession() {
+            sessionStorage.removeItem('currentSession');
+        }
+
+        // Sayfa yüklenince oturumu geri yükle
+        async function restoreSession() {
+            try {
+                const saved = sessionStorage.getItem('currentSession');
+                if (!saved) return false;
+
+                const { user, timestamp } = JSON.parse(saved);
+                // 12 saat geçerli
+                if (Date.now() - timestamp > 12 * 60 * 60 * 1000) {
+                    clearSession();
+                    return false;
+                }
+
+                if (!user || !user.id) return false;
+
+                // Kullanıcıyı DB'den doğrula
+                if (user.type === 'student') {
+                    const { data, error } = await supabase
+                        .from('students').select('*').eq('id', user.id).single();
+                    if (error || !data) { clearSession(); return false; }
+                    currentUser = { ...data, type: 'student' };
+                    showStudentDashboard();
+                } else if (user.type === 'teacher') {
+                    const { data, error } = await supabase
+                        .from('teachers').select('*').eq('id', user.id).single();
+                    if (error || !data) { clearSession(); return false; }
+                    currentUser = { ...data, type: 'teacher' };
+                    showTeacherDashboard();
+                } else {
+                    clearSession();
+                    return false;
+                }
+                return true;
+            } catch(e) {
+                console.error('Session restore error:', e);
+                clearSession();
+                return false;
+            }
+        }
+
         function loadRememberedCredentials() {
             // Load student credentials
             const rememberedStudent = localStorage.getItem('rememberedStudent');
             if (rememberedStudent) {
                 try {
                     const studentData = JSON.parse(rememberedStudent);
-                    // Check if data is not older than 30 days
                     const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
-                    
                     if (studentData.timestamp > thirtyDaysAgo) {
                         document.getElementById('studentTC').value = studentData.tc || '';
                         document.getElementById('studentNo').value = studentData.studentNo || '';
                         document.getElementById('rememberStudent').checked = true;
                     } else {
-                        // Remove expired data
                         localStorage.removeItem('rememberedStudent');
                     }
                 } catch (error) {
-                    console.error('Error loading remembered student credentials:', error);
                     localStorage.removeItem('rememberedStudent');
                 }
             }
@@ -2170,18 +2227,14 @@ let impersonatedStudent = null;
             if (rememberedTeacher) {
                 try {
                     const teacherData = JSON.parse(rememberedTeacher);
-                    // Check if data is not older than 30 days
                     const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
-                    
                     if (teacherData.timestamp > thirtyDaysAgo) {
                         document.getElementById('teacherUsername').value = teacherData.username || '';
                         document.getElementById('rememberTeacher').checked = true;
                     } else {
-                        // Remove expired data
                         localStorage.removeItem('rememberedTeacher');
                     }
                 } catch (error) {
-                    console.error('Error loading remembered teacher credentials:', error);
                     localStorage.removeItem('rememberedTeacher');
                 }
             }
@@ -2504,6 +2557,7 @@ ON CONFLICT (tc_no) DO NOTHING;
 
                 if (data) {
                     currentUser = { ...data, type: 'student' };
+                    saveSession(currentUser);
                     
                     // Handle remember me functionality
                     if (rememberMe) {
@@ -2542,6 +2596,7 @@ ON CONFLICT (tc_no) DO NOTHING;
 
                 if (data) {
                     currentUser = { ...data, type: 'teacher' };
+                    saveSession(currentUser);
                     
                     // Handle remember me functionality
                     if (rememberMe) {
@@ -2653,25 +2708,28 @@ ON CONFLICT (tc_no) DO NOTHING;
                 // Load assigned tests
                 const { data: assignments } = await supabase
                     .from('test_assignments')
-                    .select(`
-                        *,
-                        tests (*)
-                    `)
+                    .select(`*, tests (*)`)
                     .eq('student_id', currentUser.id);
 
-                // Load test results
-                const { data: results } = await supabase
-                    .from('test_results')
-                    .select('*')
-                    .eq('student_id', currentUser.id);
+                // Load test results - tüm sonuçları çek (sayfalama ile)
+                let results = [];
+                let fromSD = 0;
+                while (true) {
+                    const { data: page } = await supabase
+                        .from('test_results').select('*')
+                        .eq('student_id', currentUser.id)
+                        .order('completed_at', { ascending: false })
+                        .range(fromSD, fromSD + 999);
+                    if (!page || page.length === 0) break;
+                    results = results.concat(page);
+                    if (page.length < 1000) break;
+                    fromSD += 1000;
+                }
 
                 // Load badges
                 const { data: badges } = await supabase
                     .from('student_badges')
-                    .select(`
-                        *,
-                        badges (*)
-                    `)
+                    .select('*')
                     .eq('student_id', currentUser.id);
 
                 // Store results globally for filtering
@@ -3726,11 +3784,20 @@ ON CONFLICT (tc_no) DO NOTHING;
         // Award badges
         async function awardBadges(score, testDuration) {
             try {
-                // Get current student stats
-                const { data: results } = await supabase
+                // Get current student stats - en son sonuçları al, deduplicate et
+                const { data: rawBadgeResults } = await supabase
                     .from('test_results')
                     .select('*')
-                    .eq('student_id', currentUser.id);
+                    .eq('student_id', currentUser.id)
+                    .order('completed_at', { ascending: false });
+
+                // Her test için sadece en son sonucu say
+                const seenKeysBadge = new Set();
+                const results = (rawBadgeResults || []).filter(r => {
+                    if (seenKeysBadge.has(r.test_id)) return false;
+                    seenKeysBadge.add(r.test_id);
+                    return true;
+                });
 
                 const { data: existingBadges } = await supabase
                     .from('student_badges')
@@ -3749,7 +3816,7 @@ ON CONFLICT (tc_no) DO NOTHING;
                     { type: 'first_step', condition: totalTestCount >= 1, name: '🐣 İlk Adım' },
                     { type: 'bright_star', condition: score >= 90, name: '🌈 Parlak Yıldız' },
                     { type: 'perfect_hit', condition: score === 100, name: '🥇 Tam İsabet' },
-                    { type: 'speed_fingers', condition: testDuration && testDuration < 300, name: '⚡ Hızlı Parmaklar' },
+                    { type: 'speed_fingers', condition: testDuration && currentTest && (testDuration / currentTest.questions.length) < 30, name: '⚡ Hızlı Parmaklar' },
                     { type: 'patient_hero', condition: successfulTestCount >= 5, name: '🐢 Sabırlı Kahraman' },
                     { type: 'super_student', condition: successfulTestCount >= 10, name: '🦸 Süper Öğrenci' },
                     { type: 'knowledge_dragon', condition: successfulTestCount >= 25, name: '🐉 Bilgi Ejderhası' },
@@ -3933,18 +4000,35 @@ ON CONFLICT (tc_no) DO NOTHING;
                     
                     <div class="text-xs text-gray-500">
                         <i class="fas fa-clock mr-1"></i>
-                        8 saniye sonra otomatik kapanacak...
+                        Otomatik kapanma: <span id="resultCountdownText">120</span> saniye
                     </div>
                 </div>
             `;
             
             document.getElementById('testResultModal').classList.remove('hidden');
-            
-            // Return to dashboard after showing result
-            setTimeout(() => {
-                closeModal('testResultModal');
-                showStudentDashboard();
-            }, 8000);
+
+            // Geri sayım
+            let remaining = 120;
+            window._resultCountdownTimer = setInterval(() => {
+                remaining--;
+                const cd1 = document.getElementById('resultCountdown');
+                const cd2 = document.getElementById('resultCountdownText');
+                if (cd1) cd1.textContent = `(${remaining})`;
+                if (cd2) cd2.textContent = remaining;
+                if (remaining <= 0) {
+                    closeResultAndGoHome();
+                }
+            }, 1000);
+        }
+
+        // Test sonucu modalını kapat ve ana sayfaya dön
+        function closeResultAndGoHome() {
+            if (window._resultCountdownTimer) {
+                clearInterval(window._resultCountdownTimer);
+                window._resultCountdownTimer = null;
+            }
+            closeModal('testResultModal');
+            showStudentDashboard();
         }
 
         // Load teacher data - KESİN ÇÖZÜM İÇİN YENİDEN YAZILDI
@@ -3958,7 +4042,7 @@ ON CONFLICT (tc_no) DO NOTHING;
                 document.getElementById('totalStudents').textContent = students?.length || 0;
                 document.getElementById('activeTests').textContent = tests?.length || 0;
                 
-                const avgSuccess = results?.length > 0 
+                const avgSuccess = results.length > 0 
                     ? Math.round(results.reduce((sum, r) => sum + r.score, 0) / results.length)
                     : 0;
                 document.getElementById('averageSuccess').textContent = `%${avgSuccess}`;
@@ -4802,54 +4886,39 @@ ON CONFLICT (tc_no) DO NOTHING;
                 console.log('Loading results list...');
                 
                 // Load all students first
-                console.log('Fetching students...');
                 const { data: students, error: studentsError } = await supabase
-                    .from('students')
-                    .select('*')
-                    .order('name');
+                    .from('students').select('*').order('name');
+                if (studentsError) throw studentsError;
 
-                if (studentsError) {
-                    console.error('Students error:', studentsError);
-                    throw studentsError;
+                // Tüm sonuçları çek - her çözüm ayrı sayılır (tekrar atama dahil)
+                // Supabase 1000 satır limiti aşılabilir - tümünü çek
+                let results = [];
+                let from = 0;
+                const pageSize = 1000;
+                while (true) {
+                    const { data: page, error: pageError } = await supabase
+                        .from('test_results')
+                        .select('*')
+                        .order('completed_at', { ascending: false })
+                        .range(from, from + pageSize - 1);
+                    if (pageError) throw pageError;
+                    if (!page || page.length === 0) break;
+                    results = results.concat(page);
+                    if (page.length < pageSize) break;
+                    from += pageSize;
                 }
-                console.log('Students loaded:', students?.length || 0);
 
-                // Load all test results - simplified query first
-                console.log('Fetching test results...');
-                const { data: results, error: resultsError } = await supabase
-                    .from('test_results')
-                    .select('*')
-                    .order('completed_at', { ascending: false });
+                console.log(`Test results loaded: ${results.length}`);
 
-                if (resultsError) {
-                    console.error('Results error:', resultsError);
-                    throw resultsError;
-                }
-                console.log('Test results loaded:', results?.length || 0);
-
-                // Load tests separately to avoid join issues
-                console.log('Fetching tests...');
+                // Load tests
                 const { data: allTests, error: testsError } = await supabase
-                    .from('tests')
-                    .select('*');
+                    .from('tests').select('*');
+                if (testsError) throw testsError;
 
-                if (testsError) {
-                    console.error('Tests error:', testsError);
-                    throw testsError;
-                }
-                console.log('Tests loaded:', allTests?.length || 0);
-
-                // Load all test assignments to get assignment dates
-                console.log('Fetching assignments...');
+                // Load assignments
                 const { data: assignments, error: assignmentsError } = await supabase
-                    .from('test_assignments')
-                    .select('*');
-
-                if (assignmentsError) {
-                    console.error('Assignments error:', assignmentsError);
-                    throw assignmentsError;
-                }
-                console.log('Assignments loaded:', assignments?.length || 0);
+                    .from('test_assignments').select('*');
+                if (assignmentsError) throw assignmentsError;
 
                 const container = document.getElementById('resultsList');
                 container.innerHTML = '';
@@ -4889,6 +4958,28 @@ ON CONFLICT (tc_no) DO NOTHING;
                 console.log('Enriched results:', enrichedResults.length);
 
                 // Group results by student for comprehensive student-based view
+                // Ayrıca SQL View'dan kümülatif istatistikleri çek
+                let viewStats = {};
+                try {
+                    const { data: statsData } = await supabase
+                        .from('student_all_period_stats')
+                        .select('student_id, current_weekly_successful_tests, last_weekly_successful_tests, monthly_total_tests, monthly_successful_tests, monthly_failed_tests');
+                    if (statsData) {
+                        statsData.forEach(s => { viewStats[s.student_id] = s; });
+                    }
+                } catch(e) { console.warn('student_all_period_stats fetch failed:', e); }
+
+                // leaderboard_stats'tan toplam başarılı test sayısını çek
+                let leaderboardStats = {};
+                try {
+                    const { data: lbData } = await supabase
+                        .from('leaderboard_stats')
+                        .select('student_id, successful_tests_count, total_tests_count, average_score');
+                    if (lbData) {
+                        lbData.forEach(s => { leaderboardStats[s.student_id] = s; });
+                    }
+                } catch(e) { console.warn('leaderboard_stats fetch failed:', e); }
+
                 const studentResults = {};
                 students.forEach(student => {
                     const studentTestResults = enrichedResults.filter(r => r.student_id === student.id) || [];
@@ -4950,30 +5041,39 @@ ON CONFLICT (tc_no) DO NOTHING;
                         return testDate >= monthAgo;
                     });
                     
+                    // Gerçek kümülatif istatistikler: direkt veriden hesapla
+                    const lb = leaderboardStats[student.id];
+                    const realTotalTests  = studentTestResults.length;
+                    const realPassedTests = studentTestResults.filter(r => r.score >= 70).length;
+                    const realFailedTests = studentTestResults.filter(r => r.score < 70).length;
+                    const realAvgScore    = realTotalTests > 0
+                        ? Math.round(studentTestResults.reduce((sum, r) => sum + r.score, 0) / realTotalTests)
+                        : 0;
+
                     studentResults[student.id] = {
                         student: student,
                         results: studentTestResults,
                         assignments: studentAssignments,
                         
                         // Basic metrics
-                        totalTests: studentTestResults.length,          // Çözülen test sayısı
+                        totalTests: realTotalTests,                     // Tüm çözümler (tekrar atamalar dahil)
                         totalAssignments: studentAssignments.length,    // Atanan test sayısı
                         pendingTests: pendingCount,                     // Atanmış ama çözülmemiş
                         
                         // Score metrics
-                        averageScore: averageScore,
+                        averageScore: realAvgScore,
                         highestScore: highestScore,
                         lowestScore: lowestScore,
                         
                         // Performance categories
-                        passedTests: passedTests,
-                        failedTests: failedTests,
+                        passedTests: realPassedTests,
+                        failedTests: realFailedTests,
                         excellentTests: excellentTests,
                         perfectScores: perfectScores,
                         
                         // Success rates
-                        passRate: studentTestResults.length > 0 ? Math.round((passedTests / studentTestResults.length) * 100) : 0,
-                        excellenceRate: studentTestResults.length > 0 ? Math.round((excellentTests / studentTestResults.length) * 100) : 0,
+                        passRate: realTotalTests > 0 ? Math.round((realPassedTests / realTotalTests) * 100) : 0,
+                        excellenceRate: realTotalTests > 0 ? Math.round((excellentTests / realTotalTests) * 100) : 0,
                         
                         // Trends and patterns
                         improvementTrend: improvementTrend,
@@ -4997,8 +5097,8 @@ ON CONFLICT (tc_no) DO NOTHING;
                         testsByScore: {
                             perfect: perfectScores,
                             excellent: excellentTests - perfectScores,
-                            good: passedTests - excellentTests,
-                            needsWork: failedTests
+                            good: realPassedTests - excellentTests,
+                            needsWork: realFailedTests
                         }
                     };
                 });
@@ -5488,7 +5588,7 @@ ON CONFLICT (tc_no) DO NOTHING;
                             <div class="flex justify-between items-center mb-4">
                                 <h5 class="font-bold text-gray-900 flex items-center">
                                     <i class="fas fa-list-alt text-blue-600 mr-2"></i>
-                                    Test Sonuçları Detayı (${results.length})
+                                    Test Sonuçları Detayı (<span id="detailCount_${student.id}">${results.length}</span> / ${results.length})
                                 </h5>
                                 <div class="flex space-x-2">
                                     <button onclick="exportStudentDetail(${student.id})" class="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition duration-200">
@@ -5499,15 +5599,44 @@ ON CONFLICT (tc_no) DO NOTHING;
                                     </button>
                                 </div>
                             </div>
+
+                            <!-- Arama & Filtre -->
+                            <div class="mb-4 flex flex-wrap gap-2 items-center">
+                                <div class="relative flex-1 min-w-[200px]">
+                                    <input type="text"
+                                           id="detailSearch_${student.id}"
+                                           placeholder="Test adı ile ara..."
+                                           oninput="filterStudentDetailCards(${student.id})"
+                                           class="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <i class="fas fa-search text-gray-400 text-xs"></i>
+                                    </div>
+                                </div>
+                                <select id="detailFilter_${student.id}"
+                                        onchange="filterStudentDetailCards(${student.id})"
+                                        class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 bg-white">
+                                    <option value="all">Tümü</option>
+                                    <option value="passed">✅ Başarılı (≥70)</option>
+                                    <option value="failed">📚 Başarısız (&lt;70)</option>
+                                    <option value="excellent">⭐ Harika (≥90)</option>
+                                    <option value="perfect">🏆 Tam Puan (100)</option>
+                                </select>
+                                <button onclick="clearStudentDetailFilter(${student.id})"
+                                        class="px-3 py-2 text-xs text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg bg-white hover:bg-gray-50">
+                                    <i class="fas fa-times mr-1"></i>Temizle
+                                </button>
+                            </div>
                             
                             <div id="studentDetails_${student.id}" class="">
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div id="detailGrid_${student.id}" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     ${results.sort((a, b) => new Date(b.completed_at) - new Date(a.completed_at)).map((result, idx) => `
-                                        <div class="bg-white border-2 ${
+                                        <div class="detail-card bg-white border-2 ${
                                             result.score === 100 ? 'border-purple-200 bg-purple-50' :
                                             result.score >= 90 ? 'border-green-200 bg-green-50' :
                                             result.score >= 70 ? 'border-blue-200 bg-blue-50' : 'border-red-200 bg-red-50'
-                                        } rounded-xl p-4 hover:shadow-md transition-all duration-200">
+                                        } rounded-xl p-4 hover:shadow-md transition-all duration-200"
+                                             data-title="${(result.test?.title || '').toLowerCase().replace(/"/g, '&quot;')}"
+                                             data-score="${result.score}">
                                             <div class="flex justify-between items-start mb-3">
                                                 <div class="flex-1">
                                                     <div class="flex items-center space-x-2 mb-2">
@@ -5522,10 +5651,7 @@ ON CONFLICT (tc_no) DO NOTHING;
                                                         <div class="flex items-center">
                                                             <i class="fas fa-calendar-alt mr-2 w-3"></i>
                                                             <span>${new Date(result.completed_at).toLocaleDateString('tr-TR', { 
-                                                                weekday: 'short', 
-                                                                year: 'numeric', 
-                                                                month: 'short', 
-                                                                day: 'numeric' 
+                                                                weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' 
                                                             })}</span>
                                                         </div>
                                                         <div class="flex items-center">
@@ -5572,8 +5698,6 @@ ON CONFLICT (tc_no) DO NOTHING;
                                                     </div>
                                                 </div>
                                             </div>
-                                            
-                                            <!-- Performance indicator bar -->
                                             <div class="w-full bg-gray-200 rounded-full h-2 mt-3">
                                                 <div class="h-2 rounded-full transition-all duration-300 ${
                                                     result.score === 100 ? 'bg-purple-500' :
@@ -5581,13 +5705,10 @@ ON CONFLICT (tc_no) DO NOTHING;
                                                     result.score >= 70 ? 'bg-blue-500' : 'bg-red-500'
                                                 }" style="width: ${result.score}%"></div>
                                             </div>
-                                            
-                                            <!-- Action Buttons -->
                                             <div class="mt-3 flex gap-2">
                                                 <button onclick="showDetailedResults(${result.id}, ${student.id}, '${student.name.replace(/'/g, "\\'")}', '${result.test?.title?.replace(/'/g, "\\'") || "Test"}')" 
                                                         class="flex-1 px-3 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition duration-200 flex items-center justify-center">
-                                                    <i class="fas fa-clipboard-check mr-2"></i>
-                                                    Detaylı Sonuçlar
+                                                    <i class="fas fa-clipboard-check mr-2"></i>Detaylı Sonuçlar
                                                 </button>
                                                 <button onclick="downloadResultPDF(${result.id}, ${student.id}, '${student.name.replace(/'/g, "\\'")}', '${result.test?.title?.replace(/'/g, "\\'") || "Test"}')"
                                                         class="px-3 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition duration-200 flex items-center justify-center" title="PDF İndir">
@@ -5662,15 +5783,59 @@ ON CONFLICT (tc_no) DO NOTHING;
         // Toggle student details
         function toggleStudentDetails(studentId) {
             const detailsDiv = document.getElementById(`studentDetails_${studentId}`);
-            const button = detailsDiv.previousElementSibling.querySelector('button');
+            const button = detailsDiv.previousElementSibling.previousElementSibling.querySelector('button:last-child');
             
             if (detailsDiv.classList.contains('hidden')) {
                 detailsDiv.classList.remove('hidden');
-                button.innerHTML = '<i class="fas fa-eye-slash mr-1"></i>Detayları Gizle';
+                if (button) button.innerHTML = '<i class="fas fa-eye-slash mr-1"></i>Detayları Gizle';
             } else {
                 detailsDiv.classList.add('hidden');
-                button.innerHTML = '<i class="fas fa-eye mr-1"></i>Detayları Göster';
+                if (button) button.innerHTML = '<i class="fas fa-eye mr-1"></i>Detayları Göster';
             }
+        }
+
+        // Filter student detail cards by search term and status
+        function filterStudentDetailCards(studentId) {
+            const searchTerm = (document.getElementById(`detailSearch_${studentId}`)?.value || '').toLowerCase().trim();
+            const filterVal  = document.getElementById(`detailFilter_${studentId}`)?.value || 'all';
+            const grid       = document.getElementById(`detailGrid_${studentId}`);
+            const noResult   = document.getElementById(`detailNoResult_${studentId}`);
+            const countEl    = document.getElementById(`detailCount_${studentId}`);
+            if (!grid) return;
+
+            const cards = grid.querySelectorAll('.detail-card');
+            let visible = 0;
+
+            cards.forEach(card => {
+                const title = (card.getAttribute('data-title') || '').toLowerCase();
+                const score = parseInt(card.getAttribute('data-score') || '0');
+
+                const matchSearch = !searchTerm || title.includes(searchTerm);
+                let matchFilter = true;
+                if (filterVal === 'passed')    matchFilter = score >= 70;
+                else if (filterVal === 'failed')    matchFilter = score < 70;
+                else if (filterVal === 'excellent') matchFilter = score >= 90;
+                else if (filterVal === 'perfect')   matchFilter = score === 100;
+
+                if (matchSearch && matchFilter) {
+                    card.style.display = '';
+                    visible++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            if (countEl) countEl.textContent = visible;
+            if (noResult) noResult.classList.toggle('hidden', visible > 0);
+        }
+
+        // Clear filter for a student
+        function clearStudentDetailFilter(studentId) {
+            const searchEl = document.getElementById(`detailSearch_${studentId}`);
+            const filterEl = document.getElementById(`detailFilter_${studentId}`);
+            if (searchEl) searchEl.value = '';
+            if (filterEl) filterEl.value = 'all';
+            filterStudentDetailCards(studentId);
         }
 
         // Enhanced filter student results function
@@ -5848,28 +6013,19 @@ ON CONFLICT (tc_no) DO NOTHING;
 
                 // Get all data
                 const { data: students, error: studentsError } = await supabase
-                    .from('students')
-                    .select('*')
-                    .order('name');
-
+                    .from('students').select('*').order('name');
                 if (studentsError) throw studentsError;
 
                 const { data: results, error: resultsError } = await supabase
-                    .from('test_results')
-                    .select('*');
-
+                    .from('test_results').select('*');
                 if (resultsError) throw resultsError;
 
                 const { data: tests, error: testsError } = await supabase
-                    .from('tests')
-                    .select('*');
-
+                    .from('tests').select('*');
                 if (testsError) throw testsError;
 
                 const { data: assignments, error: assignmentsError } = await supabase
-                    .from('test_assignments')
-                    .select('*');
-
+                    .from('test_assignments').select('*');
                 if (assignmentsError) throw assignmentsError;
 
                 // Total active tests in the system
@@ -5978,28 +6134,19 @@ ON CONFLICT (tc_no) DO NOTHING;
 
                 // Get all data
                 const { data: students, error: studentsError } = await supabase
-                    .from('students')
-                    .select('*')
-                    .order('name');
-
+                    .from('students').select('*').order('name');
                 if (studentsError) throw studentsError;
 
                 const { data: results, error: resultsError } = await supabase
-                    .from('test_results')
-                    .select('*');
-
+                    .from('test_results').select('*');
                 if (resultsError) throw resultsError;
 
                 const { data: tests, error: testsError } = await supabase
-                    .from('tests')
-                    .select('*');
-
+                    .from('tests').select('*');
                 if (testsError) throw testsError;
 
                 const { data: assignments, error: assignmentsError } = await supabase
-                    .from('test_assignments')
-                    .select('*');
-
+                    .from('test_assignments').select('*');
                 if (assignmentsError) throw assignmentsError;
 
                 // Total active tests in the system
@@ -6427,24 +6574,18 @@ ON CONFLICT (tc_no) DO NOTHING;
             try {
                 console.log('Loading simple results view...');
                 
-                // Simple query to get basic data
                 const { data: results, error: resultsError } = await supabase
                     .from('test_results')
                     .select('*')
                     .order('completed_at', { ascending: false });
-
                 if (resultsError) throw resultsError;
 
                 const { data: students, error: studentsError } = await supabase
-                    .from('students')
-                    .select('*');
-
+                    .from('students').select('*');
                 if (studentsError) throw studentsError;
 
                 const { data: tests, error: testsError } = await supabase
-                    .from('tests')
-                    .select('*');
-
+                    .from('tests').select('*');
                 if (testsError) throw testsError;
 
                 const container = document.getElementById('resultsList');
@@ -6809,23 +6950,31 @@ ON CONFLICT (tc_no) DO NOTHING;
             const container = document.getElementById('studentBadges');
             container.innerHTML = '';
 
-            // Get current test count and scores for progress calculation
-            const { data: results } = await supabase
-                .from('test_results')
-                .select('*')
-                .eq('student_id', currentUser.id);
+            // Tüm sonuçları çek (sayfalama ile)
+            let allResults = [];
+            let fromIdx = 0;
+            while (true) {
+                const { data: page } = await supabase
+                    .from('test_results').select('*')
+                    .eq('student_id', currentUser.id)
+                    .order('completed_at', { ascending: false })
+                    .range(fromIdx, fromIdx + 999);
+                if (!page || page.length === 0) break;
+                allResults = allResults.concat(page);
+                if (page.length < 1000) break;
+                fromIdx += 1000;
+            }
             
-            const totalTestCount = results?.length || 0;
-            const successfulTestCount = results?.filter(r => r.score >= 70).length || 0;
-            const maxScore = results?.length > 0 ? Math.max(...results.map(r => r.score)) : 0;
-            const hasHighScore = results?.some(r => r.score >= 90) || false;
-            const hasPerfectScore = results?.some(r => r.score === 100) || false;
+            const totalTestCount = allResults.length;
+            const successfulTestCount = allResults.filter(r => r.score >= 70).length;
+            const hasHighScore = allResults.some(r => r.score >= 90);
+            const hasPerfectScore = allResults.some(r => r.score === 100);
 
             const allBadges = [
                 { type: 'first_step', name: '🐣 İlk Adım', description: 'İlk testi tamamla', requirement: 1, current: totalTestCount },
                 { type: 'bright_star', name: '🌈 Parlak Yıldız', description: '90+ puan al', requirement: '90+ puan', current: hasHighScore ? 'Kazanıldı' : 'Henüz yok' },
                 { type: 'perfect_hit', name: '🥇 Tam İsabet', description: '%100 puan al', requirement: '100 puan', current: hasPerfectScore ? 'Kazanıldı' : 'Henüz yok' },
-                { type: 'speed_fingers', name: '⚡ Hızlı Parmaklar', description: 'Hızlı test bitir', requirement: '<5 dk', current: 'Süre bazlı' },
+                { type: 'speed_fingers', name: '⚡ Hızlı Parmaklar', description: 'Soru başına ort. 30sn altında bitir', requirement: '<30sn/soru', current: 'Süre bazlı' },
                 { type: 'patient_hero', name: '🐢 Sabırlı Kahraman', description: '5 başarılı test', requirement: 5, current: successfulTestCount },
                 { type: 'super_student', name: '🦸 Süper Öğrenci', description: '10 başarılı test', requirement: 10, current: successfulTestCount },
                 { type: 'knowledge_dragon', name: '🐉 Bilgi Ejderhası', description: '25 başarılı test', requirement: 25, current: successfulTestCount },
@@ -8669,6 +8818,7 @@ Teknolojinin hızla geliştiği günümüzde, dijital kitaplar da popüler hale 
                 // Perform logout
                 currentUser = null;
                 currentTest = null;
+                clearSession();
                 if (testTimer) clearInterval(testTimer);
                 
                 modal.remove();
@@ -11983,9 +12133,16 @@ const analysisModalTemplate = `
                 <h2 id="analysisTestTitle">Test Analizi</h2>
                 <p id="analysisTestStats">Yükleniyor...</p>
             </div>
-            <button class="analysis-close-btn" onclick="closeAnalysisModal()">
-                <i class="fas fa-times"></i>
-            </button>
+            <div style="display:flex; align-items:center; gap:10px;">
+                <button onclick="downloadAnalysisPDF()" title="PDF İndir"
+                        style="background:rgba(255,255,255,0.2); border:1px solid rgba(255,255,255,0.4); color:white; padding:8px 16px; border-radius:8px; cursor:pointer; font-size:13px; font-weight:600; display:flex; align-items:center; gap:6px; transition:background 0.2s;"
+                        onmouseover="this.style.background='rgba(255,255,255,0.35)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
+                    <i class="fas fa-file-pdf"></i> PDF İndir
+                </button>
+                <button class="analysis-close-btn" onclick="closeAnalysisModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
         </div>
         
         <!-- Body -->
@@ -12357,10 +12514,298 @@ function closeAnalysisModal() {
     document.getElementById('analysisModal').style.display = 'none';
 }
 
+function downloadAnalysisPDF() {
+    const { test, results, questions } = currentAnalysisData;
+    if (!test || !questions.length) {
+        showNotification('❌ Önce analiz panelini açın.', 'error');
+        return;
+    }
+
+    showNotification('PDF hazırlanıyor...', 'info');
+
+    const avgScore = results.length > 0
+        ? Math.round(results.reduce((sum, r) => sum + r.score, 0) / results.length) : 0;
+    const passedCount = results.filter(r => r.score >= 70).length;
+    const typeLabel = { multiple_choice: 'Çoktan Seçmeli', fill_blank: 'Boşluk Doldurma', true_false: 'Doğru/Yanlış' };
+
+    // Her soru için istatistik hesapla (renderQuestionsAnalysis mantığıyla aynı)
+    const questionsAnalysis = questions.map((q, qIdx) => {
+        const optionStats = {};
+        let correctCount = 0;
+
+        // fill_blank için başlangıçta index bazlı key OLUŞTURMA — kelime bazlı çalışacak
+        if (q.type === 'multiple_choice') {
+            (q.options || []).forEach((opt, i) => { optionStats[i] = []; });
+        } else if (q.type === 'true_false') {
+            optionStats[true] = []; optionStats[false] = [];
+        }
+        // fill_blank: boş bırak, öğrenci cevaplarından dinamik doldur
+
+        results.forEach(r => {
+            let answers = {};
+            try { answers = typeof r.answers === 'string' ? JSON.parse(r.answers) : (r.answers || {}); } catch(e) {}
+            const studentAnswers = answers.answers || [];
+            const userAnswer = studentAnswers[qIdx];
+
+            if (userAnswer === undefined || userAnswer === null || userAnswer === '') {
+                if (!optionStats['(Boş)']) optionStats['(Boş)'] = [];
+                optionStats['(Boş)'].push({ name: r.students?.name || 'İsimsiz', isCorrect: false });
+                return;
+            }
+
+            let isCorrect = false, statsKey = userAnswer;
+            if (q.type === 'multiple_choice') {
+                isCorrect = parseInt(userAnswer) === parseInt(q.correct);
+                statsKey = parseInt(userAnswer);
+            } else if (q.type === 'fill_blank') {
+                const cWord = String(q.correct).trim();
+                let uWord;
+                // Eski format: index kaydedilmiş
+                if (q.options?.length > 0 && !isNaN(parseInt(userAnswer)) && q.options[parseInt(userAnswer)] !== undefined) {
+                    uWord = String(q.options[parseInt(userAnswer)]).trim();
+                } else {
+                    // Yeni format: kelime kaydedilmiş
+                    uWord = String(userAnswer).trim();
+                }
+                isCorrect = uWord.toLowerCase() === cWord.toLowerCase();
+                statsKey = uWord; // Her zaman kelime bazlı key
+            } else if (q.type === 'true_false') {
+                const uBool = userAnswer === true || userAnswer === 'true';
+                const cBool = q.correct === true || q.correct === 'true';
+                isCorrect = uBool === cBool;
+                statsKey = uBool;
+            }
+            if (!optionStats[statsKey]) optionStats[statsKey] = [];
+            optionStats[statsKey].push({ name: r.students?.name || 'İsimsiz', isCorrect });
+            if (isCorrect) correctCount++;
+        });
+
+        const successRate = results.length > 0 ? Math.round((correctCount / results.length) * 100) : 0;
+        return { q, qIdx, optionStats, correctCount, successRate, wrongCount: results.length - correctCount };
+    });
+
+    // Katılımcı satırları
+    const participantRows = results.map(r => {
+        const ans = (() => { try { return JSON.parse(r.answers || '{}'); } catch(e) { return {}; } })();
+        const correct = ans.correctAnswers || 0;
+        const total = ans.totalQuestions || questions.length;
+        const statusColor = r.score >= 70 ? '#166534' : '#991b1b';
+        const statusBg   = r.score >= 70 ? '#dcfce7'  : '#fee2e2';
+        return `<tr style="border-bottom:1px solid #e5e7eb;">
+            <td style="padding:8px 10px; font-weight:600;">${r.students?.name || 'İsimsiz'}</td>
+            <td style="padding:8px 10px; text-align:center; font-weight:700; color:${statusColor}; background:${statusBg}; border-radius:6px;">${r.score}%</td>
+            <td style="padding:8px 10px; text-align:center; color:#166534; font-weight:600;">✓ ${correct}</td>
+            <td style="padding:8px 10px; text-align:center; color:#991b1b; font-weight:600;">✗ ${total - correct}</td>
+            <td style="padding:8px 10px; text-align:center; color:#6b7280; font-size:11px;">${new Date(r.completed_at).toLocaleDateString('tr-TR')}</td>
+        </tr>`;
+    }).join('');
+
+    // Soru analiz kartları
+    const questionCards = questionsAnalysis.map(({ q, qIdx, optionStats, correctCount, successRate }) => {
+        const cardBorder = successRate >= 80 ? '#10b981' : successRate >= 50 ? '#f59e0b' : '#ef4444';
+        const cardBg     = successRate >= 80 ? '#f0fdf4' : successRate >= 50 ? '#fffbeb' : '#fef2f2';
+        const rateColor  = successRate >= 80 ? '#166534' : successRate >= 50 ? '#92400e' : '#991b1b';
+
+        // Seçenek satırları
+        let optionRows = '';
+        const keys = Object.keys(optionStats);
+
+        if (q.type === 'multiple_choice') {
+            // Çoktan seçmeli: index bazlı
+            (q.options || []).forEach((opt, i) => {
+                const students = optionStats[i] || [];
+                const pct = results.length > 0 ? Math.round((students.length / results.length) * 100) : 0;
+                const isCorrect = parseInt(i) === parseInt(q.correct);
+                const barColor = isCorrect ? '#10b981' : pct > 30 ? '#f59e0b' : '#9ca3af';
+                const label = `${String.fromCharCode(65 + i)}) ${String(opt).replace(/^[A-Z]\)\s*/, '')}`;
+                const names = students.map(s => s.name).join(', ');
+                optionRows += `<tr style="border-bottom:1px solid #f3f4f6;">
+                    <td style="padding:6px 8px; font-weight:${isCorrect ? '700' : '400'}; color:${isCorrect ? '#166534' : '#374151'};">${isCorrect ? '✓ ' : ''}${label}</td>
+                    <td style="padding:6px 8px; text-align:center; font-weight:600;">${students.length} kişi (${pct}%)</td>
+                    <td style="padding:6px 8px; width:120px;">
+                        <div style="height:10px; background:#e5e7eb; border-radius:5px; overflow:hidden;">
+                            <div style="height:10px; width:${pct}%; background:${barColor}; border-radius:5px;"></div>
+                        </div>
+                    </td>
+                    <td style="padding:6px 8px; font-size:11px; color:#6b7280;">${names}</td>
+                </tr>`;
+            });
+        } else if (q.type === 'true_false') {
+            [true, false].forEach(val => {
+                const students = optionStats[val] || [];
+                const pct = results.length > 0 ? Math.round((students.length / results.length) * 100) : 0;
+                const isCorrect = val === (q.correct === true || q.correct === 'true');
+                const barColor = isCorrect ? '#10b981' : '#ef4444';
+                const label = val ? 'Doğru' : 'Yanlış';
+                const names = students.map(s => s.name).join(', ');
+                optionRows += `<tr style="border-bottom:1px solid #f3f4f6;">
+                    <td style="padding:6px 8px; font-weight:${isCorrect ? '700' : '400'}; color:${isCorrect ? '#166534' : '#374151'};">${isCorrect ? '✓ ' : ''}${label}</td>
+                    <td style="padding:6px 8px; text-align:center; font-weight:600;">${students.length} kişi (${pct}%)</td>
+                    <td style="padding:6px 8px; width:120px;">
+                        <div style="height:10px; background:#e5e7eb; border-radius:5px; overflow:hidden;">
+                            <div style="height:10px; width:${pct}%; background:${barColor}; border-radius:5px;"></div>
+                        </div>
+                    </td>
+                    <td style="padding:6px 8px; font-size:11px; color:#6b7280;">${students.map(s => s.name).join(', ')}</td>
+                </tr>`;
+            });
+        } else {
+            // fill_blank: her zaman kelime bazlı
+            const correctWord = String(q.correct).trim();
+            // Doğru cevabı başa al, sonra diğer verilen cevaplar
+            const otherKeys = Object.keys(optionStats).filter(k => k !== '(Boş)' && k.toLowerCase() !== correctWord.toLowerCase());
+            const allKeys = [correctWord, ...otherKeys];
+            allKeys.forEach(word => {
+                // optionStats'ta bu kelimeyi case-insensitive ara
+                const matchingKey = Object.keys(optionStats).find(k => k !== '(Boş)' && k.toLowerCase() === word.toLowerCase());
+                const students = matchingKey ? optionStats[matchingKey] : [];
+                const pct = results.length > 0 ? Math.round((students.length / results.length) * 100) : 0;
+                const isCorrect = word.toLowerCase() === correctWord.toLowerCase();
+                const barColor = isCorrect ? '#10b981' : '#ef4444';
+                const names = students.map(s => s.name).join(', ');
+                optionRows += `<tr style="border-bottom:1px solid #f3f4f6;">
+                    <td style="padding:6px 8px; font-weight:${isCorrect ? '700' : '400'}; color:${isCorrect ? '#166534' : '#374151'};">${isCorrect ? '✓ ' : ''}${word}</td>
+                    <td style="padding:6px 8px; text-align:center; font-weight:600;">${students.length} kişi (${pct}%)</td>
+                    <td style="padding:6px 8px; width:120px;">
+                        <div style="height:10px; background:#e5e7eb; border-radius:5px; overflow:hidden;">
+                            <div style="height:10px; width:${pct}%; background:${barColor}; border-radius:5px;"></div>
+                        </div>
+                    </td>
+                    <td style="padding:6px 8px; font-size:11px; color:#6b7280;">${names}</td>
+                </tr>`;
+            });
+        }
+
+        // Boş cevap varsa ekle
+        if (optionStats['(Boş)']?.length > 0) {
+            const students = optionStats['(Boş)'];
+            const pct = results.length > 0 ? Math.round((students.length / results.length) * 100) : 0;
+            optionRows += `<tr style="border-bottom:1px solid #f3f4f6;">
+                <td style="padding:6px 8px; color:#9ca3af; font-style:italic;">(Boş bırakıldı)</td>
+                <td style="padding:6px 8px; text-align:center; font-weight:600; color:#9ca3af;">${students.length} kişi (${pct}%)</td>
+                <td></td>
+                <td style="padding:6px 8px; font-size:11px; color:#9ca3af;">${students.map(s => s.name).join(', ')}</td>
+            </tr>`;
+        }
+
+        return `
+        <div style="margin-bottom:20px; border:2px solid ${cardBorder}; border-radius:10px; overflow:hidden; background:${cardBg}; page-break-inside:avoid;">
+            <div style="padding:12px 16px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid ${cardBorder};">
+                <div>
+                    <span style="background:linear-gradient(135deg,#4f46e5,#7c3aed); color:white; padding:3px 10px; border-radius:4px; font-size:11px; font-weight:700; margin-right:8px;">Soru ${qIdx + 1}</span>
+                    <span style="font-size:11px; color:#6b7280;">${typeLabel[q.type] || q.type}</span>
+                </div>
+                <span style="font-weight:700; color:${rateColor};">%${successRate} Başarı &nbsp;|&nbsp; ${correctCount}/${results.length} doğru</span>
+            </div>
+            <div style="padding:12px 16px;">
+                <p style="margin:0 0 12px 0; font-weight:600; color:#1f2937; font-size:13px;">${(q.question || '').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</p>
+                <table style="width:100%; border-collapse:collapse; font-size:12px;">
+                    <thead>
+                        <tr style="background:#f3f4f6;">
+                            <th style="padding:6px 8px; text-align:left; font-size:11px; color:#6b7280;">Cevap</th>
+                            <th style="padding:6px 8px; text-align:center; font-size:11px; color:#6b7280;">Sayı</th>
+                            <th style="padding:6px 8px; font-size:11px; color:#6b7280;">Dağılım</th>
+                            <th style="padding:6px 8px; font-size:11px; color:#6b7280;">Öğrenciler</th>
+                        </tr>
+                    </thead>
+                    <tbody>${optionRows}</tbody>
+                </table>
+            </div>
+        </div>`;
+    }).join('');
+
+    const html = `<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>Test Analizi - ${test.title}</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 30px; color: #1f2937; font-size: 13px; }
+  h1 { margin:0 0 4px 0; font-size:20px; }
+  @media print {
+    .header { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .page-break { page-break-before: always; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- Başlık -->
+  <div class="header" style="background:linear-gradient(135deg,#4f46e5,#7c3aed); color:white; padding:24px; border-radius:12px; margin-bottom:24px;">
+    <h1>📊 Test Analiz Raporu</h1>
+    <p style="margin:4px 0 0 0; opacity:0.9; font-size:14px;"><strong>${test.title}</strong></p>
+    <p style="margin:3px 0 0 0; opacity:0.8; font-size:12px;">Oluşturulma: ${new Date().toLocaleDateString('tr-TR', {year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'})}</p>
+  </div>
+
+  <!-- Özet İstatistikler -->
+  <div style="display:flex; gap:12px; margin-bottom:24px; flex-wrap:wrap;">
+    <div style="flex:1; min-width:100px; background:#f9fafb; border:1px solid #e5e7eb; border-radius:10px; padding:14px; text-align:center;">
+      <div style="font-size:28px; font-weight:800; color:#4f46e5;">${results.length}</div>
+      <div style="font-size:11px; color:#6b7280; margin-top:3px;">Katılımcı</div>
+    </div>
+    <div style="flex:1; min-width:100px; background:#f9fafb; border:1px solid #e5e7eb; border-radius:10px; padding:14px; text-align:center;">
+      <div style="font-size:28px; font-weight:800; color:#0891b2;">${questions.length}</div>
+      <div style="font-size:11px; color:#6b7280; margin-top:3px;">Soru Sayısı</div>
+    </div>
+    <div style="flex:1; min-width:100px; background:#f9fafb; border:1px solid #e5e7eb; border-radius:10px; padding:14px; text-align:center;">
+      <div style="font-size:28px; font-weight:800; color:#7c3aed;">${avgScore}</div>
+      <div style="font-size:11px; color:#6b7280; margin-top:3px;">Ortalama Puan</div>
+    </div>
+    <div style="flex:1; min-width:100px; background:#dcfce7; border:1px solid #86efac; border-radius:10px; padding:14px; text-align:center;">
+      <div style="font-size:28px; font-weight:800; color:#166534;">${passedCount}</div>
+      <div style="font-size:11px; color:#166534; margin-top:3px;">Başarılı (≥70)</div>
+    </div>
+    <div style="flex:1; min-width:100px; background:#fee2e2; border:1px solid #fca5a5; border-radius:10px; padding:14px; text-align:center;">
+      <div style="font-size:28px; font-weight:800; color:#991b1b;">${results.length - passedCount}</div>
+      <div style="font-size:11px; color:#991b1b; margin-top:3px;">Başarısız (<70)</div>
+    </div>
+  </div>
+
+  <!-- Katılımcı Tablosu -->
+  <div style="margin-bottom:28px;">
+    <h2 style="font-size:15px; font-weight:700; color:#1f2937; margin-bottom:12px; padding-bottom:6px; border-bottom:2px solid #4f46e5;">
+      👥 Katılımcı Listesi
+    </h2>
+    <table style="width:100%; border-collapse:collapse; font-size:12px;">
+      <thead>
+        <tr style="background:linear-gradient(135deg,#4f46e5,#7c3aed); color:white;">
+          <th style="padding:9px 10px; text-align:left;">Öğrenci</th>
+          <th style="padding:9px 10px; text-align:center;">Puan</th>
+          <th style="padding:9px 10px; text-align:center;">Doğru</th>
+          <th style="padding:9px 10px; text-align:center;">Yanlış</th>
+          <th style="padding:9px 10px; text-align:center;">Tarih</th>
+        </tr>
+      </thead>
+      <tbody>${participantRows}</tbody>
+    </table>
+  </div>
+
+  <!-- Soru Analizleri -->
+  <div class="page-break">
+    <h2 style="font-size:15px; font-weight:700; color:#1f2937; margin-bottom:16px; padding-bottom:6px; border-bottom:2px solid #4f46e5;">
+      📋 Soru Bazında Analiz
+    </h2>
+    ${questionCards}
+  </div>
+
+  <div style="margin-top:28px; text-align:center; font-size:11px; color:#9ca3af; border-top:1px solid #e5e7eb; padding-top:14px;">
+    Türkçe Okuma Anlama Test Sistemi &nbsp;|&nbsp; ${test.title} &nbsp;|&nbsp; ${new Date().toLocaleDateString('tr-TR')}
+  </div>
+
+</body>
+</html>`;
+
+    const printWin = window.open('', '_blank');
+    printWin.document.write(html);
+    printWin.document.close();
+    setTimeout(() => {
+        printWin.print();
+        showNotification('✅ PDF yazdırma penceresi açıldı!', 'success');
+    }, 700);
+}
+
 // Global scope'a ekle
-window.showAnalysisPanel = showAnalysisPanel;
-window.closeAnalysisModal = closeAnalysisModal;
-window.applyAnalysisFilter = applyAnalysisFilter;
+window.downloadAnalysisPDF = downloadAnalysisPDF;
 
 // Sayfa yüklendiğinde
 document.addEventListener('DOMContentLoaded', () => {
