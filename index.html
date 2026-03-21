@@ -593,42 +593,6 @@ let impersonatedStudent = null;
                             </div>
                         </div>
                     </div>
-
-                    <!-- Divider for Desktop -->
-                    <div class="hidden lg:block w-px bg-gray-100 self-stretch"></div>
-
-                    <!-- Right Section: Test Status & Summary -->
-                    <div class="flex-1">
-                        <div class="flex items-center justify-between mb-8">
-                            <h3 class="text-xl font-bold text-gray-900">Test Durumu ve Özet</h3>
-                        </div>
-
-                        <div class="space-y-6">
-                            <div class="flex items-center gap-5">
-                                <div class="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-500 border border-blue-100">
-                                    <i class="fas fa-book-open text-2xl"></i>
-                                </div>
-                                <div>
-                                    <h4 id="currentBookTitle" class="font-bold text-gray-900 text-lg leading-tight">Haftalık Hedef</h4>
-                                    <p id="currentBookAuthor" class="text-sm text-gray-500 font-medium">Sıradaki okuma materyali</p>
-                                </div>
-                            </div>
-
-                            
-
-                            <div class="grid grid-cols-2 gap-2 pt-2">
-                                <div class="bg-green-50 rounded-xl p-3 border border-green-100 text-center">
-                                    <p class="text-[10px] font-bold text-green-600 uppercase">Başarılı</p>
-                                    <p id="summarySuccessCount" class="text-lg font-black text-green-700">0</p>
-                                </div>
-
-                                <div class="bg-red-50 rounded-xl p-3 border border-red-100 text-center">
-                                    <p class="text-[10px] font-bold text-red-600 uppercase">Hata</p>
-                                    <p id="summaryFailedCount" class="text-lg font-black text-red-700">0</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
 
@@ -2847,18 +2811,6 @@ ON CONFLICT (tc_no) DO NOTHING;
                     }
                     const monthly = statsData.monthly_total_tests || 0;
                     document.getElementById('studentMonthlyTotal').textContent = monthly;
-
-                    // Update Current Book Info
-                    const uncompleted = assignments?.filter(a => !results?.find(r => r.test_id === a.test_id));
-                    if (uncompleted && uncompleted.length > 0) {
-                        const currentTest = uncompleted[0].tests;
-                        document.getElementById('currentBookTitle').textContent = currentTest.title || "Sıradaki Test";
-                        document.getElementById('currentBookAuthor').textContent = currentTest.description || "Henüz tamamlanmadı";
-                    } else if (assignments && assignments.length > 0) {
-                        const lastTest = assignments[assignments.length - 1].tests;
-                        document.getElementById('currentBookTitle').textContent = lastTest.title;
-                        document.getElementById('currentBookAuthor').textContent = "Tüm testler tamamlandı! 🎉";
-                    }
                 }
 
                 // 3. Update Weekly Test Status (Öğretmen panelindeki gibi SQL View verilerini kullan)
@@ -2887,8 +2839,6 @@ ON CONFLICT (tc_no) DO NOTHING;
 	                    }).join('');
 
                     // Update Summary Counts
-                    document.getElementById('summarySuccessCount').textContent = successCount;
-                    document.getElementById('summaryFailedCount').textContent = failedCount;
                     
                     // Update Totals and Badge
                     document.getElementById('studentWeeklyTotal').textContent = `${weekly} Test`;
@@ -10944,51 +10894,78 @@ Teknolojinin hızla geliştiği günümüzde, dijital kitaplar da popüler hale 
                                         <p class="text-gray-500 mt-2">Tüm öğrenciler kendilerine atanan testleri tamamlamış.</p>
                                     </div>
                                 ` : `
-                                    <!-- Summary -->
-                                    <div class="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                                        <div class="flex items-center gap-6">
-                                            <div class="text-center">
-                                                <div class="text-3xl font-bold text-yellow-700">${pendingData.length}</div>
-                                                <div class="text-sm text-yellow-600 font-medium">Öğrencinin Bekleyen Testi Var</div>
+                                    <!-- Özet + Toplu İşlem Araç Çubuğu -->
+                                    <div class="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                        <div class="flex flex-wrap items-center justify-between gap-3">
+                                            <div class="flex items-center gap-6">
+                                                <div class="text-center">
+                                                    <div class="text-2xl font-bold text-yellow-700">${pendingData.length}</div>
+                                                    <div class="text-xs text-yellow-600 font-medium">Öğrenci</div>
+                                                </div>
+                                                <div class="text-center">
+                                                    <div class="text-2xl font-bold text-yellow-700">${totalPendingAssignments}</div>
+                                                    <div class="text-xs text-yellow-600 font-medium">Bekleyen Test</div>
+                                                </div>
+                                                <div class="text-center">
+                                                    <div id="pendingSelectedCount" class="text-2xl font-bold text-red-600">0</div>
+                                                    <div class="text-xs text-red-500 font-medium">Seçili</div>
+                                                </div>
                                             </div>
-                                            <div class="text-center">
-                                                <div class="text-3xl font-bold text-yellow-700">${totalPendingAssignments}</div>
-                                                <div class="text-sm text-yellow-600 font-medium">Toplam Bekleyen Atama</div>
+                                            <div class="flex gap-2 flex-wrap">
+                                                <button onclick="selectAllPendingTests(true)"
+                                                        class="px-3 py-2 bg-gray-600 text-white text-sm rounded-lg hover:bg-gray-700 transition">
+                                                    <i class="fas fa-check-square mr-1"></i>Tümünü Seç
+                                                </button>
+                                                <button onclick="selectAllPendingTests(false)"
+                                                        class="px-3 py-2 bg-gray-400 text-white text-sm rounded-lg hover:bg-gray-500 transition">
+                                                    <i class="fas fa-square mr-1"></i>Seçimi Temizle
+                                                </button>
+                                                <button onclick="removeSelectedPendingTests()"
+                                                        class="px-4 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition font-semibold">
+                                                    <i class="fas fa-trash mr-1"></i>Seçilenleri Kaldır
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <!-- Student List -->
-                                    <div class="space-y-4">
+                                    <!-- Öğrenci Listesi -->
+                                    <div class="space-y-3">
                                         ${pendingData.map(student => `
                                             <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                                                <div class="flex items-center justify-between mb-3">
-                                                    <div class="flex items-center gap-3">
-                                                        <div class="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
-                                                            <i class="fas fa-user text-yellow-600"></i>
-                                                        </div>
-                                                        <div>
-                                                            <h4 class="font-semibold text-gray-900">${student.studentName}</h4>
-                                                            <p class="text-sm text-gray-500">${student.studentClass}</p>
-                                                        </div>
+                                                <!-- Öğrenci Başlığı -->
+                                                <div class="flex items-center gap-3 mb-3">
+                                                    <input type="checkbox"
+                                                           class="pending-student-cb w-4 h-4 accent-red-600 cursor-pointer rounded"
+                                                           data-student-id="${student.studentId}"
+                                                           onchange="toggleStudentPendingAll(${student.studentId}, this.checked)"
+                                                           title="Öğrencinin tüm testlerini seç">
+                                                    <div class="w-9 h-9 bg-yellow-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                                        <i class="fas fa-user text-yellow-600 text-sm"></i>
                                                     </div>
-                                                    <div class="text-right">
-                                                        <span class="inline-block px-3 py-1 bg-yellow-100 text-yellow-800 text-sm font-semibold rounded-full">
-                                                            ${student.pendingTests.length} Test Bekliyor
-                                                        </span>
+                                                    <div class="flex-1">
+                                                        <h4 class="font-semibold text-gray-900">${student.studentName}</h4>
+                                                        <p class="text-xs text-gray-500">${student.studentClass}</p>
                                                     </div>
+                                                    <span class="px-3 py-1 bg-yellow-100 text-yellow-800 text-xs font-semibold rounded-full">
+                                                        ${student.pendingTests.length} Test
+                                                    </span>
                                                 </div>
-                                                <div class="pl-12 space-y-2">
+                                                <!-- Test Listesi -->
+                                                <div class="pl-7 space-y-1">
                                                     ${student.pendingTests.map((test, index) => `
-                                                        <div class="flex items-center justify-between gap-3 text-sm p-2 bg-gray-50 rounded">
-                                                            <div class="flex items-center gap-3 flex-1">
-                                                                <span class="text-gray-400 font-mono">${index + 1}.</span>
-                                                                <i class="fas fa-file-alt text-yellow-500"></i>
-                                                                <span class="text-gray-700">${test.testTitle}</span>
-                                                            </div>
+                                                        <div class="flex items-center gap-3 text-sm p-2 bg-gray-50 rounded hover:bg-gray-100 transition">
+                                                            <input type="checkbox"
+                                                                   class="pending-test-cb w-4 h-4 accent-red-600 cursor-pointer rounded"
+                                                                   data-student-id="${student.studentId}"
+                                                                   data-test-id="${test.testId}"
+                                                                   data-student-name="${student.studentName}"
+                                                                   data-test-title="${test.testTitle}"
+                                                                   onchange="updatePendingCount()">
+                                                            <i class="fas fa-file-alt text-yellow-500 flex-shrink-0"></i>
+                                                            <span class="text-gray-700 flex-1">${test.testTitle}</span>
                                                             <button onclick="removePendingAssignment(${student.studentId}, ${test.testId}, \`${student.studentName}\`, \`${test.testTitle}\`)"
-                                                                    class="text-red-500 hover:text-red-700 text-xs font-medium px-2 py-1 rounded-full hover:bg-red-100 transition duration-150">
-                                                                <i class="fas fa-times mr-1"></i>Kaldır
+                                                                    class="text-red-400 hover:text-red-600 text-xs px-2 py-1 rounded hover:bg-red-50 transition flex-shrink-0">
+                                                                <i class="fas fa-times"></i>
                                                             </button>
                                                         </div>
                                                     `).join('')}
@@ -11000,13 +10977,11 @@ Teknolojinin hızla geliştiği günümüzde, dijital kitaplar da popüler hale 
                             </div>
 
                             <!-- Footer -->
-                            <div class="p-6 border-t border-gray-200 bg-gray-50">
-                                <div class="flex justify-end">
-                                    <button onclick="closePendingTestsModal()" 
-                                            class="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">
-                                        <i class="fas fa-times mr-2"></i>Kapat
-                                    </button>
-                                </div>
+                            <div class="p-4 border-t border-gray-200 bg-gray-50 flex justify-end">
+                                <button onclick="closePendingTestsModal()" 
+                                        class="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">
+                                    <i class="fas fa-times mr-2"></i>Kapat
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -11021,9 +10996,71 @@ Teknolojinin hızla geliştiği günümüzde, dijital kitaplar da popüler hale 
             }
         }
 
+        // Seçili sayısını güncelle
+        function updatePendingCount() {
+            const checked = document.querySelectorAll('.pending-test-cb:checked').length;
+            const el = document.getElementById('pendingSelectedCount');
+            if (el) el.textContent = checked;
+        }
 
-       
-        // Remove pending assignment
+        // Öğrencinin tüm testlerini seç/kaldır
+        function toggleStudentPendingAll(studentId, checked) {
+            document.querySelectorAll(`.pending-test-cb[data-student-id="${studentId}"]`)
+                .forEach(cb => { cb.checked = checked; });
+            updatePendingCount();
+        }
+
+        // Tüm testleri seç/kaldır
+        function selectAllPendingTests(checked) {
+            document.querySelectorAll('.pending-test-cb').forEach(cb => { cb.checked = checked; });
+            document.querySelectorAll('.pending-student-cb').forEach(cb => { cb.checked = checked; });
+            updatePendingCount();
+        }
+
+        // Seçilenleri toplu kaldır
+        async function removeSelectedPendingTests() {
+            const checked = document.querySelectorAll('.pending-test-cb:checked');
+            if (checked.length === 0) {
+                showNotification('Lütfen kaldırmak istediğiniz testleri seçin.', 'warning');
+                return;
+            }
+
+            if (!confirm(`${checked.length} test ataması kaldırılacak. Emin misiniz?`)) return;
+
+            showNotification(`${checked.length} atama kaldırılıyor...`, 'info');
+
+            const toDelete = Array.from(checked).map(cb => ({
+                studentId: cb.getAttribute('data-student-id'),
+                testId: cb.getAttribute('data-test-id')
+            }));
+
+            let success = 0, fail = 0;
+            for (const item of toDelete) {
+                try {
+                    const { error } = await supabase
+                        .from('test_assignments')
+                        .delete()
+                        .eq('student_id', item.studentId)
+                        .eq('test_id', item.testId);
+                    if (error) throw error;
+                    success++;
+                } catch (e) {
+                    fail++;
+                    console.error('Delete error:', e);
+                }
+            }
+
+            if (fail === 0) {
+                showNotification(`✅ ${success} atama başarıyla kaldırıldı!`, 'success');
+            } else {
+                showNotification(`⚠️ ${success} başarılı, ${fail} hatalı.`, 'warning');
+            }
+
+            closePendingTestsModal();
+            showPendingTestsModal();
+        }
+
+        // Tek atama kaldır
         async function removePendingAssignment(studentId, testId, studentName, testTitle) {
             if (!confirm(`"${testTitle}" testinin "${studentName}" adlı öğrenciden atamasını kaldırmak istediğinizden emin misiniz?`)) {
                 return;
@@ -11041,8 +11078,6 @@ Teknolojinin hızla geliştiği günümüzde, dijital kitaplar da popüler hale 
                 if (error) throw error;
 
                 showNotification('✅ Atama başarıyla kaldırıldı!', 'success');
-                
-                // Modalı yenile
                 closePendingTestsModal();
                 showPendingTestsModal();
 
@@ -11055,9 +11090,7 @@ Teknolojinin hızla geliştiği günümüzde, dijital kitaplar da popüler hale 
         // Close pending tests modal
         function closePendingTestsModal() {
             const modal = document.getElementById('pendingTestsModal');
-            if (modal) {
-                modal.remove();
-            }
+            if (modal) modal.remove();
         }
 
         // Show edit test modal
