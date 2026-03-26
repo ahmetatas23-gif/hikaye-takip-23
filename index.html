@@ -920,6 +920,9 @@ let impersonatedStudent = null;
                         <button onclick="showTeacherTab('failedTests')" id="failedTestsTab" class="teacher-tab-button py-4 px-6 border-b-2 border-transparent text-gray-500 hover:text-gray-700">
                             <i class="fas fa-times-circle mr-2"></i>Başarısız Testler
                         </button>
+                        <button onclick="showTeacherTab('dagitimTakibi')" id="dagitimTakibiTab" class="teacher-tab-button py-4 px-6 border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-tasks mr-2"></i>Dağıtım Takibi
+                        </button>
                     </nav>
                 </div>
 
@@ -1373,9 +1376,118 @@ let impersonatedStudent = null;
                         </div>
                     </div>
 
+                    <!-- Toplu İşlem Araç Çubuğu -->
+                    <div id="failedBulkBar" class="hidden mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg flex flex-wrap items-center gap-3">
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" id="failedSelectAll" onchange="selectAllFailedTests(this.checked)"
+                                   class="w-4 h-4 accent-red-600 cursor-pointer rounded">
+                            <label for="failedSelectAll" class="text-sm font-medium text-gray-700 cursor-pointer">Tümünü Seç</label>
+                        </div>
+                        <span class="text-sm text-gray-500">|</span>
+                        <span class="text-sm text-gray-600"><span id="failedSelectedCount" class="font-bold text-red-600">0</span> seçili</span>
+                        <button onclick="deleteSelectedFailedTests()"
+                                class="ml-auto px-4 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition font-semibold flex items-center gap-2">
+                            <i class="fas fa-trash"></i>Seçilenleri Sil
+                        </button>
+                    </div>
+
                     <!-- Failed Tests List -->
                     <div id="failedTestsList" class="space-y-4"></div>
                 </div>
+
+                <!-- Dağıtım Takibi Content -->
+                <div id="dagitimTakibiContent" class="hidden p-6">
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+                        <div>
+                            <h2 class="text-xl font-bold text-gray-800"><i class="fas fa-tasks mr-2 text-green-600"></i>Dağıtım Takibi</h2>
+                            <p class="text-sm text-gray-500 mt-1">244 test — 28 öğrenciye dağıtımı takip edin. Her satırda testin hangi öğrencilere atandığını görün.</p>
+                        </div>
+                        <div class="flex gap-2 flex-wrap">
+                            <button onclick="dagitimSifirla()" class="px-4 py-2 bg-red-100 text-red-700 rounded-lg text-sm font-medium hover:bg-red-200 transition">
+                                <i class="fas fa-redo mr-1"></i>Sıfırla
+                            </button>
+                            <button onclick="dagitimDışaAktar()" class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition">
+                                <i class="fas fa-file-export mr-1"></i>CSV İndir
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- İstatistikler -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                        <div class="bg-blue-50 rounded-lg p-4 text-center">
+                            <div class="text-2xl font-bold text-blue-600" id="dtToplamTest">0</div>
+                            <div class="text-xs text-gray-500 mt-1">Toplam Test</div>
+                        </div>
+                        <div class="bg-green-50 rounded-lg p-4 text-center">
+                            <div class="text-2xl font-bold text-green-600" id="dtAtananTest">0</div>
+                            <div class="text-xs text-gray-500 mt-1">En Az 1 Kişiye Atanan</div>
+                        </div>
+                        <div class="bg-orange-50 rounded-lg p-4 text-center">
+                            <div class="text-2xl font-bold text-orange-600" id="dtAtanmayanTest">0</div>
+                            <div class="text-xs text-gray-500 mt-1">Henüz Atanmayan</div>
+                        </div>
+                        <div class="bg-purple-50 rounded-lg p-4 text-center">
+                            <div class="text-2xl font-bold text-purple-600" id="dtToplamAtama">0</div>
+                            <div class="text-xs text-gray-500 mt-1">Toplam Atama</div>
+                        </div>
+                    </div>
+
+                    <!-- Öğrenci Listesi Yönetimi -->
+                    <div class="bg-white border border-gray-200 rounded-lg p-4 mb-6">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="font-semibold text-gray-700"><i class="fas fa-users mr-2 text-blue-500"></i>Öğrenci Listesi</h3>
+                            <button onclick="toggleOgrenciDuzenle()" id="ogrenciDuzenleBtn" class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-600 transition">
+                                <i class="fas fa-edit mr-1"></i>Düzenle
+                            </button>
+                        </div>
+                        <div id="ogrenciDuzenlePanel" class="hidden mb-3">
+                            <textarea id="ogrenciListesiInput" class="w-full border border-gray-300 rounded-lg p-3 text-sm" rows="5" placeholder="Her satıra bir öğrenci adı yazın..."></textarea>
+                            <button onclick="ogrenciListesiKaydet()" class="mt-2 px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 transition">
+                                <i class="fas fa-save mr-1"></i>Kaydet
+                            </button>
+                        </div>
+                        <div id="ogrenciEtiketleri" class="flex flex-wrap gap-2"></div>
+                    </div>
+
+                    <!-- Arama + Filtre -->
+                    <div class="flex flex-wrap gap-3 mb-2">
+                        <span class="inline-flex items-center gap-1 text-xs text-gray-500">🟢 Başarılı (sistemde)</span>
+                        <span class="inline-flex items-center gap-1 text-xs text-gray-500">🔴 Düşük Puan (sistemde)</span>
+                        <span class="inline-flex items-center gap-1 text-xs text-gray-500">🟡 Bekliyor (sistemde)</span>
+                        <span class="inline-flex items-center gap-1 text-xs text-gray-500"><span class="w-3 h-3 rounded bg-gray-200 inline-block"></span> Atanmamış (tıkla → ata)</span>
+                    </div>
+                    <div class="flex flex-col md:flex-row gap-3 mb-4">
+                        <input type="text" id="dagitimArama" oninput="dagitimFiltrele()" placeholder="Test adı ara..." class="flex-1 border border-gray-300 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-green-400 focus:outline-none">
+                        <select id="dagitimDurumFiltre" onchange="dagitimFiltrele()" class="border border-gray-300 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-green-400 focus:outline-none">
+                            <option value="hepsi">Tüm Testler</option>
+                            <option value="atanan">En Az 1 Kişiye Atanan</option>
+                            <option value="atanmayan">Henüz Atanmayan</option>
+                        </select>
+                        <select id="dagitimOgrenciFiltre" onchange="dagitimFiltrele()" class="border border-gray-300 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-green-400 focus:outline-none">
+                            <option value="hepsi">Tüm Öğrenciler</option>
+                        </select>
+                    </div>
+
+                    <!-- Test Tablosu -->
+                    <div class="overflow-x-auto rounded-lg border border-gray-200">
+                        <table class="w-full text-sm">
+                            <thead class="bg-gray-50 border-b border-gray-200">
+                                <tr>
+                                    <th class="text-left px-4 py-3 text-gray-600 font-semibold w-8">#</th>
+                                    <th class="text-left px-4 py-3 text-gray-600 font-semibold">Test Adı</th>
+                                    <th class="text-left px-4 py-3 text-gray-600 font-semibold">Atanan Öğrenciler</th>
+                                    <th class="text-center px-4 py-3 text-gray-600 font-semibold w-24">Atama Sayısı</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dagitimTakibiTablosu" class="divide-y divide-gray-100"></tbody>
+                        </table>
+                    </div>
+                    <div id="dagitimBosUyari" class="hidden text-center text-gray-400 py-12">
+                        <i class="fas fa-search text-4xl mb-3"></i>
+                        <p>Sonuç bulunamadı.</p>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
@@ -4486,18 +4598,20 @@ ON CONFLICT (tc_no) DO NOTHING;
 
         function showTeacherTab(tabName) {
             // Teacher tabs
-            const tabs = ['dashboard', 'tests', 'students', 'results', 'library', 'failedTests'];
+            const tabs = ['dashboard', 'tests', 'students', 'results', 'library', 'failedTests', 'dagitimTakibi'];
             tabs.forEach(tab => {
                 const tabButtonId = tab === 'dashboard' ? 'dashboardTab' : 
                                   tab === 'tests' ? 'testsManageTab' :
                                   tab === 'students' ? 'studentsManageTab' : 
                                   tab === 'results' ? 'resultsTab' : 
-                                  tab === 'library' ? 'libraryTab' : 'failedTestsTab';
+                                  tab === 'library' ? 'libraryTab' : 
+                                  tab === 'failedTests' ? 'failedTestsTab' : 'dagitimTakibiTab';
                 const tabContentId = tab === 'dashboard' ? 'dashboardContent' : 
                                    tab === 'tests' ? 'testsManageContent' :
                                    tab === 'students' ? 'studentsManageContent' : 
                                    tab === 'results' ? 'resultsContent' : 
-                                   tab === 'library' ? 'libraryContent' : 'failedTestsContent';
+                                   tab === 'library' ? 'libraryContent' : 
+                                   tab === 'failedTests' ? 'failedTestsContent' : 'dagitimTakibiContent';
                 
                 const tabButton = document.getElementById(tabButtonId);
                 const tabContent = document.getElementById(tabContentId);
@@ -4533,6 +4647,11 @@ ON CONFLICT (tc_no) DO NOTHING;
             // Load failed tests data if failedTests tab is selected
             if (tabName === 'failedTests') {
                 loadFailedTestsList();
+            }
+
+            // Load dağıtım takibi
+            if (tabName === 'dagitimTakibi') {
+                dagitimTakibiYukle();
             }
         }
 
@@ -5146,15 +5265,16 @@ ON CONFLICT (tc_no) DO NOTHING;
                 controlsDiv.className = 'mb-6 p-4 bg-gray-50 border border-gray-200 rounded-lg';
                 controlsDiv.innerHTML = `
                     <div class="space-y-4">
-                        <!-- Search Bar -->
-                        <div class="flex items-center space-x-4">
-                            <div class="flex-1 relative">
-                                <input type="text" id="resultsSearchInput" placeholder="Öğrenci adı, sınıf, öğrenci no ile ara..." 
-                                       class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                       onkeyup="filterStudentResults()">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <i class="fas fa-search text-gray-400"></i>
-                                </div>
+                        <!-- Öğrenci Seçimi -->
+                        <div class="flex items-center gap-3 flex-wrap">
+                            <div class="flex-1 min-w-48">
+                                <select id="resultsStudentSelect" onchange="filterStudentResults()"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                    <option value="all">👤 Tüm Öğrenciler</option>
+                                    ${students.sort((a,b) => (a.name||'').localeCompare(b.name||'','tr')).map(s =>
+                                        `<option value="${s.id}">${s.name}</option>`
+                                    ).join('')}
+                                </select>
                             </div>
                             <button onclick="exportStudentResults()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition duration-200">
                                 <i class="fas fa-file-excel mr-2"></i>Excel İndir
@@ -5792,19 +5912,17 @@ ON CONFLICT (tc_no) DO NOTHING;
         function filterStudentResults() {
             if (!window.allStudentResultsData) return;
 
-            const searchTerm = document.getElementById('resultsSearchInput')?.value.toLowerCase().trim() || '';
+            const selectedStudentId = document.getElementById('resultsStudentSelect')?.value || 'all';
             const filterType = document.getElementById('resultsFilterSelect')?.value || 'all';
             const sortType = document.getElementById('resultsSortSelect')?.value || 'name_asc';
             const classFilter = document.getElementById('resultsClassFilter')?.value || 'all';
 
             let filteredResults = [...window.allStudentResultsData];
 
-            // Apply search filter
-            if (searchTerm) {
-                filteredResults = filteredResults.filter(studentData => 
-                    studentData.student.name.toLowerCase().includes(searchTerm) ||
-                    studentData.student.student_no.toLowerCase().includes(searchTerm) ||
-                    studentData.student.class.toLowerCase().includes(searchTerm)
+            // Belirli öğrenci seçilmişse sadece onu göster
+            if (selectedStudentId !== 'all') {
+                filteredResults = filteredResults.filter(studentData =>
+                    String(studentData.student.id) === String(selectedStudentId)
                 );
             }
 
@@ -5902,22 +6020,20 @@ ON CONFLICT (tc_no) DO NOTHING;
             
             if (!infoElement) return;
             
-            const searchTerm = document.getElementById('resultsSearchInput')?.value.trim() || '';
+            const selectedStudentId = document.getElementById('resultsStudentSelect')?.value || 'all';
             const filterType = document.getElementById('resultsFilterSelect')?.value || 'all';
             const classFilter = document.getElementById('resultsClassFilter')?.value || 'all';
-            
+            const selectedStudentName = selectedStudentId !== 'all'
+                ? (document.getElementById('resultsStudentSelect')?.options[document.getElementById('resultsStudentSelect')?.selectedIndex]?.text || '')
+                : '';
+
             let infoText = '';
-            
-            if (searchTerm && filterType !== 'all' && classFilter !== 'all') {
-                infoText = `"${searchTerm}" araması, ${getStudentFilterDisplayName(filterType)} ve ${classFilter} sınıfı: ${filteredCount}/${totalCount} öğrenci`;
-            } else if (searchTerm && filterType !== 'all') {
-                infoText = `"${searchTerm}" araması ve ${getStudentFilterDisplayName(filterType)}: ${filteredCount}/${totalCount} öğrenci`;
-            } else if (searchTerm && classFilter !== 'all') {
-                infoText = `"${searchTerm}" araması ve ${classFilter} sınıfı: ${filteredCount}/${totalCount} öğrenci`;
+            if (selectedStudentName && filterType !== 'all') {
+                infoText = `${selectedStudentName} — ${getStudentFilterDisplayName(filterType)}: ${filteredCount}/${totalCount} öğrenci`;
+            } else if (selectedStudentName) {
+                infoText = `${selectedStudentName} gösteriliyor`;
             } else if (filterType !== 'all' && classFilter !== 'all') {
                 infoText = `${getStudentFilterDisplayName(filterType)} ve ${classFilter} sınıfı: ${filteredCount}/${totalCount} öğrenci`;
-            } else if (searchTerm) {
-                infoText = `"${searchTerm}" araması: ${filteredCount}/${totalCount} öğrenci`;
             } else if (filterType !== 'all') {
                 infoText = `${getStudentFilterDisplayName(filterType)}: ${filteredCount}/${totalCount} öğrenci`;
             } else if (classFilter !== 'all') {
@@ -5949,7 +6065,7 @@ ON CONFLICT (tc_no) DO NOTHING;
 
         // Clear student filters
         function clearStudentFilters() {
-            document.getElementById('resultsSearchInput').value = '';
+            document.getElementById('resultsStudentSelect').value = 'all';
             document.getElementById('resultsFilterSelect').value = 'all';
             document.getElementById('resultsSortSelect').value = 'name_asc';
             document.getElementById('resultsClassFilter').value = 'all';
@@ -6818,7 +6934,7 @@ ON CONFLICT (tc_no) DO NOTHING;
         function filterResults() {
             if (!window.allResultsData) return;
 
-            const searchTerm = document.getElementById('resultsSearchInput')?.value.toLowerCase().trim() || '';
+            const searchTerm = ''; // Öğrenci arama text input kaldırıldı, dropdown kullanılıyor
             const filterType = document.getElementById('resultsFilterSelect')?.value || 'all';
             const sortType = document.getElementById('resultsSortSelect')?.value || 'newest';
 
@@ -11218,7 +11334,20 @@ Teknolojinin hızla geliştiği günümüzde, dijital kitaplar da popüler hale 
                         </div>
                         
                         <div class="mb-4">
-                            <h4 class="font-semibold text-gray-800 mb-3">Sorular:</h4>
+                            <div class="flex items-center justify-between mb-3">
+                                <h4 class="font-semibold text-gray-800">Sorular:</h4>
+                                <div class="flex gap-2">
+                                    <button type="button" onclick="yeniSoruEkle('multiple_choice')" class="px-3 py-1.5 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition">
+                                        <i class="fas fa-plus mr-1"></i>Çoktan Seçmeli
+                                    </button>
+                                    <button type="button" onclick="yeniSoruEkle('true_false')" class="px-3 py-1.5 bg-green-600 text-white text-xs rounded-lg hover:bg-green-700 transition">
+                                        <i class="fas fa-plus mr-1"></i>Doğru/Yanlış
+                                    </button>
+                                    <button type="button" onclick="yeniSoruEkle('fill_blank')" class="px-3 py-1.5 bg-yellow-500 text-white text-xs rounded-lg hover:bg-yellow-600 transition">
+                                        <i class="fas fa-plus mr-1"></i>Boşluk Doldurma
+                                    </button>
+                                </div>
+                            </div>
                             <div id="questionsContainer">
                                 ${questionsHTML}
                             </div>
@@ -11259,6 +11388,110 @@ Teknolojinin hızla geliştiği günümüzde, dijital kitaplar da popüler hale 
                 questionCard.style.display = 'none';
                 questionCard.dataset.deleted = 'true';
             }
+        }
+
+        // Yeni soru ekle — mevcut en yüksek index'i bulup +1 yapar
+        function yeniSoruEkle(type) {
+            const container = document.getElementById('questionsContainer');
+            if (!container) return;
+
+            // Mevcut en yüksek data-question-index'i bul
+            const cards = container.querySelectorAll('.question-card');
+            let maxIndex = -1;
+            cards.forEach(c => {
+                const idx = parseInt(c.dataset.questionIndex);
+                if (!isNaN(idx) && idx > maxIndex) maxIndex = idx;
+            });
+            const newIndex = maxIndex + 1;
+            const soruNo = container.querySelectorAll('.question-card:not([data-deleted="true"])').length + 1;
+
+            const typeLabel = {
+                'multiple_choice': '📝 Çoktan Seçmeli',
+                'true_false': '✓✗ Doğru/Yanlış',
+                'fill_blank': '📄 Boşluk Doldurma'
+            }[type];
+
+            const typeBadgeCls = {
+                'multiple_choice': 'bg-blue-100 text-blue-700',
+                'true_false': 'bg-green-100 text-green-700',
+                'fill_blank': 'bg-yellow-100 text-yellow-700'
+            }[type];
+
+            let typeHTML = '';
+            if (type === 'multiple_choice') {
+                typeHTML = `
+                    <div class="mb-3">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Seçenekler:</label>
+                        ${['A','B','C','D','E'].map((ltr, i) => `
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="font-medium">${ltr})</span>
+                                <input type="text" name="question_${newIndex}_option_${i}" value="" placeholder="${ltr} seçeneği..." class="flex-1 px-3 py-2 border border-gray-300 rounded-lg">
+                                <label class="flex items-center">
+                                    <input type="radio" name="question_${newIndex}_correct" value="${i}" class="mr-1">
+                                    <span class="text-sm">Doğru</span>
+                                </label>
+                            </div>
+                        `).join('')}
+                    </div>`;
+            } else if (type === 'true_false') {
+                typeHTML = `
+                    <div class="mb-3">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Doğru Cevap:</label>
+                        <div class="flex gap-4">
+                            <label class="flex items-center">
+                                <input type="radio" name="question_${newIndex}_correct" value="true" class="mr-2">
+                                <span>Doğru</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="radio" name="question_${newIndex}_correct" value="false" class="mr-2">
+                                <span>Yanlış</span>
+                            </label>
+                        </div>
+                    </div>`;
+            } else if (type === 'fill_blank') {
+                typeHTML = `
+                    <div class="mb-3">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Seçenekler (virgülle ayrılmış):</label>
+                        <input type="text" name="question_${newIndex}_options_text" value="" placeholder="Örnek: Seçenek 1, Seçenek 2, Seçenek 3..." class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                        <p class="text-xs text-gray-500 mt-1">Seçenekleri virgül ve boşlukla ayırarak yazın</p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Doğru Cevap:</label>
+                        <input type="text" name="question_${newIndex}_correct_text" value="" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Doğru cevabı yazın">
+                    </div>`;
+            }
+
+            const div = document.createElement('div');
+            div.className = 'question-card border-2 border-blue-300 bg-blue-50 rounded-lg p-4 mb-4';
+            div.dataset.questionIndex = newIndex;
+            div.dataset.newQuestion = 'true';
+            div.innerHTML = `
+                <div class="flex justify-between items-start mb-3">
+                    <h4 class="font-semibold text-gray-800">Soru ${soruNo} <span class="text-xs text-blue-600 font-normal">(Yeni)</span></h4>
+                    <div class="flex items-center gap-2">
+                        <span class="px-2 py-1 text-xs rounded ${typeBadgeCls}">${typeLabel}</span>
+                        <button type="button" onclick="this.closest('.question-card').remove()" class="px-2 py-1 bg-red-100 text-red-600 text-xs rounded hover:bg-red-200">
+                            <i class="fas fa-trash mr-1"></i>Sil
+                        </button>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Soru Metni:</label>
+                    <textarea name="question_${newIndex}_text" class="w-full px-3 py-2 border border-gray-300 rounded-lg" rows="3" placeholder="Soru metnini buraya yazın..."></textarea>
+                </div>
+                ${typeHTML}
+                <div class="flex items-center justify-between mt-3 pt-3 border-t border-gray-200">
+                    <div class="flex items-center gap-2">
+                        <label class="text-sm font-medium text-gray-700">⭐ Puan:</label>
+                        <input type="number" name="question_${newIndex}_points" value="10" min="1" max="100" class="w-20 px-2 py-1 border border-gray-300 rounded">
+                    </div>
+                </div>
+            `;
+
+            container.appendChild(div);
+
+            // Yeni soruya scroll et
+            div.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
         // Save edited test
@@ -11532,6 +11765,10 @@ Teknolojinin hızla geliştiği günümüzde, dijital kitaplar da popüler hale 
             const container = document.getElementById('failedTestsList');
             container.innerHTML = '';
 
+            // Araç çubuğunu göster/gizle
+            const bulkBar = document.getElementById('failedBulkBar');
+            if (bulkBar) bulkBar.classList.toggle('hidden', !failedTests || failedTests.length === 0);
+
             if (!failedTests || failedTests.length === 0) {
                 container.innerHTML = `
                     <div class="text-center py-12">
@@ -11540,6 +11777,7 @@ Teknolojinin hızla geliştiği günümüzde, dijital kitaplar da popüler hale 
                         <p class="text-gray-500 mt-2">Hiç başarısız test bulunmamaktadır.</p>
                     </div>
                 `;
+                updateFailedSelectedCount();
                 return;
             }
 
@@ -11547,48 +11785,109 @@ Teknolojinin hızla geliştiği günümüzde, dijital kitaplar da popüler hale 
                 const card = document.createElement('div');
                 card.className = 'bg-white border-2 border-red-200 rounded-lg p-4 hover:shadow-lg transition duration-200';
                 card.innerHTML = `
-                    <div class="flex justify-between items-start mb-3">
-                        <div class="flex-1">
-                            <div class="flex items-center gap-2 mb-2">
-                                <h4 class="font-semibold text-gray-900">${failed.studentName}</h4>
-                                <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">${failed.studentNo}</span>
-                                <span class="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded">${failed.studentClass}</span>
+                    <div class="flex items-start gap-3">
+                        <input type="checkbox"
+                               class="failed-test-cb mt-1 w-4 h-4 accent-red-600 cursor-pointer rounded flex-shrink-0"
+                               data-result-id="${failed.resultId}"
+                               data-student-name="${failed.studentName}"
+                               data-test-title="${failed.testTitle}"
+                               onchange="updateFailedSelectedCount()">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex justify-between items-start mb-3">
+                                <div class="flex-1">
+                                    <div class="flex items-center gap-2 mb-2 flex-wrap">
+                                        <h4 class="font-semibold text-gray-900">${failed.studentName}</h4>
+                                        <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">${failed.studentNo}</span>
+                                        <span class="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded">${failed.studentClass}</span>
+                                    </div>
+                                    <p class="text-sm text-gray-600 mb-2">
+                                        <i class="fas fa-book mr-1"></i>${failed.testTitle}
+                                    </p>
+                                </div>
+                                <div class="text-right ml-3">
+                                    <div class="text-2xl font-bold text-red-600">${failed.percentage}%</div>
+                                    <div class="text-xs text-gray-500">${failed.score}/${failed.maxScore} puan</div>
+                                </div>
                             </div>
-                            <p class="text-sm text-gray-600 mb-2">
-                                <i class="fas fa-book mr-1"></i>${failed.testTitle}
-                            </p>
+                            <div class="mb-3">
+                                <div class="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                                    <div class="bg-red-500 h-2 rounded-full" style="width: ${failed.percentage}%"></div>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-center text-xs text-gray-500 mb-3">
+                                <span><i class="fas fa-calendar mr-1"></i>${new Date(failed.completedAt).toLocaleDateString('tr-TR')}</span>
+                                <span class="text-red-600 font-semibold">Başarısız</span>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="reassignFailedTest('${failed.studentId}', '${failed.testId}', '${failed.testTitle}', '${failed.studentName}')" class="flex-1 px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition duration-200">
+                                    <i class="fas fa-redo mr-1"></i>Tekrar Ata
+                                </button>
+                                <button onclick="deleteFailedTestResult('${failed.resultId}', '${failed.studentName}', '${failed.testTitle}')" class="px-4 py-2 bg-red-100 text-red-600 text-sm rounded hover:bg-red-200 transition duration-200">
+                                    <i class="fas fa-trash mr-1"></i>Sil
+                                </button>
+                            </div>
                         </div>
-                        <div class="text-right">
-                            <div class="text-2xl font-bold text-red-600">${failed.percentage}%</div>
-                            <div class="text-xs text-gray-500">${failed.score}/${failed.maxScore} puan</div>
-                        </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <div class="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-                            <div class="bg-red-500 h-2 rounded-full" style="width: ${failed.percentage}%"></div>
-                        </div>
-                    </div>
-                    
-                    <div class="flex justify-between items-center text-xs text-gray-500 mb-3">
-                        <span><i class="fas fa-calendar mr-1"></i>${new Date(failed.completedAt).toLocaleDateString('tr-TR')}</span>
-                        <span class="text-red-600 font-semibold">Başarısız</span>
-                    </div>
-                    
-                    <div class="flex gap-2">
-                        <button onclick="reassignFailedTest('${failed.studentId}', '${failed.testId}', '${failed.testTitle}', '${failed.studentName}')" class="flex-1 px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition duration-200">
-                            <i class="fas fa-redo mr-1"></i>Tekrar Ata
-                        </button>
-                        <button onclick="deleteFailedTestResult('${failed.resultId}', '${failed.studentName}', '${failed.testTitle}')" class="px-4 py-2 bg-red-100 text-red-600 text-sm rounded hover:bg-red-200 transition duration-200">
-                            <i class="fas fa-trash mr-1"></i>Sil
-                        </button>
                     </div>
                 `;
                 container.appendChild(card);
             });
 
-            // Update filter info
+            updateFailedSelectedCount();
             updateFailedTestsFilterInfo(failedTests.length);
+        }
+
+        // Seçili sayısını güncelle
+        function updateFailedSelectedCount() {
+            const count = document.querySelectorAll('.failed-test-cb:checked').length;
+            const total = document.querySelectorAll('.failed-test-cb').length;
+            const el = document.getElementById('failedSelectedCount');
+            if (el) el.textContent = count;
+            const allCb = document.getElementById('failedSelectAll');
+            if (allCb) allCb.checked = total > 0 && count === total;
+        }
+
+        // Tümünü seç / kaldır
+        function selectAllFailedTests(checked) {
+            document.querySelectorAll('.failed-test-cb').forEach(cb => { cb.checked = checked; });
+            updateFailedSelectedCount();
+        }
+
+        // Seçilenleri toplu sil
+        async function deleteSelectedFailedTests() {
+            const checked = document.querySelectorAll('.failed-test-cb:checked');
+            if (checked.length === 0) {
+                showNotification('Lütfen silmek istediğiniz testleri seçin.', 'warning');
+                return;
+            }
+            if (!confirm(`${checked.length} test sonucu silinecek. Bu işlem geri alınamaz. Emin misiniz?`)) return;
+
+            showNotification(`${checked.length} sonuç siliniyor...`, 'info');
+
+            const toDelete = Array.from(checked).map(cb => ({
+                resultId: cb.getAttribute('data-result-id'),
+                studentName: cb.getAttribute('data-student-name'),
+                testTitle: cb.getAttribute('data-test-title')
+            }));
+
+            let success = 0, fail = 0;
+            for (const item of toDelete) {
+                try {
+                    const { error } = await supabase
+                        .from('test_results').delete().eq('id', item.resultId);
+                    if (error) throw error;
+                    success++;
+                } catch (e) {
+                    fail++;
+                    console.error('Delete error:', e);
+                }
+            }
+
+            if (fail === 0) {
+                showNotification(`✅ ${success} test sonucu başarıyla silindi!`, 'success');
+            } else {
+                showNotification(`⚠️ ${success} başarılı, ${fail} hatalı.`, 'warning');
+            }
+            loadFailedTestsList();
         }
 
         // Filter failed tests
@@ -12861,6 +13160,393 @@ document.addEventListener('click', (e) => {
     }
 });
 
+// =============================================
+// DAĞITIM TAKİBİ
+// =============================================
+
+// localStorage key
+const DT_KEY = 'dagitimTakibi_v1';
+const DT_OGRENCI_KEY = 'dagitimTakibi_ogrenciler_v1';
+
+// Varsayılan öğrenci listesi (28 kişi - düzenlenebilir)
+const VARSAYILAN_OGRENCILER = [
+    'Öğrenci 1','Öğrenci 2','Öğrenci 3','Öğrenci 4','Öğrenci 5',
+    'Öğrenci 6','Öğrenci 7','Öğrenci 8','Öğrenci 9','Öğrenci 10',
+    'Öğrenci 11','Öğrenci 12','Öğrenci 13','Öğrenci 14','Öğrenci 15',
+    'Öğrenci 16','Öğrenci 17','Öğrenci 18','Öğrenci 19','Öğrenci 20',
+    'Öğrenci 21','Öğrenci 22','Öğrenci 23','Öğrenci 24','Öğrenci 25',
+    'Öğrenci 26','Öğrenci 27','Öğrenci 28'
+];
+
+// { testId: [ogrenciAdi, ...] }
+let dagitimVerisi = {};
+let dagitimTestListesi = []; // { id, title }
+let dagitimOgrenciler = [];
+let dagitimFiltreli = [];
+let dagitimAtamaVerisi = {}; // { testId: { studentName: 'bekliyor'|'basarili'|'dusuk' } }
+let dagitimOgrenciIdMap = {}; // { ad: id }
+
+function dagitimVeriYukle() {
+    const raw = localStorage.getItem(DT_KEY);
+    dagitimVerisi = raw ? JSON.parse(raw) : {};
+}
+
+function dagitimVeriKaydet() {
+    localStorage.setItem(DT_KEY, JSON.stringify(dagitimVerisi));
+}
+
+function dagitimOgrencileriYukle() {
+    const raw = localStorage.getItem(DT_OGRENCI_KEY);
+    dagitimOgrenciler = raw ? JSON.parse(raw) : [...VARSAYILAN_OGRENCILER];
+}
+
+function dagitimOgrencileriKaydet() {
+    localStorage.setItem(DT_OGRENCI_KEY, JSON.stringify(dagitimOgrenciler));
+}
+
+async function dagitimTakibiYukle() {
+    dagitimVeriYukle();
+
+    // Gerçek öğrenci isimlerini Supabase'den çek
+    try {
+        const { data: students, error } = await supabase
+            .from('students')
+            .select('id, name')
+            .order('name');
+        if (!error && students && students.length > 0) {
+            dagitimOgrenciler = students.map(s => s.name);
+            dagitimOgrenciIdMap = {};
+            students.forEach(s => { dagitimOgrenciIdMap[s.name] = s.id; });
+            dagitimOgrencileriKaydet();
+        } else {
+            dagitimOgrencileriYukle();
+        }
+    } catch(e) {
+        dagitimOgrencileriYukle();
+    }
+
+    // Test listesini çek
+    try {
+        const { data: tests, error } = await supabase
+            .from('tests')
+            .select('id, title')
+            .order('title', { ascending: true });
+        if (error) throw error;
+        dagitimTestListesi = tests || [];
+    } catch(e) {
+        if (window.allTestsData && allTestsData.length > 0) {
+            dagitimTestListesi = allTestsData.map(t => ({ id: t.id, title: t.title }));
+        } else {
+            dagitimTestListesi = [];
+        }
+    }
+
+    // Her test için atama durumunu çek — Test Atama Yönetimi ile aynı mantık:
+    // students tablosunun tamamı baz alınır; her öğrenci için test_assignments ve test_results'a bakılır.
+    try {
+        const idToAd = {};
+        Object.entries(dagitimOgrenciIdMap).forEach(([ad, id]) => { idToAd[Number(id)] = ad; });
+        const ogrenciIdleri = Object.keys(idToAd).map(Number);
+
+        dagitimAtamaVerisi = {};
+
+        if (ogrenciIdleri.length > 0) {
+            // Supabase varsayılan limiti 1000 satır — sayfalayarak tüm veriyi çek
+            async function supabaseTumunuCek(tablo, kolonlar, studentIds) {
+                const PAGE = 1000;
+                let tumVeri = [];
+                let sayfa = 0;
+                while (true) {
+                    const { data, error } = await supabase
+                        .from(tablo)
+                        .select(kolonlar)
+                        .in('student_id', studentIds)
+                        .range(sayfa * PAGE, (sayfa + 1) * PAGE - 1);
+                    if (error) { console.error('[DagitimTakibi] sayfalama hatası:', tablo, error); break; }
+                    if (!data || data.length === 0) break;
+                    tumVeri = tumVeri.concat(data);
+                    if (data.length < PAGE) break; // Son sayfa
+                    sayfa++;
+                }
+                return tumVeri;
+            }
+
+            const assignments = await supabaseTumunuCek('test_assignments', 'test_id, student_id', ogrenciIdleri);
+            const results     = await supabaseTumunuCek('test_results', 'test_id, student_id, score', ogrenciIdleri);
+
+            console.log('[DagitimTakibi] assignments:', assignments.length, 'results:', results.length);
+
+            // results hızlı lookup: "testId_studentId" -> score
+            const resultsMap = {};
+            (results || []).forEach(r => {
+                resultsMap[`${r.test_id}_${r.student_id}`] = r.score;
+            });
+
+            // assignments hızlı lookup: "testId_studentId" -> true
+            const assignedSet = new Set();
+            (assignments || []).forEach(a => {
+                assignedSet.add(`${a.test_id}_${a.student_id}`);
+            });
+
+            // Her test için her öğrenciye bak (Test Atama Yönetimi ile birebir aynı mantık)
+            dagitimTestListesi.forEach(test => {
+                const testAtamalar = {};
+                ogrenciIdleri.forEach(sid => {
+                    const key = `${test.id}_${sid}`;
+                    const atandi = assignedSet.has(key);
+                    if (!atandi) return; // Atanmamış → hiç gösterme
+                    const ad = idToAd[sid];
+                    if (!ad) return;
+                    const score = resultsMap[key];
+                    let durum;
+                    if (score === undefined || score === null) {
+                        durum = 'bekliyor';
+                    } else if (score >= 70) {
+                        durum = 'basarili';
+                    } else {
+                        durum = 'dusuk';
+                    }
+                    testAtamalar[ad] = durum;
+                });
+                if (Object.keys(testAtamalar).length > 0) {
+                    dagitimAtamaVerisi[test.id] = testAtamalar;
+                }
+            });
+        }
+        console.log('[DagitimTakibi] atama verisi hazır:', Object.keys(dagitimAtamaVerisi).length, 'test');
+    } catch(e) {
+        console.error('[DagitimTakibi] hata:', e);
+        dagitimAtamaVerisi = {};
+    }
+    dagitimOgrenciEtiketleriniGoster();
+    dagitimOgrenciFiltereYukle();
+    dagitimFiltreli = [...dagitimTestListesi];
+    dagitimTabloyuRender(dagitimFiltreli);
+    dagitimIstatistikleriGuncelle();
+}
+
+function dagitimOgrenciEtiketleriniGoster() {
+    const kapsayici = document.getElementById('ogrenciEtiketleri');
+    if (!kapsayici) return;
+    kapsayici.innerHTML = dagitimOgrenciler.map(ad =>
+        `<span class="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">${ad}</span>`
+    ).join('');
+    // Input alanını da güncelle
+    const input = document.getElementById('ogrenciListesiInput');
+    if (input) input.value = dagitimOgrenciler.join('\n');
+}
+
+function dagitimOgrenciFiltereYukle() {
+    const sel = document.getElementById('dagitimOgrenciFiltre');
+    if (!sel) return;
+    sel.innerHTML = '<option value="hepsi">Tüm Öğrenciler</option>' +
+        dagitimOgrenciler.map(ad => `<option value="${ad}">${ad}</option>`).join('');
+}
+
+function toggleOgrenciDuzenle() {
+    const panel = document.getElementById('ogrenciDuzenlePanel');
+    if (panel) panel.classList.toggle('hidden');
+}
+
+function ogrenciListesiKaydet() {
+    const input = document.getElementById('ogrenciListesiInput');
+    if (!input) return;
+    const satirlar = input.value.split('\n').map(s => s.trim()).filter(s => s.length > 0);
+    if (satirlar.length === 0) { alert('En az 1 öğrenci adı girin.'); return; }
+    dagitimOgrenciler = satirlar;
+    dagitimOgrencileriKaydet();
+    dagitimOgrenciEtiketleriniGoster();
+    dagitimOgrenciFiltereYukle();
+    dagitimTabloyuRender(dagitimFiltreli);
+    document.getElementById('ogrenciDuzenlePanel').classList.add('hidden');
+}
+
+function dagitimTabloyuRender(testler) {
+    const tbody = document.getElementById('dagitimTakibiTablosu');
+    const bosUyari = document.getElementById('dagitimBosUyari');
+    if (!tbody) return;
+
+    if (testler.length === 0) {
+        tbody.innerHTML = '';
+        if (bosUyari) bosUyari.classList.remove('hidden');
+        return;
+    }
+    if (bosUyari) bosUyari.classList.add('hidden');
+
+    tbody.innerHTML = testler.map((test, idx) => {
+        const sistemAtamalari = dagitimAtamaVerisi[test.id] || {}; // { ad: durum }
+
+        // Öğrenci rozet butonları
+        const rozetler = dagitimOgrenciler.map(ad => {
+            const sistemDurumu = sistemAtamalari[ad];
+
+            let cls, title, icon, onclick;
+
+            if (sistemDurumu === 'basarili') {
+                cls = 'bg-green-500 text-white cursor-default';
+                title = ad + ' — 🟢 Başarılı';
+                icon = '🟢 ';
+                onclick = '';
+            } else if (sistemDurumu === 'dusuk') {
+                cls = 'bg-red-400 text-white cursor-default';
+                title = ad + ' — 🔴 Düşük Puan';
+                icon = '🔴 ';
+                onclick = '';
+            } else if (sistemDurumu === 'bekliyor') {
+                cls = 'bg-yellow-400 text-white cursor-default';
+                title = ad + ' — 🟡 Bekliyor';
+                icon = '🟡 ';
+                onclick = '';
+            } else {
+                cls = 'bg-gray-100 text-gray-500 hover:bg-yellow-200 hover:text-yellow-800 cursor-pointer';
+                title = ad + ' — Tıkla: testi ata (🟡 Bekliyor olur)';
+                icon = '';
+                onclick = 'onclick="dagitimAta(' + JSON.stringify(test.id) + ', ' + JSON.stringify(ad) + ')"';
+            }
+
+            const atanabilir = !sistemDurumu;
+            const dataAttr = atanabilir ? 'data-dt-ata="1" data-test-id="' + test.id + '" data-ogrenci="' + ad.replace(/"/g, '&quot;') + '"' : '';
+            return '<button ' + dataAttr + ' title="' + title.replace(/"/g,'&quot;') + '" class="px-2 py-0.5 rounded text-xs font-medium transition-all ' + cls + '">' + icon + ad + '</button>';
+        }).join('');
+
+        // Özet sayaçlar
+        const bekleyenler = Object.values(sistemAtamalari).filter(d => d === 'bekliyor').length;
+        const basarililar = Object.values(sistemAtamalari).filter(d => d === 'basarili').length;
+        const dusukler = Object.values(sistemAtamalari).filter(d => d === 'dusuk').length;
+        const ozet = [
+            basarililar > 0 ? `<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-700">🟢 ${basarililar}</span>` : '',
+            dusukler > 0 ? `<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700">🔴 ${dusukler}</span>` : '',
+            bekleyenler > 0 ? `<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-yellow-100 text-yellow-700">🟡 ${bekleyenler}</span>` : '',
+        ].filter(Boolean).join(' ') || '<span class="text-gray-300 text-xs">—</span>';
+
+        return `<tr class="hover:bg-gray-50 transition">
+            <td class="px-4 py-3 text-gray-400 text-xs">${idx + 1}</td>
+            <td class="px-4 py-3 font-medium text-gray-800 max-w-xs">
+                <div class="truncate" title="${test.title}">${test.title}</div>
+            </td>
+            <td class="px-4 py-3">
+                <div class="flex flex-wrap gap-1">${rozetler}</div>
+            </td>
+            <td class="px-4 py-3 text-center">
+                <div class="flex flex-col gap-1 items-center">${ozet}</div>
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+
+// Event delegation — tablo üzerindeki tüm "ata" butonlarını yakala
+document.addEventListener('click', async function(e) {
+    const btn = e.target.closest('[data-dt-ata="1"]');
+    if (!btn) return;
+    const testId = Number(btn.dataset.testId);
+    const ogrenciAdi = btn.dataset.ogrenci;
+    if (!testId || !ogrenciAdi) return;
+
+    const studentId = dagitimOgrenciIdMap[ogrenciAdi];
+    if (!studentId) { showNotification('Öğrenci ID bulunamadı: ' + ogrenciAdi, 'error'); return; }
+
+    // Butonu hemen devre dışı bırak
+    btn.disabled = true;
+    btn.textContent = '...';
+    btn.className = btn.className.replace('bg-gray-100', 'bg-gray-300');
+
+    console.log('[DagitimAta] testId:', testId, 'ogrenci:', ogrenciAdi, 'studentId:', studentId);
+
+    try {
+        const { error } = await supabase
+            .from('test_assignments')
+            .insert({
+                test_id: testId,
+                student_id: Number(studentId),
+                assigned_at: new Date().toISOString()
+            });
+
+        console.log('[DagitimAta] sonuç:', error);
+
+        if (error) {
+            if (error.code === '23505') {
+                showNotification('Bu öğrenciye test zaten atanmış.', 'warning');
+            } else {
+                throw error;
+            }
+        } else {
+            showNotification(ogrenciAdi + ' adlı öğrenciye test atandı! 🟡', 'success');
+            // Lokal veriyi güncelle → sarıya çevir
+            if (!dagitimAtamaVerisi[testId]) dagitimAtamaVerisi[testId] = {};
+            dagitimAtamaVerisi[testId][ogrenciAdi] = 'bekliyor';
+            dagitimTabloyuRender(dagitimFiltreli);
+            dagitimIstatistikleriGuncelle();
+        }
+    } catch(e) {
+        console.error('[DagitimAta] hata:', e);
+        showNotification('Hata: ' + (e.message || 'Bilinmeyen hata'), 'error');
+        btn.disabled = false;
+    }
+});
+
+function dagitimFiltrele() {
+    const arama = (document.getElementById('dagitimArama')?.value || '').toLowerCase();
+    const durum = document.getElementById('dagitimDurumFiltre')?.value || 'hepsi';
+    const ogrenci = document.getElementById('dagitimOgrenciFiltre')?.value || 'hepsi';
+
+    dagitimFiltreli = dagitimTestListesi.filter(test => {
+        const baslik = (test.title || '').toLowerCase();
+
+        if (arama && !baslik.includes(arama)) return false;
+        const sistemAtamalar = dagitimAtamaVerisi[test.id] || {};
+        const sistemAtananlar = Object.keys(sistemAtamalar);
+        if (durum === 'atanan' && sistemAtananlar.length === 0) return false;
+        if (durum === 'atanmayan' && sistemAtananlar.length > 0) return false;
+        if (ogrenci !== 'hepsi' && !sistemAtananlar.includes(ogrenci)) return false;
+
+        return true;
+    });
+
+    dagitimTabloyuRender(dagitimFiltreli);
+}
+
+function dagitimIstatistikleriGuncelle() {
+    const toplam = dagitimTestListesi.length;
+    // Sistemde en az 1 öğrenciye atanmış testler
+    const sistemAtanan = dagitimTestListesi.filter(t => dagitimAtamaVerisi[t.id] && Object.keys(dagitimAtamaVerisi[t.id]).length > 0).length;
+    const atanmayan = toplam - sistemAtanan;
+    // Toplam sistem ataması
+    const toplamAtama = Object.values(dagitimAtamaVerisi).reduce((s, obj) => s + Object.keys(obj).length, 0);
+
+    const el = (id, val) => { const e = document.getElementById(id); if(e) e.textContent = val; };
+    el('dtToplamTest', toplam);
+    el('dtAtananTest', sistemAtanan);
+    el('dtAtanmayanTest', atanmayan);
+    el('dtToplamAtama', toplamAtama);
+}
+
+function dagitimSifirla() {
+    if (!confirm('Manuel notlarınız (📌) silinecek. Sistem atamaları (🟢🔴🟡) etkilenmez. Emin misiniz?')) return;
+    dagitimVerisi = {};
+    dagitimVeriKaydet();
+    dagitimTabloyuRender(dagitimFiltreli);
+    dagitimIstatistikleriGuncelle();
+}
+
+function dagitimDışaAktar() {
+    let csv = 'Test Adı,Başarılı,Düşük Puan,Bekliyor,Toplam Atanan\n';
+    dagitimTestListesi.forEach(test => {
+        const durumlar = dagitimAtamaVerisi[test.id] || {};
+        const basarili = Object.values(durumlar).filter(d => d === 'basarili').length;
+        const dusuk = Object.values(durumlar).filter(d => d === 'dusuk').length;
+        const bekliyor = Object.values(durumlar).filter(d => d === 'bekliyor').length;
+        const toplam = Object.keys(durumlar).length;
+        csv += `"${test.title}",${basarili},${dusuk},${bekliyor},${toplam}\n`;
+    });
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'dagitim_takibi.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+}
 
 </script></body>
 </html>
