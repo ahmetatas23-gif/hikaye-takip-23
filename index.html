@@ -923,6 +923,9 @@ let impersonatedStudent = null;
                         <button onclick="showTeacherTab('dagitimTakibi')" id="dagitimTakibiTab" class="teacher-tab-button py-4 px-6 border-b-2 border-transparent text-gray-500 hover:text-gray-700">
                             <i class="fas fa-tasks mr-2"></i>Dağıtım Takibi
                         </button>
+                        <button onclick="showTeacherTab('sinavLiderligi')" id="sinavLiderligiTab" class="teacher-tab-button py-4 px-6 border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-medal mr-2"></i>Sınav Liderliği
+                        </button>
                     </nav>
                 </div>
 
@@ -1488,6 +1491,37 @@ let impersonatedStudent = null;
                     </div>
                 </div>
 
+                <!-- Sınav Liderliği Content -->
+                <div id="sinavLiderligiContent" class="hidden p-6">
+                    <div class="mb-6">
+                        <h2 class="text-xl font-bold text-gray-800 flex items-center">
+                            <i class="fas fa-medal mr-2 text-orange-500"></i>Sınav &amp; Alıştırma Liderliği
+                        </h2>
+                        <p class="text-sm text-gray-500 mt-1">Normal testlere dahil olmayan Sınav ve Alıştırma testlerindeki başarı sıralaması.</p>
+                    </div>
+
+                    <!-- Tip Seçici -->
+                    <div class="flex gap-3 mb-6">
+                        <button onclick="loadSinavLeaderboard('sinav')" id="sinavLiderBtn"
+                            class="px-5 py-2 rounded-full text-sm font-semibold bg-orange-500 text-white shadow transition">
+                            📋 Sınav
+                        </button>
+                        <button onclick="loadSinavLeaderboard('alistirma')" id="alistirmaLiderBtn"
+                            class="px-5 py-2 rounded-full text-sm font-semibold bg-gray-100 text-gray-600 hover:bg-green-100 hover:text-green-700 transition">
+                            🔧 Alıştırma
+                        </button>
+                    </div>
+
+                    <!-- Yükleniyor -->
+                    <div id="sinavLiderYukleniyor" class="text-center py-10 text-gray-400">
+                        <i class="fas fa-spinner fa-spin text-3xl mb-3"></i>
+                        <p>Yükleniyor...</p>
+                    </div>
+
+                    <!-- Liste -->
+                    <div id="sinavLiderList" class="space-y-4"></div>
+                </div>
+
             </div>
         </div>
     </div>
@@ -1520,7 +1554,7 @@ let impersonatedStudent = null;
 
                 <form onsubmit="uploadTest(event)">
                     <!-- Basic Info -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Test Adı</label>
                             <input type="text" id="testName" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500" required>
@@ -1528,6 +1562,38 @@ let impersonatedStudent = null;
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Test Açıklaması</label>
                             <input type="text" id="testDescription" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                        </div>
+                    </div>
+
+                    <!-- Test Tipi Seçimi -->
+                    <div class="mb-6 p-4 bg-purple-50 border border-purple-200 rounded-lg">
+                        <h4 class="font-semibold text-gray-800 mb-3 flex items-center">
+                            <i class="fas fa-tag text-purple-600 mr-2"></i>
+                            🏷️ Test Tipi
+                        </h4>
+                        <p class="text-sm text-gray-600 mb-3">Liderlik tablosu ve istatistiklerde sadece <strong>Normal</strong> testler sayılır.</p>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <label class="flex items-center space-x-3 p-3 border-2 border-blue-300 bg-blue-50 rounded-lg cursor-pointer hover:bg-blue-100 transition-colors test-type-label" data-value="normal">
+                                <input type="radio" name="testType" value="normal" class="text-blue-600 focus:ring-blue-500" checked onchange="updateTestTypeLabels()">
+                                <div>
+                                    <div class="font-semibold text-gray-900 flex items-center">📝 Normal <span class="ml-2 px-2 py-0.5 bg-blue-100 text-blue-800 text-xs rounded-full font-medium">Varsayılan</span></div>
+                                    <div class="text-xs text-gray-500 mt-0.5">Liderlikte sayılır</div>
+                                </div>
+                            </label>
+                            <label class="flex items-center space-x-3 p-3 border border-gray-200 bg-white rounded-lg cursor-pointer hover:bg-orange-50 transition-colors test-type-label" data-value="sinav">
+                                <input type="radio" name="testType" value="sinav" class="text-orange-600 focus:ring-orange-500" onchange="updateTestTypeLabels()">
+                                <div>
+                                    <div class="font-semibold text-gray-900">📋 Sınav</div>
+                                    <div class="text-xs text-gray-500 mt-0.5">Ayrı bölümde gösterilir</div>
+                                </div>
+                            </label>
+                            <label class="flex items-center space-x-3 p-3 border border-gray-200 bg-white rounded-lg cursor-pointer hover:bg-green-50 transition-colors test-type-label" data-value="alistirma">
+                                <input type="radio" name="testType" value="alistirma" class="text-green-600 focus:ring-green-500" onchange="updateTestTypeLabels()">
+                                <div>
+                                    <div class="font-semibold text-gray-900">🔧 Alıştırma</div>
+                                    <div class="text-xs text-gray-500 mt-0.5">Liderlikte sayılmaz</div>
+                                </div>
+                            </label>
                         </div>
                     </div>
 
@@ -2830,11 +2896,18 @@ ON CONFLICT (tc_no) DO NOTHING;
             window.lastResults = results;
             window.lastBadges = badges;
 
-            if (document.getElementById('totalTests')) document.getElementById('totalTests').textContent = assignments?.length || 0;
-            if (document.getElementById('completedTests')) document.getElementById('completedTests').textContent = results?.length || 0;
+            // Sadece normal tipindeki testleri say (liderlik/istatistik için)
+            const normalAssignments = (assignments || []).filter(a => !a.tests?.test_type || a.tests.test_type === 'normal');
+            const normalResults = (results || []).filter(r => {
+                const assignment = (assignments || []).find(a => a.test_id === r.test_id);
+                return !assignment || !assignment.tests?.test_type || assignment.tests.test_type === 'normal';
+            });
+
+            if (document.getElementById('totalTests')) document.getElementById('totalTests').textContent = normalAssignments.length;
+            if (document.getElementById('completedTests')) document.getElementById('completedTests').textContent = normalResults.length;
             
-            const avgScore = results?.length > 0 
-                ? Math.round(results.reduce((sum, r) => sum + r.score, 0) / results.length)
+            const avgScore = normalResults.length > 0 
+                ? Math.round(normalResults.reduce((sum, r) => sum + r.score, 0) / normalResults.length)
                 : 0;
             if (document.getElementById('averageScore')) document.getElementById('averageScore').textContent = avgScore;
             if (document.getElementById('badgeCount')) document.getElementById('badgeCount').textContent = badges?.length || 0;
@@ -3079,17 +3152,8 @@ ON CONFLICT (tc_no) DO NOTHING;
                 const bResult = results?.find(r => r.test_id === b.test_id);
                 const aWaiting = !aResult;
                 const bWaiting = !bResult;
-
-                // Önce bekleyenler
                 if (aWaiting && !bWaiting) return -1;
                 if (!aWaiting && bWaiting) return 1;
-
-                // İkisi de bekleyense en son atanan üste
-                if (aWaiting && bWaiting) {
-                    return new Date(b.assigned_at) - new Date(a.assigned_at);
-                }
-
-                // İkisi de tamamlanmışsa tamamlanma tarihine göre (en yeni üste)
                 return new Date(b.assigned_at) - new Date(a.assigned_at);
             });
 
@@ -3115,130 +3179,116 @@ ON CONFLICT (tc_no) DO NOTHING;
                 return;
             }
 
-            filteredAssignments.forEach(assignment => {
-                const result = results?.find(r => r.test_id === assignment.test_id);
-                const isCompleted = !!result;
-                const passed = result && result.score >= 70;
-                const failed = result && result.score < 70;
+            // Testleri Normal ve Sınav olarak grupla
+            const normalTests = filteredAssignments.filter(a => !a.tests?.test_type || a.tests.test_type === 'normal' || a.tests.test_type === 'alistirma');
+            const sinavTests = filteredAssignments.filter(a => a.tests?.test_type === 'sinav');
 
-                // Determine status and styling
-                let statusBadge, statusColor, buttonContent, buttonAction, buttonClass;
-                
-                if (!isCompleted) {
-                    statusBadge = '🟡 Bekliyor';
-                    statusColor = 'bg-yellow-100 text-yellow-800 border-yellow-200';
-                    buttonContent = '<i class="fas fa-play mr-2"></i>Teste Başla';
-                    buttonAction = `onclick="startTest(${assignment.test_id})"`;
-                    buttonClass = 'px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-300 font-semibold';
-                } else if (passed) {
-                    statusBadge = '🟢 Başarılı';
-                    statusColor = 'bg-green-100 text-green-800 border-green-200';
-                    buttonContent = '<i class="fas fa-trophy mr-2"></i>Tamamlandı';
-                    buttonAction = '';
-                    buttonClass = 'px-6 py-3 bg-green-100 text-green-800 rounded-lg cursor-default font-semibold';
-                } else {
-                    statusBadge = '🔴 Düşük Puan';
-                    statusColor = 'bg-red-100 text-red-800 border-red-200';
-                    buttonContent = '<i class="fas fa-lock mr-2"></i>Tamamlandı';
-                    buttonAction = 'onclick="showRetakeMessage()"';
-                    buttonClass = 'px-6 py-3 bg-gray-400 text-white rounded-lg cursor-not-allowed font-semibold';
-                }
+            // Normal / Alıştırma testler bölümü
+            if (normalTests.length > 0) {
+                const sectionHeader = document.createElement('div');
+                sectionHeader.className = 'mb-3 mt-1';
+                sectionHeader.innerHTML = `<h3 class="text-base font-bold text-gray-700 flex items-center"><span class="w-2 h-5 bg-blue-500 rounded mr-2 inline-block"></span>📝 Testler <span class="ml-2 text-xs font-normal text-gray-400">(${normalTests.length} adet)</span></h3>`;
+                container.appendChild(sectionHeader);
+                normalTests.forEach(a => renderStudentTestCard(a, results, container));
+            }
 
-                const testCard = document.createElement('div');
-                testCard.className = `bg-white rounded-xl p-6 border-2 ${statusColor.includes('yellow') ? 'border-yellow-200 hover:border-yellow-300' : statusColor.includes('green') ? 'border-green-200' : 'border-red-200'} hover:shadow-lg transition-all duration-300`;
-                testCard.innerHTML = `
-                    <div class="flex justify-between items-start">
-                        <div class="flex-1">
-                            <!-- Test Header -->
-                            <div class="flex items-center mb-3">
-                                <h4 class="font-bold text-gray-900 text-lg">${assignment.tests.title}</h4>
-                                <span class="ml-3 px-3 py-1 text-sm font-medium rounded-full border ${statusColor}">
-                                    ${statusBadge}
-                                </span>
-                            </div>
-                            
-                            <p class="text-gray-600 mb-4">${assignment.tests.description || 'Test açıklaması bulunmuyor.'}</p>
-                            
-                            <!-- Test Info Grid -->
-                            <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
-                                <div class="bg-gray-50 rounded-lg p-3 text-center">
-                                    <div class="text-lg font-bold text-gray-800">${assignment.tests.time_limit}</div>
-                                    <div class="text-xs text-gray-600">Dakika</div>
-                                </div>
-                                <div class="bg-blue-50 rounded-lg p-3 text-center">
-                                    <div class="text-lg font-bold text-blue-800">${(() => {
-                                        try {
-                                            const questions = JSON.parse(assignment.tests.questions);
-                                            return Array.isArray(questions) ? questions.length : 7;
-                                        } catch (e) {
-                                            return 7;
-                                        }
-                                    })()}</div>
-                                    <div class="text-xs text-blue-600">Soru</div>
-                                </div>
-                                ${result ? `
-                                    <div class="bg-${result.score >= 70 ? 'green' : 'red'}-50 rounded-lg p-3 text-center">
-                                        <div class="text-lg font-bold text-${result.score >= 70 ? 'green' : 'red'}-800">${result.score}</div>
-                                        <div class="text-xs text-${result.score >= 70 ? 'green' : 'red'}-600">Puan</div>
-                                    </div>
-                                ` : `
-                                    <div class="bg-gray-50 rounded-lg p-3 text-center">
-                                        <div class="text-lg font-bold text-gray-800">-</div>
-                                        <div class="text-xs text-gray-600">Puan</div>
-                                    </div>
-                                `}
-                            </div>
-                            
-                            <!-- Additional Info -->
-                            <div class="text-sm text-gray-500">
-                                <div class="flex items-center mb-1">
-                                    <i class="fas fa-calendar mr-2"></i>
-                                    Atanma: ${new Date(assignment.assigned_at).toLocaleDateString('tr-TR')}
-                                </div>
-                                ${result ? `
-                                    <div class="flex items-center">
-                                        <i class="fas fa-check-circle mr-2"></i>
-                                        Tamamlanma: ${new Date(result.completed_at).toLocaleDateString('tr-TR')}
-                                    </div>
-                                ` : ''}
-                            </div>
-                            
-                            <!-- Warning for failed tests -->
-                            ${failed ? `
-                                <div class="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                                    <div class="flex items-center">
-                                        <i class="fas fa-exclamation-triangle text-red-600 mr-2"></i>
-                                        <div>
-                                            <p class="text-red-800 font-medium text-sm">Tekrar Çözme Hakkı</p>
-                                            <p class="text-red-700 text-xs mt-1">
-                                                Bu testi tekrar çözebilmek için öğretmeninizin size yeniden atama yapması gerekmektedir.
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            ` : ''}
-                        </div>
-                        
-                        <!-- Action Button -->
-                        <div class="ml-6 flex flex-col items-end">
-                            <button ${buttonAction} class="${buttonClass}">
-                                ${buttonContent}
-                            </button>
-                            
-                            ${!isCompleted ? `
-                                <div class="mt-2 text-xs text-gray-500 text-center">
-                                    <i class="fas fa-info-circle mr-1"></i>
-                                    Tek seferlik test
-                                </div>
-                            ` : ''}
-                        </div>
-                    </div>
-                `;
-                container.appendChild(testCard);
-            });
-            
-            // Update filter info
+            // Sınav testler bölümü
+            if (sinavTests.length > 0) {
+                const sinavHeader = document.createElement('div');
+                sinavHeader.className = 'mb-3 mt-5';
+                sinavHeader.innerHTML = `<h3 class="text-base font-bold text-gray-700 flex items-center"><span class="w-2 h-5 bg-orange-500 rounded mr-2 inline-block"></span>📋 Sınavlar <span class="ml-2 text-xs font-normal text-gray-400">(${sinavTests.length} adet)</span></h3>`;
+                container.appendChild(sinavHeader);
+                sinavTests.forEach(a => renderStudentTestCard(a, results, container));
+            }
+
             updateStudentTestFilterInfo(filteredAssignments.length, assignments.length);
+        }
+
+        function renderStudentTestCard(assignment, results, container) {
+            const result = results?.find(r => r.test_id === assignment.test_id);
+            const isCompleted = !!result;
+            const passed = result && result.score >= 70;
+            const failed = result && result.score < 70;
+
+            let statusBadge, statusColor, buttonContent, buttonAction, buttonClass;
+            if (!isCompleted) {
+                statusBadge = '🟡 Bekliyor';
+                statusColor = 'bg-yellow-100 text-yellow-800 border-yellow-200';
+                buttonContent = '<i class="fas fa-play mr-2"></i>Teste Başla';
+                buttonAction = `onclick="startTest(${assignment.test_id})"`;
+                buttonClass = 'px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-300 font-semibold';
+            } else if (passed) {
+                statusBadge = '🟢 Başarılı';
+                statusColor = 'bg-green-100 text-green-800 border-green-200';
+                buttonContent = '<i class="fas fa-trophy mr-2"></i>Tamamlandı';
+                buttonAction = '';
+                buttonClass = 'px-6 py-3 bg-green-100 text-green-800 rounded-lg cursor-default font-semibold';
+            } else {
+                statusBadge = '🔴 Düşük Puan';
+                statusColor = 'bg-red-100 text-red-800 border-red-200';
+                buttonContent = '<i class="fas fa-lock mr-2"></i>Tamamlandı';
+                buttonAction = 'onclick="showRetakeMessage()"';
+                buttonClass = 'px-6 py-3 bg-gray-400 text-white rounded-lg cursor-not-allowed font-semibold';
+            }
+
+            const testCard = document.createElement('div');
+            testCard.className = `bg-white rounded-xl p-6 border-2 ${statusColor.includes('yellow') ? 'border-yellow-200 hover:border-yellow-300' : statusColor.includes('green') ? 'border-green-200' : 'border-red-200'} hover:shadow-lg transition-all duration-300`;
+            testCard.innerHTML = `
+                <div class="flex justify-between items-start">
+                    <div class="flex-1">
+                        <div class="flex items-center flex-wrap gap-2 mb-3">
+                            <h4 class="font-bold text-gray-900 text-lg">${assignment.tests.title}</h4>
+                            ${getTestTypeBadge(assignment.tests.test_type)}
+                            <span class="px-3 py-1 text-sm font-medium rounded-full border ${statusColor}">${statusBadge}</span>
+                        </div>
+                        <p class="text-gray-600 mb-4">${assignment.tests.description || 'Test açıklaması bulunmuyor.'}</p>
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
+                            <div class="bg-gray-50 rounded-lg p-3 text-center">
+                                <div class="text-lg font-bold text-gray-800">${assignment.tests.time_limit}</div>
+                                <div class="text-xs text-gray-600">Dakika</div>
+                            </div>
+                            <div class="bg-blue-50 rounded-lg p-3 text-center">
+                                <div class="text-lg font-bold text-blue-800">${(() => { try { const q = JSON.parse(assignment.tests.questions); return Array.isArray(q) ? q.length : 7; } catch(e) { return 7; } })()}</div>
+                                <div class="text-xs text-blue-600">Soru</div>
+                            </div>
+                            ${result ? `
+                                <div class="bg-${result.score >= 70 ? 'green' : 'red'}-50 rounded-lg p-3 text-center">
+                                    <div class="text-lg font-bold text-${result.score >= 70 ? 'green' : 'red'}-800">${result.score}</div>
+                                    <div class="text-xs text-${result.score >= 70 ? 'green' : 'red'}-600">Puan</div>
+                                </div>
+                            ` : `
+                                <div class="bg-gray-50 rounded-lg p-3 text-center">
+                                    <div class="text-lg font-bold text-gray-800">-</div>
+                                    <div class="text-xs text-gray-600">Puan</div>
+                                </div>
+                            `}
+                        </div>
+                        <div class="text-sm text-gray-500">
+                            <div class="flex items-center mb-1">
+                                <i class="fas fa-calendar mr-2"></i>
+                                Atanma: ${new Date(assignment.assigned_at).toLocaleDateString('tr-TR')}
+                            </div>
+                            ${result ? `<div class="flex items-center"><i class="fas fa-check-circle mr-2"></i>Tamamlanma: ${new Date(result.completed_at).toLocaleDateString('tr-TR')}</div>` : ''}
+                        </div>
+                        ${failed ? `
+                            <div class="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                                <div class="flex items-center">
+                                    <i class="fas fa-exclamation-triangle text-red-600 mr-2"></i>
+                                    <div>
+                                        <p class="text-red-800 font-medium text-sm">Tekrar Çözme Hakkı</p>
+                                        <p class="text-red-700 text-xs mt-1">Bu testi tekrar çözebilmek için öğretmeninizin size yeniden atama yapması gerekmektedir.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                    <div class="ml-6 flex flex-col items-end">
+                        <button ${buttonAction} class="${buttonClass}">${buttonContent}</button>
+                        ${!isCompleted ? `<div class="mt-2 text-xs text-gray-500 text-center"><i class="fas fa-info-circle mr-1"></i>Tek seferlik test</div>` : ''}
+                    </div>
+                </div>
+            `;
+            container.appendChild(testCard);
         }
 
         // Start test with assignment validation
@@ -4597,26 +4647,26 @@ ON CONFLICT (tc_no) DO NOTHING;
         }
 
         function showTeacherTab(tabName) {
-            // Teacher tabs
-            const tabs = ['dashboard', 'tests', 'students', 'results', 'library', 'failedTests', 'dagitimTakibi'];
+            const tabs = ['dashboard', 'tests', 'students', 'results', 'library', 'failedTests', 'dagitimTakibi', 'sinavLiderligi'];
             tabs.forEach(tab => {
                 const tabButtonId = tab === 'dashboard' ? 'dashboardTab' : 
                                   tab === 'tests' ? 'testsManageTab' :
                                   tab === 'students' ? 'studentsManageTab' : 
                                   tab === 'results' ? 'resultsTab' : 
                                   tab === 'library' ? 'libraryTab' : 
-                                  tab === 'failedTests' ? 'failedTestsTab' : 'dagitimTakibiTab';
+                                  tab === 'failedTests' ? 'failedTestsTab' :
+                                  tab === 'dagitimTakibi' ? 'dagitimTakibiTab' : 'sinavLiderligiTab';
                 const tabContentId = tab === 'dashboard' ? 'dashboardContent' : 
                                    tab === 'tests' ? 'testsManageContent' :
                                    tab === 'students' ? 'studentsManageContent' : 
                                    tab === 'results' ? 'resultsContent' : 
                                    tab === 'library' ? 'libraryContent' : 
-                                   tab === 'failedTests' ? 'failedTestsContent' : 'dagitimTakibiContent';
+                                   tab === 'failedTests' ? 'failedTestsContent' :
+                                   tab === 'dagitimTakibi' ? 'dagitimTakibiContent' : 'sinavLiderligiContent';
                 
                 const tabButton = document.getElementById(tabButtonId);
                 const tabContent = document.getElementById(tabContentId);
                 
-                // Check if elements exist before manipulating them
                 if (tabButton && tabContent) {
                     if (tab === tabName) {
                         tabButton.classList.add('border-green-500', 'text-green-600');
@@ -4630,29 +4680,14 @@ ON CONFLICT (tc_no) DO NOTHING;
                 }
             });
 
-            // Load library data if library tab is selected
-            if (tabName === 'library') {
-                loadLibraryStudents();
-            }
-            
-            // Load podium data if dashboard tab is selected
+            if (tabName === 'library') loadLibraryStudents();
             if (tabName === 'dashboard') {
                 loadLeaderboard();
-                // Ogretmen paneli podyumunu yukle
-                setTimeout(() => {
-                    renderTeacherStarList();
-                }, 500);
+                setTimeout(() => { renderTeacherStarList(); }, 500);
             }
-            
-            // Load failed tests data if failedTests tab is selected
-            if (tabName === 'failedTests') {
-                loadFailedTestsList();
-            }
-
-            // Load dağıtım takibi
-            if (tabName === 'dagitimTakibi') {
-                dagitimTakibiYukle();
-            }
+            if (tabName === 'failedTests') loadFailedTestsList();
+            if (tabName === 'dagitimTakibi') dagitimTakibiYukle();
+            if (tabName === 'sinavLiderligi') loadSinavLeaderboard('sinav');
         }
 
         // Load tests list for teacher
@@ -4764,6 +4799,7 @@ ON CONFLICT (tc_no) DO NOTHING;
                         <div class="flex-1">
                             <div class="flex items-center mb-2">
                                 <h4 class="font-semibold text-gray-900 text-lg">${test.title}</h4>
+                                ${getTestTypeBadge(test.test_type)}
                             </div>
                             <p class="text-gray-600 text-sm mb-3">${test.description || ''}</p>
                             
@@ -7455,9 +7491,9 @@ ON CONFLICT (tc_no) DO NOTHING;
                                     <div class="text-xl font-bold text-yellow-700">${student.perfect_scores_count || 0} 💯</div>
                                     <div class="text-xs text-yellow-700 font-medium">Tam Puan</div>
                                 </div>
-                                <div class="bg-blue-50 rounded-lg p-3">
-                                    <div class="text-xl font-bold text-blue-700">${student.speed_bonuses_count || 0} ⚡</div>
-                                    <div class="text-xs text-blue-700 font-medium">Hız Bonusu</div>
+                                <div class="bg-purple-50 rounded-lg p-3">
+                                    <div class="text-xl font-bold text-purple-700">${student.harika_count || 0} ⭐</div>
+                                    <div class="text-xs text-purple-700 font-medium">Harika (90-99)</div>
                                 </div>
                             </div>
                         </div>
@@ -7494,6 +7530,10 @@ ON CONFLICT (tc_no) DO NOTHING;
                     <div class="text-sm text-blue-800 space-y-1">
                         <div><strong>Öncelik:</strong> Başarılı (70 puan ve üzeri) Test Sayısı</div>
                         <div><strong>Eşitlik Durumunda:</strong> Ortalama Puan</div>
+                        <div class="mt-2 pt-2 border-t border-blue-200 flex items-center gap-2">
+                            <span class="inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-200 text-blue-900 border border-blue-300">📝 Sadece Normal Testler</span>
+                            <span class="text-xs text-blue-700">Sınav ve Alıştırma testleri sayılmaz</span>
+                        </div>
                     </div>
                 </div>
             `;
@@ -7503,11 +7543,21 @@ ON CONFLICT (tc_no) DO NOTHING;
         // Güvenlik ağı olarak eski fonksiyonu yeniden adlandırarak saklayalım
         async function loadLeaderboardLegacy() {
             try {
-                // Eğer view yoksa, ham verilerden hesapla
-                const { data: results, error } = await supabase.from('test_results').select('*, students(name)');
+                // Sadece normal tipindeki testlerin sonuçlarını al
+                const { data: normalTests, error: ntError } = await supabase
+                    .from('tests')
+                    .select('id')
+                    .or('test_type.eq.normal,test_type.is.null');
+
+                const normalTestIds = (normalTests || []).map(t => t.id);
+
+                const { data: results, error } = await supabase
+                    .from('test_results')
+                    .select('*, students(name)')
+                    .in('test_id', normalTestIds.length > 0 ? normalTestIds : [0]);
+
                 if (error) throw error;
 
-                // Öğrenci bazlı grupla
                 const stats = {};
                 results.forEach(r => {
                     const id = r.student_id;
@@ -7524,10 +7574,9 @@ ON CONFLICT (tc_no) DO NOTHING;
                     successful_tests_count: s.successful
                 })).sort((a, b) => b.successful_tests_count - a.successful_tests_count || b.average_score - a.average_score);
 
-                // UI Güncelleme (Basitleştirilmiş)
                 const container = document.getElementById('leaderboardList');
                 if (container) {
-                    container.innerHTML = '<p class="text-center py-4 text-gray-500">Liderlik tablosu (Legacy Modu)</p>';
+                    container.innerHTML = '<p class="text-center py-4 text-gray-500">Liderlik tablosu (Legacy Modu — Sadece Normal Testler)</p>';
                     leaderboard.slice(0, 15).forEach((s, i) => {
                         const div = document.createElement('div');
                         div.className = 'p-4 bg-white border rounded-lg mb-2 flex justify-between items-center';
@@ -7540,10 +7589,203 @@ ON CONFLICT (tc_no) DO NOTHING;
             }
         }
 
-        // Modal functions
-        function showUploadTest() {
-            document.getElementById('uploadTestModal').classList.remove('hidden');
+        // ── Sınav & Alıştırma Liderlik Tablosu ────────────────────────────────
+        async function loadSinavLeaderboard(tip = 'sinav') {
+            const list = document.getElementById('sinavLiderList');
+            const yukleniyor = document.getElementById('sinavLiderYukleniyor');
+            const sinavBtn = document.getElementById('sinavLiderBtn');
+            const alistirmaBtn = document.getElementById('alistirmaLiderBtn');
+
+            if (!list) return;
+
+            // Buton stillerini güncelle
+            if (tip === 'sinav') {
+                sinavBtn.className = 'px-5 py-2 rounded-full text-sm font-semibold bg-orange-500 text-white shadow transition';
+                alistirmaBtn.className = 'px-5 py-2 rounded-full text-sm font-semibold bg-gray-100 text-gray-600 hover:bg-green-100 hover:text-green-700 transition';
+            } else {
+                alistirmaBtn.className = 'px-5 py-2 rounded-full text-sm font-semibold bg-green-500 text-white shadow transition';
+                sinavBtn.className = 'px-5 py-2 rounded-full text-sm font-semibold bg-gray-100 text-gray-600 hover:bg-orange-100 hover:text-orange-700 transition';
+            }
+
+            list.innerHTML = '';
+            if (yukleniyor) yukleniyor.classList.remove('hidden');
+
+            try {
+                // Bu tipteki testlerin ID'lerini al
+                const { data: testler } = await supabase
+                    .from('tests')
+                    .select('id, title')
+                    .eq('test_type', tip);
+
+                const testIds = (testler || []).map(t => t.id);
+
+                if (testIds.length === 0) {
+                    if (yukleniyor) yukleniyor.classList.add('hidden');
+                    list.innerHTML = `
+                        <div class="text-center py-12">
+                            <i class="fas fa-trophy text-6xl text-gray-200 mb-4"></i>
+                            <p class="text-gray-400 text-lg">${tip === 'sinav' ? 'Henüz sınav testi' : 'Henüz alıştırma testi'} bulunmuyor.</p>
+                            <p class="text-gray-300 text-sm mt-1">Test yüklerken tip seçmeyi unutmayın.</p>
+                        </div>`;
+                    return;
+                }
+
+                // Bu testlere ait sonuçları öğrencilerle birlikte çek
+                const { data: results } = await supabase
+                    .from('test_results')
+                    .select('*, students(name)')
+                    .in('test_id', testIds);
+
+                if (yukleniyor) yukleniyor.classList.add('hidden');
+
+                if (!results || results.length === 0) {
+                    list.innerHTML = `
+                        <div class="text-center py-12">
+                            <i class="fas fa-trophy text-6xl text-gray-200 mb-4"></i>
+                            <p class="text-gray-400 text-lg">Henüz sonuç bulunmuyor.</p>
+                        </div>`;
+                    return;
+                }
+
+                // Öğrenci bazlı grupla
+                const stats = {};
+                results.forEach(r => {
+                    const id = r.student_id;
+                    if (!stats[id]) {
+                        stats[id] = {
+                            student_id: id,
+                            student_name: r.students?.name || 'İsimsiz',
+                            scores: [],
+                            successful: 0,
+                            perfect: 0,
+                            harika: 0
+                        };
+                    }
+                    stats[id].scores.push(r.score);
+                    if (r.score >= 70) stats[id].successful++;
+                    if (r.score === 100) stats[id].perfect++;
+                    if (r.score >= 90 && r.score <= 99) stats[id].harika++;
+                });
+
+                const leaderboard = Object.values(stats)
+                    .map(s => ({
+                        ...s,
+                        average_score: Math.round(s.scores.reduce((a, b) => a + b, 0) / s.scores.length),
+                        successful_tests_count: s.successful,
+                        perfect_scores_count: s.perfect,
+                        harika_count: s.harika
+                    }))
+                    .sort((a, b) => b.successful_tests_count - a.successful_tests_count || b.average_score - a.average_score);
+
+                // Başlık
+                const tipRenk = tip === 'sinav' ? 'orange' : 'green';
+                const tipLabel = tip === 'sinav' ? '📋 Sınav' : '🔧 Alıştırma';
+                const headerDiv = document.createElement('div');
+                headerDiv.className = `mb-6 p-4 bg-${tipRenk}-50 rounded-xl border border-${tipRenk}-100`;
+                headerDiv.innerHTML = `
+                    <h3 class="text-lg font-bold text-gray-800 mb-2 flex items-center">
+                        <i class="fas fa-trophy text-${tipRenk}-500 mr-2"></i>${tipLabel} Liderlik Tablosu
+                    </h3>
+                    <div class="text-sm text-gray-600 space-y-1">
+                        <div><strong>Sıralama:</strong> Başarılı test sayısı (70 puan ve üzeri)</div>
+                        <div><strong>Eşitlikte:</strong> Ortalama puan</div>
+                        <div><strong>Toplam öğrenci:</strong> ${leaderboard.length}</div>
+                    </div>`;
+                list.appendChild(headerDiv);
+
+                // Kartlar
+                leaderboard.forEach((student, index) => {
+                    const position = index + 1;
+                    const avg = student.average_score;
+
+                    let performanceLevel, performanceIcon, performanceColor;
+                    if (avg >= 95) { performanceLevel = 'Mükemmel'; performanceIcon = '🔥'; performanceColor = 'text-red-600 bg-red-50'; }
+                    else if (avg >= 90) { performanceLevel = 'Harika'; performanceIcon = '⭐'; performanceColor = 'text-yellow-600 bg-yellow-50'; }
+                    else if (avg >= 80) { performanceLevel = 'İyi'; performanceIcon = '👍'; performanceColor = 'text-green-600 bg-green-50'; }
+                    else { performanceLevel = 'Gelişiyor'; performanceIcon = '📚'; performanceColor = 'text-blue-600 bg-blue-50'; }
+
+                    let medalColor, medalIcon;
+                    if (position === 1) { medalColor = 'bg-gradient-to-br from-yellow-400 to-yellow-600'; medalIcon = '👑'; }
+                    else if (position === 2) { medalColor = 'bg-gradient-to-br from-gray-300 to-gray-500'; medalIcon = '🥈'; }
+                    else if (position === 3) { medalColor = 'bg-gradient-to-br from-orange-400 to-orange-600'; medalIcon = '🥉'; }
+                    else { medalColor = 'bg-gradient-to-br from-blue-400 to-blue-600'; medalIcon = position.toString(); }
+
+                    const card = document.createElement('div');
+                    card.className = 'mb-4 p-5 rounded-xl border-2 bg-white border-gray-200 hover:border-gray-300 hover:shadow-lg transition-all duration-300';
+                    card.innerHTML = `
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-12 h-12 rounded-full ${medalColor} flex items-center justify-center text-white font-bold shadow-lg">${medalIcon}</div>
+                                <div>
+                                    <div class="flex items-center space-x-2">
+                                        <h4 class="font-bold text-lg text-gray-900">${student.student_name}</h4>
+                                    </div>
+                                    <div class="flex items-center space-x-3 mt-1">
+                                        <span class="px-2 py-1 rounded-full text-xs font-medium ${performanceColor}">${performanceIcon} ${performanceLevel}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-3xl font-bold ${avg >= 90 ? 'text-green-600' : 'text-blue-600'}">${avg}</div>
+                                <div class="text-sm text-gray-600 font-medium">Ortalama Puan</div>
+                            </div>
+                        </div>
+                        <div class="mt-4 pt-4 border-t border-gray-100">
+                            <div class="grid grid-cols-3 gap-3 text-center">
+                                <div class="bg-green-50 rounded-lg p-3 border-2 border-green-200">
+                                    <div class="text-xl font-bold text-green-700">${student.successful_tests_count} ✅</div>
+                                    <div class="text-xs text-green-700 font-medium">Başarılı Test</div>
+                                </div>
+                                <div class="bg-yellow-50 rounded-lg p-3">
+                                    <div class="text-xl font-bold text-yellow-700">${student.perfect_scores_count} 💯</div>
+                                    <div class="text-xs text-yellow-700 font-medium">Tam Puan</div>
+                                </div>
+                                <div class="bg-purple-50 rounded-lg p-3">
+                                    <div class="text-xl font-bold text-purple-700">${student.harika_count} ⭐</div>
+                                    <div class="text-xs text-purple-700 font-medium">Harika (90-99)</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    list.appendChild(card);
+                });
+
+            } catch (err) {
+                if (yukleniyor) yukleniyor.classList.add('hidden');
+                console.error('Sınav liderliği hatası:', err);
+                list.innerHTML = `<p class="text-red-500 text-center py-8">Yüklenirken hata oluştu: ${err.message}</p>`;
+            }
         }
+        // ──────────────────────────────────────────────────────────────────────
+
+        // ── Test Tipi Yardımcı Fonksiyonlar ────────────────────────────────────
+        function getTestTypeBadge(testType) {
+            const types = {
+                'normal':    { label: 'Normal',    icon: '📝', cls: 'bg-blue-100 text-blue-800 border-blue-200' },
+                'sinav':     { label: 'Sınav',     icon: '📋', cls: 'bg-orange-100 text-orange-800 border-orange-200' },
+                'alistirma': { label: 'Alıştırma', icon: '🔧', cls: 'bg-green-100 text-green-800 border-green-200' },
+                'deneme':    { label: 'Deneme',    icon: '🔬', cls: 'bg-purple-100 text-purple-800 border-purple-200' },
+            };
+            const t = types[testType] || types['normal'];
+            return `<span class="inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-full border ${t.cls} ml-2">${t.icon} ${t.label}</span>`;
+        }
+
+        function updateTestTypeLabels() {
+            document.querySelectorAll('.test-type-label').forEach(label => {
+                const val = label.dataset.value;
+                const radio = label.querySelector('input[type="radio"]');
+                if (radio && radio.checked) {
+                    label.classList.add('border-blue-400', 'bg-blue-50');
+                    label.classList.remove('border-gray-200', 'bg-white');
+                } else {
+                    label.classList.remove('border-blue-400', 'bg-blue-50');
+                    label.classList.add('border-gray-200', 'bg-white');
+                }
+            });
+        }
+        // ──────────────────────────────────────────────────────────────────────
+
+        
 
         function showAddStudent() {
             document.getElementById('addStudentModal').classList.remove('hidden');
@@ -7917,6 +8159,9 @@ Teknolojinin hızla geliştiği günümüzde, dijital kitaplar da popüler hale 
             // Get text display mode from form
             const textDisplayMode = document.querySelector('input[name="textDisplayMode"]:checked')?.value || 'first_page_only';
             
+            // Get test type from form
+            const testType = document.querySelector('input[name="testType"]:checked')?.value || 'normal';
+            
             // Prepare data for database
             const dbData = {
                 title: name.trim(),
@@ -7925,7 +8170,8 @@ Teknolojinin hızla geliştiği günümüzde, dijital kitaplar da popüler hale 
                 text_display_mode: testData.textDisplayMode || textDisplayMode,
                 time_limit: parseInt(testData.timeLimit || testData.time_limit || 30),
                 questions: JSON.stringify(testData.questions),
-                created_by: currentUser?.id || null
+                created_by: currentUser?.id || null,
+                test_type: testType
             };
             
             console.log('Veritabanına gönderilecek veri:', dbData);
@@ -7954,6 +8200,9 @@ Teknolojinin hızla geliştiği günümüzde, dijital kitaplar da popüler hale 
                 document.getElementById('testFile').value = '';
                 document.getElementById('selectedFileName').classList.add('hidden');
                 document.getElementById('jsonValidationResult').classList.add('hidden');
+                // Reset test type to default
+                const normalRadio = document.querySelector('input[name="testType"][value="normal"]');
+                if (normalRadio) { normalRadio.checked = true; updateTestTypeLabels(); }
                 
             } catch (error) {
                 console.error('Test yükleme hatası:', error);
@@ -10421,7 +10670,7 @@ Teknolojinin hızla geliştiği günümüzde, dijital kitaplar da popüler hale 
 
                 // Create modal HTML (student result view style)
                 const modalHTML = `
-                    <div id="detailedResultsModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 overflow-y-auto">
+                    <div id="detailedResultsModal" class="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto" style="z-index:1100;">
                         <div class="min-h-screen flex items-center justify-center p-4">
                             <div class="bg-white rounded-lg shadow-xl max-w-3xl w-full my-8">
                                 <!-- Header -->
@@ -12535,18 +12784,34 @@ async function showAnalysisPanel(testId) {
         // Sonuçları çek
         const { data: results, error: resultsError } = await supabase
             .from('test_results')
-            .select('*, students(name, id)')
+            .select('*')
             .eq('test_id', testId)
             .order('completed_at', { ascending: false });
             
         if (resultsError) throw resultsError;
+
+        // Öğrenci bilgilerini ayrı çek (join güvenilmez olabilir)
+        const studentIds = [...new Set((results || []).map(r => r.student_id).filter(Boolean))];
+        let studentMap = {};
+        if (studentIds.length > 0) {
+            const { data: students } = await supabase
+                .from('students')
+                .select('id, name')
+                .in('id', studentIds);
+            (students || []).forEach(s => { studentMap[s.id] = s; });
+        }
+        // results'a students bilgisini ekle
+        const enrichedResults = (results || []).map(r => ({
+            ...r,
+            students: studentMap[r.student_id] || { id: r.student_id, name: 'İsimsiz' }
+        }));
         
         // Veriyi global state'e kaydet
         currentAnalysisData = {
             test: test,
-            results: results || [],
+            results: enrichedResults,
             questions: JSON.parse(test.questions || '[]'),
-            filteredResults: results || []
+            filteredResults: enrichedResults
         };
         
         // Modalı render et
@@ -12584,24 +12849,55 @@ function renderAnalysisPanel() {
 function renderStudentList() {
     const { results } = currentAnalysisData;
     const studentList = document.getElementById('analysisStudentList');
-    
-    studentList.innerHTML = results.map((result, idx) => {
-        const answers = JSON.parse(result.answers || '{}');
+
+    if (!results || results.length === 0) {
+        studentList.innerHTML = '<p style="color:#aaa; font-size:13px; padding:12px 0;">Henüz katılımcı yok.</p>';
+        return;
+    }
+
+    studentList.innerHTML = results.map((result) => {
+        let answers = {};
+        try { answers = typeof result.answers === 'string' ? JSON.parse(result.answers) : (result.answers || {}); } catch(e) {}
         const correctCount = answers.correctAnswers || 0;
         const totalQuestions = answers.totalQuestions || 0;
         const wrongCount = totalQuestions - correctCount;
-        
+        const passed = result.score >= 70;
+        const scoreColor = passed ? '#22c55e' : '#ef4444';
+
         return `
-            <div class="student-item" title="${result.students?.name}">
-                <div class="student-name">${result.students?.name || 'İsimsiz'}</div>
+            <div class="student-item" 
+                 style="cursor:pointer; border-left: 3px solid ${scoreColor}; transition: background 0.15s;"
+                 title="${result.students?.name} — Detaylı sonuçlar için tıkla"
+                 onmouseover="this.style.background='rgba(255,255,255,0.15)'"
+                 onmouseout="this.style.background=''"
+                 onclick="analizdenDetayAc(${result.id}, ${result.students?.id || 'null'}, '${(result.students?.name || 'İsimsiz').replace(/'/g, "\'")}', '${currentAnalysisData.test.title.replace(/'/g, "\'")}')">
+                <div class="student-name" style="display:flex; align-items:center; gap:6px;">
+                    <i class="fas fa-user-circle" style="opacity:0.6; font-size:11px;"></i>
+                    ${result.students?.name || 'İsimsiz'}
+                </div>
                 <div class="student-stats">
-                    <span class="stat-badge stat-score">${result.score}%</span>
+                    <span class="stat-badge stat-score" style="background:${passed ? 'rgba(34,197,94,0.25)' : 'rgba(239,68,68,0.25)'}; color:${scoreColor};">${result.score}%</span>
                     <span class="stat-badge stat-correct">✓ ${correctCount}</span>
                     <span class="stat-badge stat-wrong">✗ ${wrongCount}</span>
+                </div>
+                <div style="font-size:10px; opacity:0.5; margin-top:3px; text-align:right;">
+                    <i class="fas fa-mouse-pointer" style="font-size:9px;"></i> Detay
                 </div>
             </div>
         `;
     }).join('');
+}
+
+// Analiz panelinden detaylı sonuç aç
+async function analizdenDetayAc(resultId, studentId, studentName, testTitle) {
+    try {
+        // Önce detaylı modalı oluştur (showDetailedResults içi)
+        await showDetailedResults(resultId, studentId, studentName, testTitle);
+        // detailedResultsModal analiz modalının üstünde z-index:1100 ile görünür
+    } catch(e) {
+        console.error('[AnalizDetay] hata:', e);
+        showNotification('Detay yüklenemedi: ' + e.message, 'error');
+    }
 }
 
 function renderQuestionsAnalysis() {
@@ -13548,5 +13844,33 @@ function dagitimDışaAktar() {
     URL.revokeObjectURL(url);
 }
 
-</script></body>
+</script>
+
+<script>
+    /* ── Global olarak erişilmesi gereken fonksiyonlar ── */
+    function showUploadTest() {
+        document.getElementById('uploadTestModal').classList.remove('hidden');
+    }
+    function showAddStudent() {
+        var m = document.getElementById('addStudentModal');
+        if (m) m.classList.remove('hidden');
+    }
+    function closeModal(modalId) {
+        var m = document.getElementById(modalId);
+        if (m) m.classList.add('hidden');
+    }
+    function updateTestTypeLabels() {
+        document.querySelectorAll('.test-type-label').forEach(function(label) {
+            var radio = label.querySelector('input[type="radio"]');
+            if (radio && radio.checked) {
+                label.classList.add('border-blue-400', 'bg-blue-50');
+                label.classList.remove('border-gray-200', 'bg-white');
+            } else {
+                label.classList.remove('border-blue-400', 'bg-blue-50');
+                label.classList.add('border-gray-200', 'bg-white');
+            }
+        });
+    }
+</script>
+</body>
 </html>
