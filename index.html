@@ -339,7 +339,7 @@
 </head>
 <body class="bg-gray-50">
     <!-- Supabase Configuration -->
-    <script>
+    <script data-cfasync="false">
         // Supabase bağlantısı - Gerçek bilgileriniz
         const SUPABASE_URL = 'https://gmzdeptaipfacmfdexnd.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdtemRlcHRhaXBmYWNtZmRleG5kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3Mzk2NzAsImV4cCI6MjA3MjMxNTY3MH0.uFenHsXWA0esrAoAYJ3MK6UoEW-8uNOc8CzYrJVyt5k';
@@ -635,22 +635,31 @@ let impersonatedStudent = null;
                         </div>
 
                         <!-- Filtre Butonları -->
-                        <div class="flex flex-wrap gap-3">
+                        <div class="flex flex-wrap gap-2">
                             <button onclick="setStudentTestFilter('all')" id="filterAllStudentTests" 
-                                    class="student-test-filter-btn px-4 py-2 text-sm rounded-lg bg-blue-100 text-blue-800 border border-blue-200 font-medium">
+                                    class="student-test-filter-btn px-3 py-2 text-sm rounded-lg bg-blue-100 text-blue-800 border border-blue-200 font-medium">
                                 <i class="fas fa-list mr-1"></i>Tümü
                             </button>
                             <button onclick="setStudentTestFilter('waiting')" id="filterWaitingStudentTests" 
-                                    class="student-test-filter-btn px-4 py-2 text-sm rounded-lg bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200">
+                                    class="student-test-filter-btn px-3 py-2 text-sm rounded-lg bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200">
                                 🟡 Bekliyor
                             </button>
                             <button onclick="setStudentTestFilter('successful')" id="filterSuccessfulStudentTests" 
-                                    class="student-test-filter-btn px-4 py-2 text-sm rounded-lg bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200">
+                                    class="student-test-filter-btn px-3 py-2 text-sm rounded-lg bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200">
                                 🟢 Başarılı
                             </button>
                             <button onclick="setStudentTestFilter('low_score')" id="filterLowScoreStudentTests" 
-                                    class="student-test-filter-btn px-4 py-2 text-sm rounded-lg bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200">
+                                    class="student-test-filter-btn px-3 py-2 text-sm rounded-lg bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200">
                                 🔴 Düşük Puan
+                            </button>
+                            <div class="w-px bg-gray-200 self-stretch mx-1"></div>
+                            <button onclick="setStudentTestFilter('alistirma')" id="filterAlistirmaStudentTests" 
+                                    class="student-test-filter-btn px-3 py-2 text-sm rounded-lg bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200">
+                                🔧 Alıştırma
+                            </button>
+                            <button onclick="setStudentTestFilter('sinav')" id="filterSinavStudentTests" 
+                                    class="student-test-filter-btn px-3 py-2 text-sm rounded-lg bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200">
+                                📋 Sınav
                             </button>
                         </div>
                         
@@ -925,6 +934,9 @@ let impersonatedStudent = null;
                         </button>
                         <button onclick="showTeacherTab('sinavLiderligi')" id="sinavLiderligiTab" class="teacher-tab-button py-4 px-6 border-b-2 border-transparent text-gray-500 hover:text-gray-700">
                             <i class="fas fa-medal mr-2"></i>Sınav Liderliği
+                        </button>
+                        <button onclick="showTeacherTab('topluYukleme')" id="topluYuklemeTab" class="teacher-tab-button py-4 px-6 border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-file-excel mr-2"></i>Toplu Sonuç Yükle
                         </button>
                     </nav>
                 </div>
@@ -1319,8 +1331,13 @@ let impersonatedStudent = null;
                         <h3 class="text-lg font-semibold text-gray-900 mb-4">
                             <i class="fas fa-times-circle text-red-600 mr-2"></i>Başarısız Testler
                         </h3>
-                        <p class="text-gray-600 text-sm mb-4">
+                        <p class="text-gray-600 text-sm mb-2">
                             Öğrencilerin başarısız olduğu testler aşağıda listelenmektedir. Tekrar atama butonu ile bu testleri tekrar atayabilirsiniz.
+                        </p>
+                        <p class="text-xs text-gray-400 flex items-center gap-1">
+                            <i class="fas fa-info-circle"></i>
+                            Yalnızca <strong class="text-gray-500">📝 Normal</strong> tipindeki testler gösterilir.
+                            🔧 Alıştırma ve 📋 Sınav testleri bu listede yer almaz.
                         </p>
                     </div>
 
@@ -1520,6 +1537,104 @@ let impersonatedStudent = null;
 
                     <!-- Liste -->
                     <div id="sinavLiderList" class="space-y-4"></div>
+                </div>
+
+                <!-- Toplu Sonuç Yükleme Content -->
+                <div id="topluYuklemeContent" class="hidden p-6">
+                    <div class="max-w-4xl mx-auto">
+
+                        <!-- Başlık -->
+                        <div class="mb-6">
+                            <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                                <i class="fas fa-file-excel text-green-600"></i> Toplu Optik Form Sonuç Yükleme
+                            </h2>
+                            <p class="text-sm text-gray-500 mt-1">Excel dosyasını seçin; her sayfa ayrı bir ders olarak işlenir.</p>
+                        </div>
+
+                        <!-- ADIM 1: Dosya Seç -->
+                        <div class="bg-white border border-gray-200 rounded-2xl p-6 mb-5 shadow-sm">
+                            <h3 class="font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                                <span class="w-6 h-6 bg-green-500 text-white rounded-full flex items-center justify-center text-xs font-bold">1</span>
+                                Excel Dosyası Seç
+                            </h3>
+                            <p class="text-xs text-gray-400 mb-4">Sütunlar: <strong>Numara, Ad Soyad, Sınıf, D, Y, B, Net, Puan, Sıralama</strong> (ilk 5 satırda başlık aranır)</p>
+                            <div class="flex items-center gap-4 flex-wrap">
+                                <label id="bulkFileLabel" class="cursor-pointer inline-flex items-center gap-2 px-5 py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-xl transition select-none">
+                                    <i class="fas fa-upload"></i> Excel Seç (.xlsx)
+                                    <input type="file" id="bulkExcelInput" accept=".xlsx,.xls" class="hidden">
+                                </label>
+                                <span id="bulkFileNameLabel" class="text-sm text-gray-400 italic">Dosya seçilmedi</span>
+                                <span id="bulkXlsxStatus" class="text-xs text-gray-300 italic">XLSX yükleniyor...</span>
+                            </div>
+                        </div>
+
+                        <!-- ADIM 2: Önizleme -->
+                        <div id="bulk2" class="hidden bg-white border border-gray-200 rounded-2xl p-6 mb-5 shadow-sm">
+                            <h3 class="font-semibold text-gray-700 mb-4 flex items-center gap-2">
+                                <span class="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold">2</span>
+                                Önizleme &amp; Eşleştirme
+                            </h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-600 mb-1">Test/Sınav Adı <span class="text-red-500">*</span></label>
+                                    <input type="text" id="bulk2TestName" placeholder="Örn: 25. Hafta Değerlendirme"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-400 outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-600 mb-1">Test Tipi</label>
+                                    <select id="bulk2TestType" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-400 outline-none">
+                                        <option value="sinav">📋 Sınav (Sınav Liderliğinde Görünür)</option>
+                                        <option value="normal">📝 Normal</option>
+                                        <option value="alistirma">🔧 Alıştırma</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <!-- Sayfa sekmeleri -->
+                            <div id="bulk2Tabs" class="flex gap-2 flex-wrap mb-3"></div>
+                            <!-- Tablo -->
+                            <div class="overflow-x-auto rounded-xl border border-gray-100 mb-4">
+                                <table class="w-full text-sm">
+                                    <thead id="bulk2Head" class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white"></thead>
+                                    <tbody id="bulk2Body" class="divide-y divide-gray-100"></tbody>
+                                </table>
+                            </div>
+                            <!-- Eşleştirme özeti -->
+                            <div id="bulk2Match" class="hidden p-3 rounded-xl bg-blue-50 border border-blue-200 text-sm mb-4">
+                                <p class="font-semibold text-blue-700 mb-1"><i class="fas fa-info-circle mr-1"></i>Öğrenci Eşleştirme</p>
+                                <div id="bulk2MatchContent"></div>
+                            </div>
+                            <!-- Yükle butonu -->
+                            <div class="flex gap-3 flex-wrap">
+                                <button id="bulk2UploadBtn" onclick="bulk2Run()"
+                                    class="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition shadow">
+                                    <i class="fas fa-cloud-upload-alt"></i> Tüm Sayfaları Yükle
+                                </button>
+                                <button onclick="bulk2Reset()"
+                                    class="inline-flex items-center gap-2 px-5 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition">
+                                    <i class="fas fa-redo"></i> Sıfırla
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- İlerleme -->
+                        <div id="bulk2Progress" class="hidden bg-white border border-gray-200 rounded-2xl p-6 mb-5 shadow-sm">
+                            <h3 class="font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                                <i class="fas fa-spinner fa-spin text-indigo-500"></i> Yükleniyor...
+                            </h3>
+                            <div class="w-full bg-gray-200 rounded-full h-3 mb-2">
+                                <div id="bulk2Bar" class="bg-indigo-500 h-3 rounded-full transition-all duration-500" style="width:0%"></div>
+                            </div>
+                            <p id="bulk2ProgressText" class="text-sm text-gray-500 mb-3">Hazırlanıyor...</p>
+                            <div id="bulk2Log" class="max-h-48 overflow-y-auto text-xs font-mono bg-gray-50 rounded-lg p-3 space-y-0.5"></div>
+                        </div>
+
+                        <!-- Sonuç -->
+                        <div id="bulk2Result" class="hidden bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+                            <h3 id="bulk2ResultTitle" class="font-semibold text-gray-800 mb-3"></h3>
+                            <div id="bulk2ResultBody" class="text-sm text-gray-600"></div>
+                        </div>
+
+                    </div>
                 </div>
 
             </div>
@@ -2180,7 +2295,7 @@ let impersonatedStudent = null;
         </div>
     </div>
 
-    <script>
+    <script data-cfasync="false">
         // Initialize the application
         document.addEventListener('DOMContentLoaded', async function() {
             console.log('Türkçe Okuma Anlama Test Sistemi yüklendi!');
@@ -3133,6 +3248,16 @@ ON CONFLICT (tc_no) DO NOTHING;
                         return result && result.score < 70;
                     });
                     break;
+                case 'alistirma':
+                    filteredAssignments = assignments.filter(assignment =>
+                        assignment.tests?.test_type === 'alistirma'
+                    );
+                    break;
+                case 'sinav':
+                    filteredAssignments = assignments.filter(assignment =>
+                        assignment.tests?.test_type === 'sinav'
+                    );
+                    break;
                 case 'all':
                 default:
                     break;
@@ -3159,10 +3284,12 @@ ON CONFLICT (tc_no) DO NOTHING;
 
             if (filteredAssignments.length === 0) {
                 const filterMessages = {
-                    'waiting': 'Bekleyen test bulunmuyor.',
+                    'waiting':    'Bekleyen test bulunmuyor.',
                     'successful': 'Başarılı test bulunmuyor.',
-                    'low_score': 'Düşük puan alan test bulunmuyor.',
-                    'all': 'Test bulunmuyor.'
+                    'low_score':  'Düşük puan alan test bulunmuyor.',
+                    'alistirma':  'Alıştırma testi bulunmuyor.',
+                    'sinav':      'Sınav testi bulunmuyor.',
+                    'all':        'Test bulunmuyor.'
                 };
                 const msg = searchTerm
                     ? `"${searchTerm}" ile eşleşen test bulunamadı.`
@@ -3204,91 +3331,523 @@ ON CONFLICT (tc_no) DO NOTHING;
             updateStudentTestFilterInfo(filteredAssignments.length, assignments.length);
         }
 
+
+        // Öğrenci kendi sonucunu görüntüler
+        async function showStudentOwnResult(resultId) {
+            try {
+                showNotification('Sonuç yükleniyor...', 'info');
+
+                const { data: result, error: rErr } = await supabase
+                    .from('test_results').select('*').eq('id', resultId).single();
+                if (rErr) throw rErr;
+
+                const { data: test, error: tErr } = await supabase
+                    .from('tests').select('*').eq('id', result.test_id).single();
+                if (tErr) throw tErr;
+
+                const answersData = result.answers ? JSON.parse(result.answers) : {};
+                const isOptikForm = answersData.kaynak === 'optik_form';
+                const score = result.score;
+                const passed = score >= 70;
+
+                let soruDetayHTML = '';
+
+                if (isOptikForm) {
+                    // ── Optik form: soruAnaliz grid ──────────────────────────
+                    const soruAnaliz = answersData.soruAnaliz || [];
+                    const dogru  = answersData.dogru  || 0;
+                    const yanlis = answersData.yanlis || 0;
+                    const bos    = answersData.bos    || 0;
+                    const total  = soruAnaliz.length || (dogru + yanlis + bos);
+
+                    const istatHTML =
+                        '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;">' +
+                        '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px;text-align:center;">' +
+                            '<div style="font-size:24px;font-weight:700;color:#16a34a;">' + dogru + '</div>' +
+                            '<div style="font-size:11px;color:#15803d;">Doğru</div></div>' +
+                        '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:12px;text-align:center;">' +
+                            '<div style="font-size:24px;font-weight:700;color:#dc2626;">' + yanlis + '</div>' +
+                            '<div style="font-size:11px;color:#b91c1c;">Yanlış</div></div>' +
+                        '<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:12px;text-align:center;">' +
+                            '<div style="font-size:24px;font-weight:700;color:#6b7280;">' + bos + '</div>' +
+                            '<div style="font-size:11px;color:#4b5563;">Boş</div></div>' +
+                        '</div>';
+
+                    let gridHTML = '';
+                    if (soruAnaliz.length > 0) {
+                        gridHTML = '<p style="font-size:11px;color:#6b7280;margin-bottom:8px;">🟢 Doğru &nbsp; 🔴 Yanlış (senin cevabın) &nbsp; ⚪ Boş</p>' +
+                            '<div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px;">' +
+                            soruAnaliz.map(function(s) {
+                                var bg = s.sonuc === 'dogru' ? '#22c55e' : s.sonuc === 'yanlis' ? '#ef4444' : '#d1d5db';
+                                var label = s.sonuc === 'dogru' ? '✓' : s.sonuc === 'yanlis' ? (s.ogrenciCevap || '✗') : '—';
+                                var tip = s.sonuc === 'dogru'
+                                    ? ('Soru ' + s.soruNo + ': Doğru (' + s.dogruCevap + ')')
+                                    : s.sonuc === 'yanlis'
+                                    ? ('Soru ' + s.soruNo + ': Sen ' + s.ogrenciCevap + ' işaretledin, doğrusu ' + s.dogruCevap)
+                                    : ('Soru ' + s.soruNo + ': Boş bıraktın');
+                                return '<div title="' + tip + '" style="width:36px;height:36px;border-radius:8px;background:' + bg + ';color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;cursor:default;box-shadow:0 1px 3px rgba(0,0,0,.15);">' + label + '</div>';
+                            }).join('') +
+                            '</div>';
+
+                        const hatalar = soruAnaliz.filter(function(s) { return s.sonuc !== 'dogru'; });
+                        if (hatalar.length > 0) {
+                            gridHTML += '<p style="font-size:11px;font-weight:700;color:#6b7280;margin-bottom:6px;">Hatalı / Boş Sorular:</p>' +
+                                hatalar.map(function(s) {
+                                    var isY = s.sonuc === 'yanlis';
+                                    return '<div style="display:flex;align-items:center;gap:10px;padding:7px 12px;border-radius:8px;margin-bottom:4px;' +
+                                        (isY ? 'background:#fef2f2;border:1px solid #fecaca;' : 'background:#f9fafb;border:1px solid #e5e7eb;') + '">' +
+                                        '<span>' + (isY ? '❌' : '⬜') + '</span>' +
+                                        '<span style="font-size:13px;font-weight:600;color:#374151;min-width:60px;">Soru ' + s.soruNo + '</span>' +
+                                        '<span style="font-size:13px;color:#4b5563;">' +
+                                            (isY ? ('Sen <strong>' + s.ogrenciCevap + '</strong> işaretledin, doğrusu <strong>' + s.dogruCevap + '</strong>') : 'Boş bıraktın') +
+                                        '</span></div>';
+                                }).join('');
+                        } else {
+                            gridHTML += '<p style="font-size:13px;color:#16a34a;font-weight:600;">🎯 Tüm soruları doğru yaptın!</p>';
+                        }
+                    } else {
+                        gridHTML = '<p style="font-size:13px;color:#9ca3af;text-align:center;padding:12px 0;">Soru detayı bulunamadı.</p>';
+                    }
+
+                    soruDetayHTML =
+                        '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:12px;">' +
+                            '<h4 style="font-size:14px;font-weight:700;color:#1f2937;margin-bottom:12px;display:flex;align-items:center;gap:8px;">' +
+                                '<i class="fas fa-list-check" style="color:#6366f1;"></i> Soru Analizi</h4>' +
+                            istatHTML + gridHTML +
+                        '</div>';
+
+                } else {
+                    // ── Normal test: soru bazlı detay ────────────────────────
+                    let questions = [];
+                    try { questions = JSON.parse(test.questions); } catch(e) {}
+                    let studentAnswers = [];
+                    if (answersData.answers) {
+                        if (Array.isArray(answersData.answers)) {
+                            studentAnswers = answersData.answers;
+                        } else {
+                            for (let i = 0; i < questions.length; i++) {
+                                studentAnswers[i] = answersData.answers[i] !== undefined ? answersData.answers[i] : answersData.answers[String(i)];
+                            }
+                        }
+                    } else if (Array.isArray(answersData)) {
+                        studentAnswers = answersData;
+                    } else {
+                        for (let i = 0; i < questions.length; i++) {
+                            studentAnswers[i] = answersData[i] !== undefined ? answersData[i] : answersData[String(i)];
+                        }
+                    }
+
+                    const qRows = questions.map((question, index) => {
+                        const userAnswer = studentAnswers[index];
+                        const correctAnswer = question.correct !== undefined ? question.correct : question.correct_answer;
+                        let isCorrect = false, userDisp = '', correctDisp = '';
+
+                        if (question.type === 'multiple_choice') {
+                            isCorrect = parseInt(userAnswer) === parseInt(correctAnswer);
+                            userDisp = userAnswer !== undefined && question.options && question.options[userAnswer]
+                                ? String.fromCharCode(65 + parseInt(userAnswer)) + ') ' + question.options[userAnswer] : 'Cevaplanmadı';
+                            correctDisp = question.options && question.options[correctAnswer]
+                                ? String.fromCharCode(65 + parseInt(correctAnswer)) + ') ' + question.options[correctAnswer] : '';
+                        } else if (question.type === 'true_false') {
+                            const ub = (userAnswer === 'true' || userAnswer === true);
+                            const cb = (correctAnswer === 'true' || correctAnswer === true);
+                            isCorrect = ub === cb && userAnswer !== undefined && userAnswer !== null && userAnswer !== '';
+                            userDisp = userAnswer === true || userAnswer === 'true' ? 'Doğru' : userAnswer === false || userAnswer === 'false' ? 'Yanlış' : 'Cevaplanmadı';
+                            correctDisp = cb ? 'Doğru' : 'Yanlış';
+                        } else if (question.type === 'fill_blank') {
+                            if (!userAnswer && userAnswer !== 0) { userDisp = 'Cevaplanmadı'; correctDisp = String(correctAnswer); }
+                            else if (question.options && !isNaN(parseInt(userAnswer)) && question.options[parseInt(userAnswer)] !== undefined) {
+                                isCorrect = parseInt(userAnswer) === parseInt(correctAnswer);
+                                userDisp = question.options[parseInt(userAnswer)];
+                                correctDisp = question.options[parseInt(correctAnswer)] || String(correctAnswer);
+                            } else {
+                                isCorrect = String(userAnswer).trim().toLowerCase() === String(correctAnswer).trim().toLowerCase();
+                                userDisp = String(userAnswer);
+                                correctDisp = String(correctAnswer);
+                            }
+                        } else {
+                            isCorrect = userAnswer && String(userAnswer).toLowerCase().trim() === String(correctAnswer).toLowerCase().trim();
+                            userDisp = userAnswer || 'Cevaplanmadı';
+                            correctDisp = String(correctAnswer);
+                        }
+
+                        return '<div style="border:2px solid ' + (isCorrect ? '#bbf7d0' : '#fecaca') + ';background:' + (isCorrect ? '#f0fdf4' : '#fef2f2') + ';border-radius:10px;padding:12px;margin-bottom:8px;">' +
+                            '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">' +
+                                '<div style="flex:1;">' +
+                                    '<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">' +
+                                        '<span style="font-size:16px;">' + (isCorrect ? '✅' : '❌') + '</span>' +
+                                        '<span style="font-weight:700;color:#111827;">Soru ' + (index + 1) + '</span>' +
+                                    '</div>' +
+                                    '<p style="font-size:13px;color:#374151;margin-bottom:8px;">' + (question.text || question.question || '') + '</p>' +
+                                    '<div style="background:#fff;border-radius:8px;padding:10px;border:1px solid #e5e7eb;">' +
+                                        '<div style="display:flex;justify-content:space-between;font-size:13px;">' +
+                                            '<span style="font-weight:600;color:#374151;">📝 Senin cevabın:</span>' +
+                                            '<span style="font-weight:700;color:' + (isCorrect ? '#15803d' : '#b91c1c') + ';">' + userDisp + '</span>' +
+                                        '</div>' +
+                                        (!isCorrect ? '<div style="display:flex;justify-content:space-between;font-size:13px;margin-top:6px;padding-top:6px;border-top:1px solid #e5e7eb;">' +
+                                            '<span style="font-weight:600;color:#374151;">✓ Doğru cevap:</span>' +
+                                            '<span style="font-weight:700;color:#15803d;">' + correctDisp + '</span>' +
+                                        '</div>' : '') +
+                                    '</div>' +
+                                '</div>' +
+                            '</div>' +
+                        '</div>';
+                    }).join('');
+
+                    soruDetayHTML =
+                        '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:12px;">' +
+                            '<h4 style="font-size:14px;font-weight:700;color:#1f2937;margin-bottom:12px;display:flex;align-items:center;gap:8px;">' +
+                                '<i class="fas fa-list-check" style="color:#6366f1;"></i> Soru Bazında Detay (' + questions.length + ' soru)</h4>' +
+                            '<div style="max-height:400px;overflow-y:auto;">' + qRows + '</div>' +
+                        '</div>';
+                }
+
+                // Modal oluştur
+                const passed2 = score >= 70;
+                const modalHTML = `
+                    <div id="studentOwnResultModal" style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;overflow-y:auto;">
+                        <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px;">
+                            <div style="background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.2);max-width:680px;width:100%;margin:24px 0;">
+                                <!-- Başlık -->
+                                <div style="padding:20px 24px;border-bottom:1px solid #e5e7eb;background:linear-gradient(to right,#eff6ff,#f5f3ff);border-radius:16px 16px 0 0;display:flex;justify-content:space-between;align-items:flex-start;">
+                                    <div>
+                                        <h3 style="font-size:18px;font-weight:700;color:#111827;margin-bottom:4px;">
+                                            <i class="fas fa-clipboard-check" style="color:#6366f1;margin-right:8px;"></i>Test Sonucun
+                                        </h3>
+                                        <p style="font-size:13px;color:#6b7280;">${test.title}</p>
+                                    </div>
+                                    <button onclick="document.getElementById('studentOwnResultModal').remove()" style="background:none;border:none;cursor:pointer;font-size:22px;color:#9ca3af;line-height:1;">✕</button>
+                                </div>
+                                <!-- İçerik -->
+                                <div style="padding:20px 24px;max-height:75vh;overflow-y:auto;">
+                                    <!-- Puan özet -->
+                                    <div style="text-align:center;margin-bottom:20px;">
+                                        <div style="width:80px;height:80px;border-radius:50%;background:${passed2 ? 'linear-gradient(135deg,#4ade80,#16a34a)' : 'linear-gradient(135deg,#fb923c,#ef4444)'};display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">
+                                            <i class="fas ${passed2 ? 'fa-trophy' : 'fa-exclamation-triangle'}" style="font-size:28px;color:#fff;"></i>
+                                        </div>
+                                        <div style="font-size:36px;font-weight:800;color:${passed2 ? '#16a34a' : '#dc2626'};">${score}%</div>
+                                        <p style="font-size:14px;color:${passed2 ? '#15803d' : '#b91c1c'};font-weight:600;">${passed2 ? '🎉 Başarı puanına ulaştın!' : '⚠️ Başarı puanına ulaşamadın.'}</p>
+                                        <p style="font-size:12px;color:#9ca3af;margin-top:4px;">Tamamlanma: ${new Date(result.completed_at).toLocaleDateString('tr-TR', {day:'numeric',month:'long',year:'numeric'})}</p>
+                                    </div>
+                                    <!-- Soru analizi -->
+                                    ${soruDetayHTML}
+                                </div>
+                                <!-- Alt bar -->
+                                <div style="padding:16px 24px;border-top:1px solid #e5e7eb;background:#f9fafb;border-radius:0 0 16px 16px;display:flex;justify-content:flex-end;">
+                                    <button onclick="document.getElementById('studentOwnResultModal').remove()" style="padding:10px 24px;background:#6366f1;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">Kapat</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+
+                // Eski modal varsa kaldır
+                const existing = document.getElementById('studentOwnResultModal');
+                if (existing) existing.remove();
+                document.body.insertAdjacentHTML('beforeend', modalHTML);
+                showNotification('✅ Sonuç yüklendi!', 'success');
+
+            } catch(err) {
+                console.error('showStudentOwnResult error:', err);
+                showNotification('Sonuç yüklenirken hata: ' + err.message, 'error');
+            }
+        }
+
         function renderStudentTestCard(assignment, results, container) {
             const result = results?.find(r => r.test_id === assignment.test_id);
             const isCompleted = !!result;
             const passed = result && result.score >= 70;
             const failed = result && result.score < 70;
-
-            let statusBadge, statusColor, buttonContent, buttonAction, buttonClass;
-            if (!isCompleted) {
-                statusBadge = '🟡 Bekliyor';
-                statusColor = 'bg-yellow-100 text-yellow-800 border-yellow-200';
-                buttonContent = '<i class="fas fa-play mr-2"></i>Teste Başla';
-                buttonAction = `onclick="startTest(${assignment.test_id})"`;
-                buttonClass = 'px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-300 font-semibold';
-            } else if (passed) {
-                statusBadge = '🟢 Başarılı';
-                statusColor = 'bg-green-100 text-green-800 border-green-200';
-                buttonContent = '<i class="fas fa-trophy mr-2"></i>Tamamlandı';
-                buttonAction = '';
-                buttonClass = 'px-6 py-3 bg-green-100 text-green-800 rounded-lg cursor-default font-semibold';
-            } else {
-                statusBadge = '🔴 Düşük Puan';
-                statusColor = 'bg-red-100 text-red-800 border-red-200';
-                buttonContent = '<i class="fas fa-lock mr-2"></i>Tamamlandı';
-                buttonAction = 'onclick="showRetakeMessage()"';
-                buttonClass = 'px-6 py-3 bg-gray-400 text-white rounded-lg cursor-not-allowed font-semibold';
-            }
+            const testType = assignment.tests?.test_type || 'normal';
+            const isCompact = testType === 'alistirma' || testType === 'sinav';
+            const resultId = result ? result.id : null;
 
             const testCard = document.createElement('div');
-            testCard.className = `bg-white rounded-xl p-6 border-2 ${statusColor.includes('yellow') ? 'border-yellow-200 hover:border-yellow-300' : statusColor.includes('green') ? 'border-green-200' : 'border-red-200'} hover:shadow-lg transition-all duration-300`;
-            testCard.innerHTML = `
-                <div class="flex justify-between items-start">
-                    <div class="flex-1">
-                        <div class="flex items-center flex-wrap gap-2 mb-3">
-                            <h4 class="font-bold text-gray-900 text-lg">${assignment.tests.title}</h4>
-                            ${getTestTypeBadge(assignment.tests.test_type)}
-                            <span class="px-3 py-1 text-sm font-medium rounded-full border ${statusColor}">${statusBadge}</span>
-                        </div>
-                        <p class="text-gray-600 mb-4">${assignment.tests.description || 'Test açıklaması bulunmuyor.'}</p>
-                        <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
-                            <div class="bg-gray-50 rounded-lg p-3 text-center">
-                                <div class="text-lg font-bold text-gray-800">${assignment.tests.time_limit}</div>
-                                <div class="text-xs text-gray-600">Dakika</div>
-                            </div>
-                            <div class="bg-blue-50 rounded-lg p-3 text-center">
-                                <div class="text-lg font-bold text-blue-800">${(() => { try { const q = JSON.parse(assignment.tests.questions); return Array.isArray(q) ? q.length : 7; } catch(e) { return 7; } })()}</div>
-                                <div class="text-xs text-blue-600">Soru</div>
-                            </div>
-                            ${result ? `
-                                <div class="bg-${result.score >= 70 ? 'green' : 'red'}-50 rounded-lg p-3 text-center">
-                                    <div class="text-lg font-bold text-${result.score >= 70 ? 'green' : 'red'}-800">${result.score}</div>
-                                    <div class="text-xs text-${result.score >= 70 ? 'green' : 'red'}-600">Puan</div>
+
+            if (isCompact) {
+                // ── Kompakt kart: Alıştırma & Sınav ─────────────────────────────
+                const questionCount = (() => { try { const q = JSON.parse(assignment.tests.questions); return Array.isArray(q) ? q.length : 0; } catch(e) { return 0; } })();
+
+                let borderColor, accentColor, statusPill;
+                if (!isCompleted) {
+                    borderColor = 'border-yellow-300'; accentColor = 'bg-yellow-400';
+                    statusPill = '<span class="text-xs font-bold text-yellow-700 bg-yellow-100 px-2 py-0.5 rounded-full">⏳ Bekliyor</span>';
+                } else if (passed) {
+                    borderColor = 'border-green-300'; accentColor = 'bg-green-500';
+                    statusPill = '<span class="text-xs font-bold text-green-700 bg-green-100 px-2 py-0.5 rounded-full">✅ Başarılı</span>';
+                } else {
+                    borderColor = 'border-red-300'; accentColor = 'bg-red-400';
+                    statusPill = '<span class="text-xs font-bold text-red-700 bg-red-100 px-2 py-0.5 rounded-full">🔴 Düşük</span>';
+                }
+
+                const typeIcon  = testType === 'sinav' ? '📋' : '🔧';
+                const typeColor = testType === 'sinav' ? 'text-orange-600 bg-orange-50' : 'text-green-600 bg-green-50';
+
+                let actionBtn = '';
+                if (!isCompleted) {
+                    actionBtn = `<button onclick="startTest(${assignment.test_id})" class="flex-shrink-0 flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-700 transition"><i class="fas fa-play text-xs"></i> Başla</button>`;
+                } else if (resultId) {
+                    actionBtn = `<button onclick="showStudentOwnResult(${resultId})" class="flex-shrink-0 flex items-center gap-1 px-3 py-1.5 bg-indigo-50 text-indigo-700 border border-indigo-200 text-xs font-bold rounded-lg hover:bg-indigo-100 transition"><i class="fas fa-chart-bar text-xs"></i> Sonuç</button>`;
+                }
+
+                testCard.className = `bg-white rounded-xl border-2 ${borderColor} hover:shadow-md transition-all duration-200 overflow-hidden`;
+                testCard.innerHTML = `
+                    <div class="flex items-stretch">
+                        <div class="w-1.5 ${accentColor} flex-shrink-0"></div>
+                        <div class="flex-1 px-3 py-2.5 flex items-center gap-2.5 min-w-0">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-lg ${typeColor} flex items-center justify-center text-base">${typeIcon}</div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-1.5 flex-wrap mb-0.5">
+                                    <span class="font-bold text-gray-900 text-sm leading-tight truncate" style="max-width:150px">${assignment.tests.title}</span>
+                                    ${statusPill}
                                 </div>
-                            ` : `
+                                <div class="flex items-center gap-2.5 text-xs text-gray-400">
+                                    ${questionCount > 0 ? `<span><i class="fas fa-list-ol mr-0.5"></i>${questionCount} soru</span>` : ''}
+                                    <span><i class="fas fa-clock mr-0.5"></i>${assignment.tests.time_limit} dk</span>
+                                    ${result ? `<span class="font-bold ${result.score >= 70 ? 'text-green-600' : 'text-red-500'}">${result.score} puan</span>` : ''}
+                                </div>
+                            </div>
+                            ${actionBtn}
+                        </div>
+                    </div>
+                    ${failed ? `
+                    <div class="mx-3 mb-2 px-2.5 py-1.5 bg-red-50 border border-red-100 rounded-lg flex items-center gap-2">
+                        <i class="fas fa-exclamation-triangle text-red-400 text-xs flex-shrink-0"></i>
+                        <p class="text-red-600 text-xs">Tekrar çözebilmek için öğretmeninizden yeniden atama isteyin.</p>
+                    </div>` : ''}
+                `;
+            } else {
+                // ── Geniş kart: Normal test tipi (mevcut tasarım) ───────────────
+                let statusBadge, statusColor, buttonContent, buttonAction, buttonClass;
+                if (!isCompleted) {
+                    statusBadge = '🟡 Bekliyor';
+                    statusColor = 'bg-yellow-100 text-yellow-800 border-yellow-200';
+                    buttonContent = '<i class="fas fa-play mr-2"></i>Teste Başla';
+                    buttonAction = `onclick="startTest(${assignment.test_id})"`;
+                    buttonClass = 'px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-300 font-semibold';
+                } else if (passed) {
+                    statusBadge = '🟢 Başarılı';
+                    statusColor = 'bg-green-100 text-green-800 border-green-200';
+                    buttonContent = '<i class="fas fa-trophy mr-2"></i>Tamamlandı';
+                    buttonAction = '';
+                    buttonClass = 'px-6 py-3 bg-green-100 text-green-800 rounded-lg cursor-default font-semibold';
+                } else {
+                    statusBadge = '🔴 Düşük Puan';
+                    statusColor = 'bg-red-100 text-red-800 border-red-200';
+                    buttonContent = '<i class="fas fa-lock mr-2"></i>Tamamlandı';
+                    buttonAction = 'onclick="showRetakeMessage()"';
+                    buttonClass = 'px-6 py-3 bg-gray-400 text-white rounded-lg cursor-not-allowed font-semibold';
+                }
+
+                testCard.className = `bg-white rounded-xl p-6 border-2 ${statusColor.includes('yellow') ? 'border-yellow-200 hover:border-yellow-300' : statusColor.includes('green') ? 'border-green-200' : 'border-red-200'} hover:shadow-lg transition-all duration-300`;
+                testCard.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <div class="flex items-center flex-wrap gap-2 mb-3">
+                                <h4 class="font-bold text-gray-900 text-lg">${assignment.tests.title}</h4>
+                                ${getTestTypeBadge(assignment.tests.test_type)}
+                                <span class="px-3 py-1 text-sm font-medium rounded-full border ${statusColor}">${statusBadge}</span>
+                            </div>
+                            <p class="text-gray-600 mb-4">${assignment.tests.description || 'Test açıklaması bulunmuyor.'}</p>
+                            <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
                                 <div class="bg-gray-50 rounded-lg p-3 text-center">
-                                    <div class="text-lg font-bold text-gray-800">-</div>
-                                    <div class="text-xs text-gray-600">Puan</div>
+                                    <div class="text-lg font-bold text-gray-800">${assignment.tests.time_limit}</div>
+                                    <div class="text-xs text-gray-600">Dakika</div>
                                 </div>
-                            `}
-                        </div>
-                        <div class="text-sm text-gray-500">
-                            <div class="flex items-center mb-1">
-                                <i class="fas fa-calendar mr-2"></i>
-                                Atanma: ${new Date(assignment.assigned_at).toLocaleDateString('tr-TR')}
+                                <div class="bg-blue-50 rounded-lg p-3 text-center">
+                                    <div class="text-lg font-bold text-blue-800">${(() => { try { const q = JSON.parse(assignment.tests.questions); return Array.isArray(q) ? q.length : 7; } catch(e) { return 7; } })()}</div>
+                                    <div class="text-xs text-blue-600">Soru</div>
+                                </div>
+                                ${result ? `
+                                    <div class="bg-${result.score >= 70 ? 'green' : 'red'}-50 rounded-lg p-3 text-center">
+                                        <div class="text-lg font-bold text-${result.score >= 70 ? 'green' : 'red'}-800">${result.score}</div>
+                                        <div class="text-xs text-${result.score >= 70 ? 'green' : 'red'}-600">Puan</div>
+                                    </div>
+                                ` : `
+                                    <div class="bg-gray-50 rounded-lg p-3 text-center">
+                                        <div class="text-lg font-bold text-gray-800">-</div>
+                                        <div class="text-xs text-gray-600">Puan</div>
+                                    </div>
+                                `}
                             </div>
-                            ${result ? `<div class="flex items-center"><i class="fas fa-check-circle mr-2"></i>Tamamlanma: ${new Date(result.completed_at).toLocaleDateString('tr-TR')}</div>` : ''}
-                        </div>
-                        ${failed ? `
-                            <div class="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                                <div class="flex items-center">
-                                    <i class="fas fa-exclamation-triangle text-red-600 mr-2"></i>
-                                    <div>
-                                        <p class="text-red-800 font-medium text-sm">Tekrar Çözme Hakkı</p>
-                                        <p class="text-red-700 text-xs mt-1">Bu testi tekrar çözebilmek için öğretmeninizin size yeniden atama yapması gerekmektedir.</p>
+                            <div class="text-sm text-gray-500">
+                                <div class="flex items-center mb-1">
+                                    <i class="fas fa-calendar mr-2"></i>
+                                    Atanma: ${new Date(assignment.assigned_at).toLocaleDateString('tr-TR')}
+                                </div>
+                                ${result ? `<div class="flex items-center"><i class="fas fa-check-circle mr-2"></i>Tamamlanma: ${new Date(result.completed_at).toLocaleDateString('tr-TR')}</div>` : ''}
+                            </div>
+                            ${failed ? `
+                                <div class="mt-4 p-3 bg-red-50 border-red-200 rounded-lg">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-exclamation-triangle text-red-600 mr-2"></i>
+                                        <div>
+                                            <p class="text-red-800 font-medium text-sm">Tekrar Çözme Hakkı</p>
+                                            <p class="text-red-700 text-xs mt-1">Bu testi tekrar çözebilmek için öğretmeninizin size yeniden atama yapması gerekmektedir.</p>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        ` : ''}
+                            ` : ''}
+                        </div>
+                        <div class="ml-6 flex flex-col items-end gap-2">
+                            <button ${buttonAction} class="${buttonClass}">${buttonContent}</button>
+                            ${!isCompleted ? `<div class="mt-2 text-xs text-gray-500 text-center"><i class="fas fa-info-circle mr-1"></i>Tek seferlik test</div>` : ''}
+                        </div>
                     </div>
-                    <div class="ml-6 flex flex-col items-end">
-                        <button ${buttonAction} class="${buttonClass}">${buttonContent}</button>
-                        ${!isCompleted ? `<div class="mt-2 text-xs text-gray-500 text-center"><i class="fas fa-info-circle mr-1"></i>Tek seferlik test</div>` : ''}
-                    </div>
-                </div>
-            `;
+                `;
+            }
+
             container.appendChild(testCard);
+        }
+
+        // Öğrencinin kendi sonucunu görüntüleme modalı
+        async function showStudentOwnResult(resultId) {
+            try {
+                showNotification('Sonuç yükleniyor...', 'info');
+
+                const { data: result, error: rErr } = await supabase
+                    .from('test_results').select('*').eq('id', resultId).single();
+                if (rErr) throw rErr;
+
+                const { data: test, error: tErr } = await supabase
+                    .from('tests').select('*').eq('id', result.test_id).single();
+                if (tErr) throw tErr;
+
+                const answersData = result.answers ? JSON.parse(result.answers) : {};
+                const isOptikForm = answersData.kaynak === 'optik_form';
+                const score = result.score;
+                const passed = score >= 70;
+
+                let soruBolumu = '';
+
+                if (isOptikForm) {
+                    const soruAnaliz = answersData.soruAnaliz || [];
+                    const dogru  = answersData.dogru  || 0;
+                    const yanlis = answersData.yanlis  || 0;
+                    const bos    = answersData.bos     || 0;
+                    soruBolumu = `
+                        <div class="bg-white border border-gray-200 rounded-xl p-4 mb-4">
+                            <h4 class="font-semibold text-gray-800 mb-3 flex items-center">
+                                <i class="fas fa-list-check text-blue-600 mr-2"></i>
+                                Soru Bazında Detay
+                            </h4>
+                            <div class="flex gap-4 mb-4 text-sm">
+                                <span class="flex items-center gap-1"><span style="width:14px;height:14px;border-radius:4px;background:#22c55e;display:inline-block;"></span><strong>${dogru}</strong> Doğru</span>
+                                <span class="flex items-center gap-1"><span style="width:14px;height:14px;border-radius:4px;background:#ef4444;display:inline-block;"></span><strong>${yanlis}</strong> Yanlış</span>
+                                <span class="flex items-center gap-1"><span style="width:14px;height:14px;border-radius:4px;background:#d1d5db;display:inline-block;"></span><strong>${bos}</strong> Boş</span>
+                            </div>
+                            ${renderOptikSoruAnaliz(soruAnaliz)}
+                        </div>`;
+                } else {
+                    let questions = [];
+                    try { questions = JSON.parse(test.questions); } catch(e) {}
+
+                    let studentAnswers = [];
+                    if (answersData.answers) {
+                        if (Array.isArray(answersData.answers)) {
+                            studentAnswers = answersData.answers;
+                        } else {
+                            for (let i = 0; i < questions.length; i++) {
+                                studentAnswers[i] = answersData.answers[i] !== undefined ? answersData.answers[i] : answersData.answers[String(i)];
+                            }
+                        }
+                    } else if (Array.isArray(answersData)) {
+                        studentAnswers = answersData;
+                    } else {
+                        for (let i = 0; i < questions.length; i++) {
+                            studentAnswers[i] = answersData[i] !== undefined ? answersData[i] : answersData[String(i)];
+                        }
+                    }
+
+                    if (questions.length === 0) {
+                        soruBolumu = '<p class="text-sm text-gray-400 text-center py-4">Soru detay\u0131 bulunamad\u0131.</p>';
+                    } else {
+                        const soruRows = questions.map((q, idx) => {
+                            const ua = studentAnswers[idx];
+                            const correctAnswer = q.correct !== undefined ? q.correct : q.correct_answer;
+                            let isCorrect = false;
+                            let uaDisplay = 'Cevaplanmad\u0131';
+                            let caDisplay = '';
+
+                            if (q.type === 'multiple_choice') {
+                                isCorrect = parseInt(ua) === parseInt(correctAnswer);
+                                uaDisplay = ua !== undefined && q.options && q.options[ua] ? String.fromCharCode(65 + parseInt(ua)) + ') ' + q.options[ua] : 'Cevaplanmad\u0131';
+                                caDisplay = q.options && q.options[correctAnswer] ? String.fromCharCode(65 + parseInt(correctAnswer)) + ') ' + q.options[correctAnswer] : String(correctAnswer);
+                            } else if (q.type === 'fill_blank') {
+                                if (ua === undefined || ua === null || ua === '') {
+                                    isCorrect = false; uaDisplay = 'Cevaplanmad\u0131'; caDisplay = String(correctAnswer);
+                                } else if (q.options && !isNaN(parseInt(ua)) && q.options[parseInt(ua)] !== undefined) {
+                                    isCorrect = parseInt(ua) === parseInt(correctAnswer);
+                                    uaDisplay = q.options[parseInt(ua)]; caDisplay = q.options[correctAnswer] || String(correctAnswer);
+                                } else {
+                                    isCorrect = String(ua).trim().toLowerCase() === String(correctAnswer).trim().toLowerCase();
+                                    uaDisplay = String(ua); caDisplay = String(correctAnswer);
+                                }
+                            } else if (q.type === 'true_false') {
+                                const uaBool = (ua === 'true' || ua === true);
+                                const caBool = (correctAnswer === 'true' || correctAnswer === true);
+                                isCorrect = (ua !== undefined && ua !== null && ua !== '') && uaBool === caBool;
+                                uaDisplay = (ua === true || ua === 'true') ? 'Do\u011fru' : (ua === false || ua === 'false') ? 'Yanl\u0131\u015f' : 'Cevaplanmad\u0131';
+                                caDisplay = caBool ? 'Do\u011fru' : 'Yanl\u0131\u015f';
+                            }
+
+                            const bg = isCorrect ? 'background:#f0fdf4;border:1px solid #bbf7d0;' : 'background:#fef2f2;border:1px solid #fecaca;';
+                            const icon = isCorrect ? '\u2705' : '\u274c';
+                            return '<div style="' + bg + 'border-radius:8px;padding:8px 12px;margin-bottom:6px;display:flex;align-items:flex-start;gap:10px;">' +
+                                '<span style="font-size:14px;flex-shrink:0;">' + icon + '</span>' +
+                                '<div style="flex:1;min-width:0;">' +
+                                    '<div style="font-size:12px;font-weight:700;color:#374151;">Soru ' + (idx+1) + '</div>' +
+                                    '<div style="font-size:12px;color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + (q.text || q.question || '') + '</div>' +
+                                    '<div style="font-size:12px;margin-top:3px;">' +
+                                        '<span style="color:' + (isCorrect ? '#16a34a' : '#dc2626') + ';font-weight:600;">Cevab\u0131n\u0131z: ' + uaDisplay + '</span>' +
+                                        (!isCorrect ? '<span style="color:#16a34a;margin-left:8px;font-weight:600;">\u2713 Do\u011fru: ' + caDisplay + '</span>' : '') +
+                                    '</div>' +
+                                '</div></div>';
+                        }).join('');
+
+                        soruBolumu = '<div class="bg-white border border-gray-200 rounded-xl p-4 mb-4">' +
+                            '<h4 class="font-semibold text-gray-800 mb-3 flex items-center">' +
+                            '<i class="fas fa-list-check text-blue-600 mr-2"></i>' +
+                            'Soru Bazında Detay (' + questions.length + ' soru)</h4>' +
+                            '<div style="max-height:320px;overflow-y:auto;">' + soruRows + '</div></div>';
+                    }
+                }
+
+                const completedDate = new Date(result.completed_at).toLocaleDateString('tr-TR', {day:'numeric',month:'long',year:'numeric'});
+                const gradientClass = passed ? 'from-green-400 to-green-600' : 'from-orange-400 to-red-500';
+                const scoreColor   = passed ? 'text-green-700' : 'text-red-600';
+                const borderClass  = passed ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200';
+                const statusLabel  = passed ? '\ud83c\udf89 Ba\u015far\u0131l\u0131' : '\u26a0\ufe0f Ba\u015far\u0131s\u0131z';
+                const statusColor2 = passed ? 'text-green-600' : 'text-red-500';
+                const iconClass    = passed ? 'fa-trophy' : 'fa-exclamation-triangle';
+
+                const modalHTML = '<div id="studentOwnResultModal" class="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto" style="z-index:1200;">' +
+                    '<div class="min-h-screen flex items-center justify-center p-4">' +
+                    '<div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg my-8">' +
+                    '<div class="p-5 border-b border-gray-100 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-t-2xl flex justify-between items-start">' +
+                        '<div><h3 class="text-lg font-bold text-gray-900">' + test.title + '</h3>' +
+                        '<p class="text-xs text-gray-500 mt-1">' + completedDate + '</p></div>' +
+                        '<button onclick="document.getElementById(\'studentOwnResultModal\').remove()" class="text-gray-400 hover:text-gray-600 ml-4"><i class="fas fa-times text-xl"></i></button>' +
+                    '</div>' +
+                    '<div class="p-5 max-h-[75vh] overflow-y-auto">' +
+                        '<div class="flex items-center justify-center gap-6 mb-5 p-4 rounded-xl border ' + borderClass + '">' +
+                            '<div class="w-16 h-16 rounded-full flex items-center justify-center bg-gradient-to-br ' + gradientClass + ' shadow-lg">' +
+                                '<i class="fas ' + iconClass + ' text-2xl text-white"></i></div>' +
+                            '<div class="text-center">' +
+                                '<div class="text-4xl font-extrabold ' + scoreColor + '">' + score + '<span class="text-lg font-normal">%</span></div>' +
+                                '<div class="text-sm font-semibold ' + statusColor2 + '">' + statusLabel + '</div>' +
+                            '</div></div>' +
+                        soruBolumu +
+                    '</div></div></div></div>';
+
+                const old = document.getElementById('studentOwnResultModal');
+                if (old) old.remove();
+                document.body.insertAdjacentHTML('beforeend', modalHTML);
+                showNotification('\u2705 Sonu\u00e7 y\u00fcklendi!', 'success');
+
+            } catch(err) {
+                console.error('showStudentOwnResult error:', err);
+                showNotification('Sonu\u00e7 y\u00fcklenirken hata: ' + err.message, 'error');
+            }
         }
 
         // Start test with assignment validation
@@ -4647,7 +5206,7 @@ ON CONFLICT (tc_no) DO NOTHING;
         }
 
         function showTeacherTab(tabName) {
-            const tabs = ['dashboard', 'tests', 'students', 'results', 'library', 'failedTests', 'dagitimTakibi', 'sinavLiderligi'];
+            const tabs = ['dashboard', 'tests', 'students', 'results', 'library', 'failedTests', 'dagitimTakibi', 'sinavLiderligi', 'topluYukleme'];
             tabs.forEach(tab => {
                 const tabButtonId = tab === 'dashboard' ? 'dashboardTab' : 
                                   tab === 'tests' ? 'testsManageTab' :
@@ -4655,14 +5214,16 @@ ON CONFLICT (tc_no) DO NOTHING;
                                   tab === 'results' ? 'resultsTab' : 
                                   tab === 'library' ? 'libraryTab' : 
                                   tab === 'failedTests' ? 'failedTestsTab' :
-                                  tab === 'dagitimTakibi' ? 'dagitimTakibiTab' : 'sinavLiderligiTab';
+                                  tab === 'dagitimTakibi' ? 'dagitimTakibiTab' :
+                                  tab === 'sinavLiderligi' ? 'sinavLiderligiTab' : 'topluYuklemeTab';
                 const tabContentId = tab === 'dashboard' ? 'dashboardContent' : 
                                    tab === 'tests' ? 'testsManageContent' :
                                    tab === 'students' ? 'studentsManageContent' : 
                                    tab === 'results' ? 'resultsContent' : 
                                    tab === 'library' ? 'libraryContent' : 
                                    tab === 'failedTests' ? 'failedTestsContent' :
-                                   tab === 'dagitimTakibi' ? 'dagitimTakibiContent' : 'sinavLiderligiContent';
+                                   tab === 'dagitimTakibi' ? 'dagitimTakibiContent' :
+                                   tab === 'sinavLiderligi' ? 'sinavLiderligiContent' : 'topluYuklemeContent';
                 
                 const tabButton = document.getElementById(tabButtonId);
                 const tabContent = document.getElementById(tabContentId);
@@ -4688,6 +5249,7 @@ ON CONFLICT (tc_no) DO NOTHING;
             if (tabName === 'failedTests') loadFailedTestsList();
             if (tabName === 'dagitimTakibi') dagitimTakibiYukle();
             if (tabName === 'sinavLiderligi') loadSinavLeaderboard('sinav');
+            // topluYukleme: sekmeye geçince sıfırlama — sadece kullanıcı manuel sıfırlarsa sıfırla
         }
 
         // Load tests list for teacher
@@ -10060,6 +10622,12 @@ Teknolojinin hızla geliştiği günümüzde, dijital kitaplar da popüler hale 
                 case 'low_score':
                     infoText = `🔴 Düşük puan alan testler: ${filteredCount}/${totalCount}`;
                     break;
+                case 'alistirma':
+                    infoText = `🔧 Alıştırma testleri: ${filteredCount}/${totalCount}`;
+                    break;
+                case 'sinav':
+                    infoText = `📋 Sınav testleri: ${filteredCount}/${totalCount}`;
+                    break;
                 case 'all':
                 default:
                     infoText = `Tüm testler gösteriliyor: ${filteredCount} test`;
@@ -10552,6 +11120,45 @@ Teknolojinin hızla geliştiği günümüzde, dijital kitaplar da popüler hale 
         // DETAYLI SONUÇLAR FONKSİYONLARI
         // ============================================
 
+        // Optik form soru analizi HTML üretici
+        function renderOptikSoruAnaliz(soruAnaliz) {
+            if (!soruAnaliz || soruAnaliz.length === 0) {
+                return '<p class="text-sm text-gray-400 text-center py-4">Soru analizi verisi bulunamadı.</p>';
+            }
+            // Özet grid: her soru için renkli küçük kutu
+            var grid = soruAnaliz.map(function(s) {
+                var bg = s.sonuc === 'dogru' ? 'background:#22c55e' : s.sonuc === 'yanlis' ? 'background:#ef4444' : 'background:#d1d5db';
+                var label = s.sonuc === 'dogru' ? '✓' : s.sonuc === 'yanlis' ? (s.ogrenciCevap || '✗') : '—';
+                var tip = s.sonuc === 'dogru'
+                    ? ('S' + s.soruNo + ': Doğru (' + s.dogruCevap + ')')
+                    : s.sonuc === 'yanlis'
+                    ? ('S' + s.soruNo + ': Yanlış — Öğrenci: ' + s.ogrenciCevap + ', Doğru: ' + s.dogruCevap)
+                    : ('S' + s.soruNo + ': Boş');
+                return '<div title="' + tip + '" style="' + bg + ';color:#fff;width:36px;height:36px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;cursor:default;box-shadow:0 1px 3px rgba(0,0,0,.2);margin:2px;">' + label + '</div>';
+            }).join('');
+            // Detay satırları: sadece yanlış ve boş olanlar
+            var hatalar = soruAnaliz.filter(function(s) { return s.sonuc !== 'dogru'; });
+            var detaylar = hatalar.map(function(s) {
+                var isYanlis = s.sonuc === 'yanlis';
+                var bg = isYanlis ? 'background:#fef2f2;border:1px solid #fecaca;' : 'background:#f9fafb;border:1px solid #e5e7eb;';
+                var icon = isYanlis ? '❌' : '⬜';
+                var text = isYanlis
+                    ? ('Öğrenci <strong>' + s.ogrenciCevap + '</strong> işaretledi, doğrusu <strong>' + s.dogruCevap + '</strong>')
+                    : 'Boş bıraktı';
+                return '<div style="' + bg + 'display:flex;align-items:center;gap:12px;padding:6px 12px;border-radius:8px;margin-bottom:4px;">' +
+                    '<span style="font-size:14px;">' + icon + '</span>' +
+                    '<span style="font-size:13px;font-weight:600;color:#374151;min-width:56px;">Soru ' + s.soruNo + '</span>' +
+                    '<span style="font-size:13px;color:#4b5563;">' + text + '</span></div>';
+            }).join('');
+            var detayHTML = hatalar.length > 0
+                ? '<p style="font-size:11px;font-weight:600;color:#6b7280;margin:12px 0 6px;">Hatalı / Boş Sorular:</p>' + detaylar
+                : '<p style="font-size:12px;color:#16a34a;font-weight:600;">🎯 Tüm sorular doğru!</p>';
+            return '<div style="margin-bottom:12px;">' +
+                '<p style="font-size:11px;color:#6b7280;margin-bottom:8px;">🟢 Doğru &nbsp;🔴 Yanlış (öğrenci cevabı) &nbsp;⚪ Boş</p>' +
+                '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;">' + grid + '</div></div>' +
+                detayHTML;
+        }
+
         // Show detailed results modal (using student result view)
         async function showDetailedResults(resultId, studentId, studentName, testTitle) {
             try {
@@ -10613,13 +11220,28 @@ Teknolojinin hızla geliştiği günümüzde, dijital kitaplar da popüler hale 
                 const minutes = Math.floor(timeSpent / 60);
                 const seconds = timeSpent % 60;
 
+                // Optik form kaynağını kontrol et
+                const isOptikForm = answersData.kaynak === 'optik_form';
+                const soruAnaliz = isOptikForm ? (answersData.soruAnaliz || []) : [];
+
                 // Calculate statistics - exactly like student submitTest
                 let totalPoints = 0;
                 let earnedPoints = 0;
                 let correctCount = 0;
-                const totalQuestions = questions.length;
+                let totalQuestions;
 
-                questions.forEach((question, index) => {
+                if (isOptikForm) {
+                    totalQuestions = soruAnaliz.length;
+                    correctCount = answersData.dogru || 0;
+                    const yanlis = answersData.yanlis || 0;
+                    const bos = answersData.bos || 0;
+                    totalPoints = totalQuestions * 10;
+                    earnedPoints = correctCount * 10;
+                } else {
+                    totalQuestions = questions.length;
+                }
+
+                if (!isOptikForm) questions.forEach((question, index) => {
                     const userAnswer = studentAnswers[index];
                     const questionPoints = question.points || 10;
                     totalPoints += questionPoints;
@@ -10784,7 +11406,7 @@ Teknolojinin hızla geliştiği günümüzde, dijital kitaplar da popüler hale 
                                             Soru Bazında Detay (${totalQuestions} soru)
                                         </h4>
                                         <div class="space-y-2 max-h-96 overflow-y-auto">
-                                            ${questions.map((question, index) => {
+                                                                                        ${isOptikForm ? renderOptikSoruAnaliz(soruAnaliz) : questions.map((question, index) => {
                                                 const userAnswer = studentAnswers[index];
                                                 const questionPoints = question.points || 10;
                                                 let isCorrect = false;
@@ -11966,7 +12588,7 @@ Teknolojinin hızla geliştiği günümüzde, dijital kitaplar da popüler hale 
                 if (error) throw error;
 
                 // 2. Veriyi işleyerek gerekli formatı oluştur
-                const failedTestsData = rawFailedData.map(item => ({
+                const allMapped = rawFailedData.map(item => ({
                     resultId: item.result_id,
                     studentId: item.student_id,
                     studentName: item.student_name,
@@ -11976,8 +12598,33 @@ Teknolojinin hızla geliştiği günümüzde, dijital kitaplar da popüler hale 
                     score: item.score_percentage, // View'dan gelen yüzde
                     maxScore: 100, // Yüzde olduğu için max 100
                     completedAt: item.result_date,
-                    percentage: item.score_percentage // Zaten yüzde
+                    percentage: item.score_percentage, // Zaten yüzde
+                    testType: item.test_type || null // View'da test_type varsa kullan
                 }));
+
+                // test_type view'da yoksa tests tablosundan çek
+                let failedTestsData = allMapped;
+                const missingType = allMapped.some(m => m.testType === null || m.testType === undefined);
+                if (missingType) {
+                    const uniqueTestIds = [...new Set(allMapped.map(m => m.testId))];
+                    if (uniqueTestIds.length > 0) {
+                        const { data: testsInfo } = await supabase
+                            .from('tests')
+                            .select('id, test_type')
+                            .in('id', uniqueTestIds);
+                        const typeMap = {};
+                        (testsInfo || []).forEach(t => { typeMap[t.id] = t.test_type; });
+                        failedTestsData = allMapped.map(m => ({
+                            ...m,
+                            testType: typeMap[m.testId] || 'normal'
+                        }));
+                    }
+                }
+
+                // Sadece 'normal' tipindeki testleri göster (sinav ve alistirma hariç)
+                failedTestsData = failedTestsData.filter(m =>
+                    !m.testType || m.testType === 'normal'
+                );
 
                 // 3. İstatistikleri hesapla
                 const failedStudentsSet = new Set(failedTestsData.map(f => f.studentId));
@@ -12275,6 +12922,8 @@ Teknolojinin hızla geliştiği günümüzde, dijital kitaplar da popüler hale 
         }
     </script>
 <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97e724fa56c16e07',t:'MTc1Nzc2MTI2My4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();
+</script>
+<script data-cfasync="false">
 
 
 /* ===== ANALİZ PANELİ - GELIŞMIŞ VERSIYON ===== */
@@ -13844,6 +14493,439 @@ function dagitimDışaAktar() {
     URL.revokeObjectURL(url);
 }
 
+// ═══════════════════════════════════════════════════════
+// TOPLU OPTİK FORM SONUÇ YÜKLEME SİSTEMİ — v2
+// ═══════════════════════════════════════════════════════
+
+(function() {
+    // XLSX kütüphanesini yükle
+    if (!window.XLSX) {
+        var s = document.createElement('script');
+        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+        s.onload = function() {
+            var el = document.getElementById('bulkXlsxStatus');
+            if (el) { el.textContent = 'XLSX hazır ✓'; el.className = 'text-xs text-green-500'; }
+        };
+        s.onerror = function() {
+            var el = document.getElementById('bulkXlsxStatus');
+            if (el) { el.textContent = 'XLSX yüklenemedi!'; el.className = 'text-xs text-red-500'; }
+        };
+        document.head.appendChild(s);
+    }
+})();
+
+var bulk2Sheets = [];
+var bulk2ActiveSheet = 0;
+
+function bulk2Log(msg, type) {
+    var log = document.getElementById('bulk2Log');
+    if (!log) return;
+    var d = document.createElement('div');
+    var colors = { ok: 'text-green-600', error: 'text-red-500', warn: 'text-yellow-600', info: 'text-gray-500' };
+    var icons  = { ok: '✓', error: '✗', warn: '!', info: '→' };
+    d.className = colors[type] || 'text-gray-500';
+    d.textContent = (icons[type] || '→') + ' ' + msg;
+    log.appendChild(d);
+    log.scrollTop = log.scrollHeight;
+}
+
+function bulk2Reset() {
+    bulk2Sheets = [];
+    bulk2ActiveSheet = 0;
+    var inp = document.getElementById('bulkExcelInput');
+    if (inp) inp.value = '';
+    var lbl = document.getElementById('bulkFileNameLabel');
+    if (lbl) lbl.textContent = 'Dosya seçilmedi';
+    ['bulk2', 'bulk2Progress', 'bulk2Result', 'bulk2Match'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) el.classList.add('hidden');
+    });
+    var nameEl = document.getElementById('bulk2TestName');
+    if (nameEl) nameEl.value = '';
+    var tabsEl = document.getElementById('bulk2Tabs');
+    if (tabsEl) tabsEl.innerHTML = '';
+}
+
+function bulk2SwitchTab(idx) {
+    bulk2ActiveSheet = idx;
+    document.querySelectorAll('[id^="bulk2Tab_"]').forEach(function(btn, i) {
+        btn.className = 'px-3 py-1.5 rounded-full text-sm font-semibold transition ' +
+            (i === idx ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-indigo-100');
+    });
+    bulk2RenderTable(idx);
+}
+
+function bulk2RenderTable(idx) {
+    var sheet = bulk2Sheets[idx];
+    if (!sheet) return;
+
+    // Kaç soru var? (ilk satırdan bul)
+    var maxSoru = 0;
+    sheet.rows.forEach(function(r) { if (r.soruAnaliz && r.soruAnaliz.length > maxSoru) maxSoru = r.soruAnaliz.length; });
+
+    // Başlık
+    var headHtml = '<tr><th class="px-3 py-2 text-left">Numara</th><th class="px-3 py-2 text-left">Ad Soyad</th>' +
+        '<th class="px-3 py-2 text-center">Sınıf</th><th class="px-3 py-2 text-center">D</th>' +
+        '<th class="px-3 py-2 text-center">Y</th><th class="px-3 py-2 text-center">B</th>' +
+        '<th class="px-3 py-2 text-center">Puan</th>';
+    if (maxSoru > 0) {
+        sheet.rows[0].soruAnaliz.forEach(function(s) {
+            headHtml += '<th class="px-2 py-2 text-center text-xs text-gray-500">' + s.soruNo + '</th>';
+        });
+    }
+    headHtml += '</tr>';
+    document.getElementById('bulk2Head').innerHTML = headHtml;
+
+    // Satırlar
+    document.getElementById('bulk2Body').innerHTML = sheet.rows.map(function(r) {
+        var cls = r.puan >= 70 ? 'bg-green-100 text-green-800' : r.puan >= 50 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800';
+        var html = '<tr class="hover:bg-gray-50">' +
+            '<td class="px-3 py-1.5 font-mono text-xs text-gray-600">' + r.numara + '</td>' +
+            '<td class="px-3 py-1.5 text-sm">' + r.adSoyad + '</td>' +
+            '<td class="px-3 py-1.5 text-center text-xs">' + r.sinif + '</td>' +
+            '<td class="px-3 py-1.5 text-center text-green-700 font-semibold">' + r.dogru + '</td>' +
+            '<td class="px-3 py-1.5 text-center text-red-500">' + r.yanlis + '</td>' +
+            '<td class="px-3 py-1.5 text-center text-gray-400">' + r.bos + '</td>' +
+            '<td class="px-3 py-1.5 text-center"><span class="px-2 py-0.5 rounded-full text-xs font-bold ' + cls + '">' + r.puan + '</span></td>';
+        // Soru hücreleri
+        (r.soruAnaliz || []).forEach(function(s) {
+            var bg, icon, title;
+            if (s.sonuc === 'dogru') {
+                bg = 'bg-green-50 text-green-700';
+                icon = '✓';
+                title = s.dogruCevap;
+            } else if (s.sonuc === 'yanlis') {
+                bg = 'bg-red-50 text-red-600';
+                icon = s.ogrenciCevap;
+                title = 'Doğru: ' + s.dogruCevap + ' | Öğrenci: ' + s.ogrenciCevap;
+            } else {
+                bg = 'bg-gray-50 text-gray-400';
+                icon = '—';
+                title = 'Boş';
+            }
+            html += '<td class="px-1 py-1.5 text-center ' + bg + '" title="' + title + '">' +
+                '<span class="text-xs font-bold">' + icon + '</span></td>';
+        });
+        html += '</tr>';
+        return html;
+    }).join('');
+}
+
+async function bulk2ShowMatch() {
+    try {
+        var res = await supabase.from('students').select('id, student_no');
+        var sMap = {};
+        (res.data || []).forEach(function(s) { sMap[String(s.student_no).trim()] = s.id; });
+        var total = 0, matched = 0, unmatched = [];
+        bulk2Sheets.forEach(function(sheet) {
+            sheet.rows.forEach(function(row) {
+                total++;
+                if (sMap[String(row.numara).trim()]) { matched++; row._sid = sMap[String(row.numara).trim()]; }
+                else { unmatched.push(row.numara + ' – ' + row.adSoyad); }
+            });
+        });
+        var el = document.getElementById('bulk2Match');
+        var ct = document.getElementById('bulk2MatchContent');
+        el.classList.remove('hidden');
+        ct.innerHTML = '<div class="flex gap-4 flex-wrap text-sm">' +
+            '<span>Toplam: <strong>' + total + '</strong></span>' +
+            '<span class="text-green-700">✅ Eşleşti: <strong>' + matched + '</strong></span>' +
+            '<span class="text-red-600">❌ Eşleşmedi: <strong>' + unmatched.length + '</strong></span></div>' +
+            (unmatched.length > 0
+                ? '<details class="mt-2"><summary class="cursor-pointer text-red-600 text-xs font-medium">Eşleşmeyenleri gör</summary>' +
+                  '<ul class="pl-4 text-xs text-red-400 mt-1">' + unmatched.map(function(u) { return '<li>• ' + u + '</li>'; }).join('') + '</ul>' +
+                  '<p class="text-xs text-gray-400 mt-1">Eşleşmeyenler atlanır. Öğrenci Yönetimi\'nden kontrol edin.</p></details>'
+                : '');
+    } catch(e) { console.warn('Eşleştirme hatası:', e); }
+}
+
+async function bulk2HandleFile(event) {
+    var file = event.target.files[0];
+    if (!file) return;
+
+    document.getElementById('bulkFileNameLabel').textContent = file.name;
+    document.getElementById('bulk2TestName').value = file.name.replace(/\.(xlsx|xls)$/i, '');
+
+    // XLSX hazır olana kadar bekle (maks 6 saniye)
+    var waited = 0;
+    while (!window.XLSX && waited < 30) {
+        await new Promise(function(r) { setTimeout(r, 200); });
+        waited++;
+    }
+    if (!window.XLSX) {
+        alert('Excel kütüphanesi yüklenemedi. İnternet bağlantınızı kontrol edip sayfayı yenileyin.');
+        return;
+    }
+
+    try {
+        var arrayBuf = await file.arrayBuffer();
+        var wb = window.XLSX.read(arrayBuf, { type: 'array' });
+        bulk2Sheets = [];
+
+        wb.SheetNames.forEach(function(sheetName) {
+            var ws = wb.Sheets[sheetName];
+            var raw = window.XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+
+            // Başlık satırını bul (ilk 5 satırda 'Numara' sütunu ara)
+            var headerRow = -1;
+            for (var i = 0; i < Math.min(raw.length, 5); i++) {
+                var cells = raw[i].map(function(c) { return String(c).trim(); });
+                if (cells.indexOf('Numara') !== -1) { headerRow = i; break; }
+            }
+            if (headerRow === -1) return; // Bu sayfada geçerli başlık yok, atla
+
+            var h = raw[headerRow].map(function(c) { return String(c).trim(); });
+            var cN = h.indexOf('Numara');
+            var cA = h.findIndex(function(x) { return x === 'Ad Soyad' || x === 'Adı Soyadı' || x === 'Ad' || x.includes('Ad'); });
+            var cS = h.indexOf('Sınıf');
+            // Yeni şablon: Doğru/Yanlış/Boş — eski şablon: D/Y/B
+            var cD = h.indexOf('Doğru'); if (cD === -1) cD = h.indexOf('D');
+            var cY = h.indexOf('Yanlış'); if (cY === -1) cY = h.indexOf('Y');
+            var cB = h.indexOf('Boş'); if (cB === -1) cB = h.indexOf('B');
+            var cNet = h.indexOf('Net');
+            var cP = h.indexOf('Puan');
+            var cR = h.indexOf('Sıralama');
+
+            // Soru sütunlarını bul: başlığı sayısal olan sütunlar (1, 2, 3, ...)
+            var questionCols = []; // [{col: idx, soruNo: 1}, ...]
+            h.forEach(function(hdr, idx) {
+                var n = parseInt(hdr);
+                if (!isNaN(n) && n >= 1 && n <= 50 && String(n) === hdr) {
+                    questionCols.push({ col: idx, soruNo: n });
+                }
+            });
+            questionCols.sort(function(a, b) { return a.soruNo - b.soruNo; });
+
+            var rows = [];
+            for (var j = headerRow + 1; j < raw.length; j++) {
+                var r = raw[j];
+                var numara = String(r[cN] || '').trim();
+                var adSoyad = cA >= 0 ? String(r[cA] || '').trim() : '';
+                if (!numara || isNaN(parseInt(numara))) continue;
+
+                // Soru bazlı analizi çözümle
+                // Format: "DOĞRU-öğrenci" — DOĞRU büyük harf, öğrenci küçük harf (yanlış) veya büyük (doğru)
+                // ".-" veya ".- " = bu soru testte yok, " - " = boş bıraktı
+                var soruAnaliz = []; // [{soruNo, dogruCevap, ogrenciCevap, sonuc}]
+                questionCols.forEach(function(qc) {
+                    var cell = String(r[qc.col] || '').trim();
+                    if (!cell || cell === '.-' || cell.startsWith('.-')) return; // Bu soru yok
+                    var parts = cell.split('-');
+                    if (parts.length < 2) return;
+                    var dogruCevap = parts[0].trim();   // Büyük harf
+                    var ogrenciCevap = parts[1].trim(); // Büyük=doğru, küçük=yanlış, boş=boş
+                    var sonuc;
+                    if (!ogrenciCevap || ogrenciCevap === ' ' || ogrenciCevap === '') {
+                        sonuc = 'bos';
+                        ogrenciCevap = '';
+                    } else if (ogrenciCevap === ogrenciCevap.toUpperCase()) {
+                        sonuc = 'dogru';
+                    } else {
+                        sonuc = 'yanlis';
+                        ogrenciCevap = ogrenciCevap.toUpperCase(); // normalize
+                    }
+                    soruAnaliz.push({
+                        soruNo: qc.soruNo,
+                        dogruCevap: dogruCevap,
+                        ogrenciCevap: ogrenciCevap,
+                        sonuc: sonuc
+                    });
+                });
+
+                rows.push({
+                    numara:     numara,
+                    adSoyad:    adSoyad,
+                    sinif:      cS >= 0 ? String(r[cS] || '').trim() : '',
+                    dogru:      cD >= 0 ? (parseInt(r[cD]) || 0) : 0,
+                    yanlis:     cY >= 0 ? (parseInt(r[cY]) || 0) : 0,
+                    bos:        cB >= 0 ? (parseInt(r[cB]) || 0) : 0,
+                    net:        cNet >= 0 ? (parseFloat(r[cNet]) || 0) : 0,
+                    puan:       cP >= 0 ? Math.round(parseFloat(r[cP]) || 0) : 0,
+                    siralama:   cR >= 0 ? String(r[cR] || '').trim() : '',
+                    soruAnaliz: soruAnaliz
+                });
+            }
+            if (rows.length > 0) bulk2Sheets.push({ sheetName: sheetName, rows: rows });
+        });
+
+        if (bulk2Sheets.length === 0) {
+            alert('Geçerli veri bulunamadı.\n\nDosyanızda "Numara" başlıklı bir sütun var mı?\nSütun başlıkları ilk 5 satırda olmalıdır.');
+            return;
+        }
+
+        // Sekmeleri oluştur
+        document.getElementById('bulk2Tabs').innerHTML = bulk2Sheets.map(function(s, i) {
+            return '<button id="bulk2Tab_' + i + '" onclick="bulk2SwitchTab(' + i + ')" class="px-3 py-1.5 rounded-full text-sm font-semibold transition ' +
+                (i === 0 ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-indigo-100') + '">📄 ' + s.sheetName +
+                ' <span class="opacity-70">(' + s.rows.length + ')</span></button>';
+        }).join('');
+
+        bulk2RenderTable(0);
+        await bulk2ShowMatch();
+        document.getElementById('bulk2').classList.remove('hidden');
+
+    } catch(err) {
+        console.error('Excel okuma hatası:', err);
+        alert('Excel okunurken hata: ' + err.message);
+    }
+}
+
+async function bulk2Run() {
+    var testName = document.getElementById('bulk2TestName').value.trim();
+    var testType = document.getElementById('bulk2TestType').value;
+
+    if (!testName) { alert('Lütfen test adını girin.'); document.getElementById('bulk2TestName').focus(); return; }
+    if (!bulk2Sheets || bulk2Sheets.length === 0) { alert('Önce Excel dosyası seçin.'); return; }
+
+    document.getElementById('bulk2').classList.add('hidden');
+    document.getElementById('bulk2Progress').classList.remove('hidden');
+    document.getElementById('bulk2Result').classList.add('hidden');
+    document.getElementById('bulk2Log').innerHTML = '';
+
+    var totalUploaded = 0, totalSkipped = 0, totalErrors = 0;
+
+    bulk2Log('Öğrenci listesi alınıyor...', 'info');
+    var stuRes = await supabase.from('students').select('id, student_no');
+    if (stuRes.error) {
+        bulk2Log('Öğrenci listesi alınamadı: ' + stuRes.error.message, 'error');
+        bulk2ShowResult(false, stuRes.error.message, 0, 0, 1);
+        return;
+    }
+    var sMap = {};
+    (stuRes.data || []).forEach(function(s) { sMap[String(s.student_no).trim()] = s.id; });
+    bulk2Log((stuRes.data || []).length + ' öğrenci yüklendi.', 'ok');
+
+    for (var si = 0; si < bulk2Sheets.length; si++) {
+        var sheet = bulk2Sheets[si];
+        var sName = testName + ' - ' + sheet.sheetName;
+
+        document.getElementById('bulk2Bar').style.width = Math.round((si / bulk2Sheets.length) * 85) + '%';
+        document.getElementById('bulk2ProgressText').textContent = 'İşleniyor: ' + sheet.sheetName + ' (' + (si + 1) + '/' + bulk2Sheets.length + ')';
+        bulk2Log('━━━ ' + sheet.sheetName + ' ━━━', 'info');
+
+        // Aynı başlıkta test var mı?
+        var existRes = await supabase.from('tests').select('id').eq('title', sName).maybeSingle();
+        var testId = null;
+
+        if (existRes.data && existRes.data.id) {
+            testId = existRes.data.id;
+            await supabase.from('tests').update({ test_type: testType, description: 'Optik form - ' + new Date().toLocaleDateString('tr-TR') }).eq('id', testId);
+            bulk2Log('Mevcut test güncellendi (ID:' + testId + ')', 'ok');
+        } else {
+            var insRes = await supabase.from('tests').insert({
+                title:             sName,
+                description:       'Optik form - ' + new Date().toLocaleDateString('tr-TR'),
+                reading_text:      '[Optik Form] ' + sName,
+                questions:         JSON.stringify([]),
+                text_display_mode: 'first_page_only',
+                time_limit:        30,
+                test_type:         testType,
+                created_by:        (currentUser && currentUser.id) ? currentUser.id : null
+            }).select('id').single();
+
+            if (insRes.error) {
+                bulk2Log('Test oluşturulamadı: ' + insRes.error.message + ' [' + insRes.error.code + ']', 'error');
+                if (insRes.error.hint) bulk2Log('İpucu: ' + insRes.error.hint, 'warn');
+                totalErrors++;
+                continue;
+            }
+            testId = insRes.data.id;
+            bulk2Log('Test oluşturuldu (ID:' + testId + ')', 'ok');
+        }
+
+        for (var ri = 0; ri < sheet.rows.length; ri++) {
+            var row = sheet.rows[ri];
+            var sid = sMap[String(row.numara).trim()];
+            if (!sid) {
+                bulk2Log(row.numara + ' [' + row.adSoyad + ']: eşleşmedi, atlandı.', 'warn');
+                totalSkipped++;
+                continue;
+            }
+            var upsRes = await supabase.from('test_results').upsert(
+                {
+                    test_id:      testId,
+                    student_id:   sid,
+                    score:        row.puan,
+                    answers:      JSON.stringify({ dogru: row.dogru, yanlis: row.yanlis, bos: row.bos, net: row.net, siralama: row.siralama, kaynak: 'optik_form', soruAnaliz: row.soruAnaliz || [] }),
+                    completed_at: new Date().toISOString()
+                },
+                { onConflict: 'test_id,student_id' }
+            );
+            if (upsRes.error) {
+                bulk2Log(row.adSoyad + ': hata – ' + upsRes.error.message, 'error');
+                totalErrors++;
+            } else {
+                // test_assignments kaydı oluştur (öğrenci ekranında ve liderlikte görünmesi için)
+                await supabase.from('test_assignments').upsert(
+                    { test_id: testId, student_id: sid, assigned_at: new Date().toISOString() },
+                    { onConflict: 'test_id,student_id' }
+                );
+                bulk2Log(row.adSoyad + ': ' + row.puan + ' puan kaydedildi', 'ok');
+                totalUploaded++;
+            }
+        }
+    }
+
+    document.getElementById('bulk2Bar').style.width = '100%';
+    document.getElementById('bulk2ProgressText').textContent = 'Tamamlandı!';
+    setTimeout(function() {
+        document.getElementById('bulk2Progress').classList.add('hidden');
+        bulk2ShowResult(true, null, totalUploaded, totalSkipped, totalErrors);
+    }, 700);
+}
+
+function bulk2ShowResult(success, errMsg, uploaded, skipped, errors) {
+    var section = document.getElementById('bulk2Result');
+    var title   = document.getElementById('bulk2ResultTitle');
+    var body    = document.getElementById('bulk2ResultBody');
+    section.classList.remove('hidden');
+
+    if (!success) {
+        title.innerHTML = '<i class="fas fa-times-circle text-red-500 mr-2"></i>Yükleme Başarısız';
+        body.innerHTML  = '<p class="text-red-600">' + errMsg + '</p>' +
+            '<button onclick="document.getElementById(\'bulk2\').classList.remove(\'hidden\')" class="mt-3 px-4 py-2 bg-gray-100 rounded-lg text-sm">← Geri Dön</button>';
+        return;
+    }
+
+    title.innerHTML = errors === 0
+        ? '<i class="fas fa-check-circle text-green-500 mr-2"></i>Yükleme Tamamlandı!'
+        : '<i class="fas fa-exclamation-triangle text-yellow-500 mr-2"></i>Yükleme Tamamlandı (bazı hatalar)';
+
+    body.innerHTML =
+        '<div class="grid grid-cols-3 gap-3 mb-4">' +
+            '<div class="text-center p-3 bg-green-50 rounded-xl"><div class="text-2xl font-bold text-green-700">' + uploaded + '</div><div class="text-xs text-green-600">Kaydedildi</div></div>' +
+            '<div class="text-center p-3 bg-yellow-50 rounded-xl"><div class="text-2xl font-bold text-yellow-700">' + skipped + '</div><div class="text-xs text-yellow-600">Atlandı</div></div>' +
+            '<div class="text-center p-3 bg-red-50 rounded-xl"><div class="text-2xl font-bold text-red-700">' + errors + '</div><div class="text-xs text-red-600">Hata</div></div>' +
+        '</div>' +
+        '<p class="text-gray-500 text-sm mb-4">Sonuçlar öğrenci panellerinde ve Sınav Liderliği\'nde görünüyor.</p>' +
+        '<div class="flex gap-3 flex-wrap">' +
+            '<button onclick="showTeacherTab(\'sinavLiderligi\')" class="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold rounded-lg transition"><i class="fas fa-medal mr-1"></i>Sınav Liderliğini Gör</button>' +
+            '<button onclick="bulk2Reset()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold rounded-lg transition"><i class="fas fa-upload mr-1"></i>Yeni Dosya Yükle</button>' +
+        '</div>';
+}
+
+// Event bağlama — DOM hazır olduktan sonra
+(function() {
+    function bindBulkInput() {
+        var inp = document.getElementById('bulkExcelInput');
+        if (inp) {
+            inp.addEventListener('change', bulk2HandleFile);
+            var statusEl = document.getElementById('bulkXlsxStatus');
+            if (window.XLSX && statusEl) { statusEl.textContent = 'XLSX hazır ✓'; statusEl.className = 'text-xs text-green-500'; }
+        }
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', bindBulkInput);
+    } else {
+        bindBulkInput();
+    }
+})();
+
+// Global scope
+window.bulk2HandleFile  = bulk2HandleFile;
+window.bulk2Run         = bulk2Run;
+window.bulk2Reset       = bulk2Reset;
+window.bulk2SwitchTab   = bulk2SwitchTab;
 </script>
 
 <script>
