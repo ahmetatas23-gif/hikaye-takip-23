@@ -1,0 +1,31 @@
+# ══════════════════════════════════════════════════════════════
+#  .gitignore — Okul Yönetim Sistemi
+#  ⚠️  Bu dosya olmadan API anahtarlarınız herkese açık olur!
+# ══════════════════════════════════════════════════════════════
+
+# ─── Supabase gizli yapılandırma ───────────────────────────────
+js/supabase-config.js       # Gerçek URL ve ANON KEY burada
+.env                        # Varsa environment variables
+.env.local
+.env.production
+
+# ─── İşletim sistemi dosyaları ────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ─── Editör / IDE ─────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ─── Node (geliştirme araçları varsa) ─────────────────────────
+node_modules/
+npm-debug.log*
+
+# ─── Yedek / geçici dosyalar ──────────────────────────────────
+*.bak
+*.tmp
+*.orig
