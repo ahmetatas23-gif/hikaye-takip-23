@@ -734,7 +734,10 @@ ON CONFLICT (tc_no) DO NOTHING;
                 if (timeRemaining <= 0) {
                     clearInterval(testTimer);
                     // Auto submit when time runs out
-                    submitTest();
+                    submitTest().catch(err => {
+                        console.error('submitTest (timer) unhandled error:', err);
+                        showNotification('❌ Hata: ' + (err.message || 'Bilinmeyen hata'), 'error');
+                    });
                 }
             }, 1000);
         }
@@ -2315,7 +2318,10 @@ ON CONFLICT (tc_no) DO NOTHING;
             if (questionTimer) clearInterval(questionTimer);
             
             if (currentTest.currentQuestion === currentTest.questions.length - 1) {
-                submitTest();
+                submitTest().catch(err => {
+                    console.error('submitTest unhandled error:', err);
+                    showNotification('❌ Hata: ' + (err.message || 'Bilinmeyen hata'), 'error');
+                });
             } else {
                 currentTest.currentQuestion++;
                 displayQuestion();
@@ -2440,6 +2446,8 @@ ON CONFLICT (tc_no) DO NOTHING;
                     hint: error.hint
                 });
                 showNotification('❌ Test sonucu kaydedilirken hata oluştu: ' + (error.message || 'Bilinmeyen hata'), 'error');
+                // Hata olsa bile sonuç ekranını göster (kayıt olmadan)
+                showTestResult(score, correctAnswers, currentTest ? currentTest.questions.length : 0, earnedPoints, totalPoints);
             }
         }
 
@@ -6967,9 +6975,19 @@ Teknolojinin hızla geliştiği günümüzde, dijital kitaplar da popüler hale 
                 time_limit: parseInt(testData.timeLimit || testData.time_limit || 30),
                 questions: JSON.stringify(testData.questions),
                 created_by: currentUser?.id || null,
-                test_type: testType,
-                option_count: optionCount
+                test_type: testType
             };
+
+            // option_count kolonunu sadece cevap_kagidi tipinde ve değer varsa ekle
+            // (Supabase'de kolon yoksa hata vermemesi için)
+            if (optionCount !== null) {
+                try {
+                    // Kolonun var olup olmadığını test et, yoksa sessizce geç
+                    dbData.option_count = optionCount;
+                } catch(e) {
+                    console.warn('option_count kolonu eklenemedi:', e);
+                }
+            }
             
             console.log('Veritabanına gönderilecek veri:', dbData);
             
@@ -7004,6 +7022,35 @@ Teknolojinin hızla geliştiği günümüzde, dijital kitaplar da popüler hale 
             } catch (error) {
                 console.error('Test yükleme hatası:', error);
                 
+                // option_count kolonu eksikse: otomatik retry (kolonsuz)
+                if (error.code === 'PGRST204' && error.message && error.message.includes('option_count')) {
+                    console.warn('option_count kolonu bulunamadı, kolon olmadan tekrar deneniyor...');
+                    try {
+                        delete dbData.option_count;
+                        const { data: data2, error: error2 } = await supabase
+                            .from('tests')
+                            .insert(dbData)
+                            .select();
+                        if (!error2) {
+                            console.log('Test başarıyla kaydedildi (option_count olmadan):', data2);
+                            showNotification('Test yüklendi! (Not: Seçenek sayısı kaydedilemedi. Supabase\'de migration_option_count.sql dosyasını çalıştırın.)', 'warning');
+                            closeModal('uploadTestModal');
+                            await loadTestsList();
+                            document.getElementById('testName').value = '';
+                            document.getElementById('testDescription').value = '';
+                            document.getElementById('jsonTextArea').value = '';
+                            document.getElementById('testFile').value = '';
+                            document.getElementById('selectedFileName').classList.add('hidden');
+                            document.getElementById('jsonValidationResult').classList.add('hidden');
+                            const normalRadio = document.querySelector('input[name="testType"][value="normal"]');
+                            if (normalRadio) { normalRadio.checked = true; updateTestTypeLabels(); }
+                            return;
+                        }
+                    } catch(retryErr) {
+                        console.error('Retry da başarısız:', retryErr);
+                    }
+                }
+
                 // Detailed error message
                 let errorMessage = 'Test yüklenirken hata oluştu.';
                 if (error.message) {
