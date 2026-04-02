@@ -151,27 +151,34 @@ body {
   color: #2563eb !important;
 }
 
-/* Desktop: hamburger gizli, nav her zaman görünür yatay bant */
+/* Desktop: hamburger görünür, nav açılınca yatay bant */
 @media (min-width: 768px) {
   .hamburger-btn {
-    display: none !important;
-  }
-  .mobile-nav-wrapper {
-    max-height: none !important;
-    overflow: visible !important;
-    opacity: 1 !important;
-    border-top: none !important;
-    box-shadow: none !important;
-    transition: none !important;
-  }
-  .mobile-nav-wrapper nav {
     display: flex !important;
+  }
+  /* Kapalıyken nav gizli (mobille aynı davranış) */
+  .mobile-nav-wrapper {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height 0.28s ease, opacity 0.22s ease;
+    border-top: 1px solid #e5e7eb;
+    box-shadow: none;
+  }
+  /* Açıkken desktop'ta yatay bant olarak aç */
+  .mobile-nav-wrapper.is-open {
+    max-height: 80px !important;
+    opacity: 1 !important;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.06) !important;
+  }
+  .mobile-nav-wrapper.is-open nav {
+    flex-direction: row !important;
     overflow-x: auto;
     scrollbar-width: none;
   }
-  .mobile-nav-wrapper nav::-webkit-scrollbar { display: none; }
-  .mobile-nav-wrapper .tab-button,
-  .mobile-nav-wrapper .teacher-tab-button {
+  .mobile-nav-wrapper.is-open nav::-webkit-scrollbar { display: none; }
+  .mobile-nav-wrapper.is-open .tab-button,
+  .mobile-nav-wrapper.is-open .teacher-tab-button {
     width: auto !important;
     border-left: none !important;
     border-bottom: 2px solid transparent !important;
@@ -181,10 +188,10 @@ body {
     min-height: unset !important;
     white-space: nowrap !important;
   }
-  .mobile-nav-wrapper .tab-button.active-tab,
-  .mobile-nav-wrapper .teacher-tab-button.active-tab,
-  .mobile-nav-wrapper .tab-button.border-green-500,
-  .mobile-nav-wrapper .teacher-tab-button.border-green-500 {
+  .mobile-nav-wrapper.is-open .tab-button.active-tab,
+  .mobile-nav-wrapper.is-open .teacher-tab-button.active-tab,
+  .mobile-nav-wrapper.is-open .tab-button.border-green-500,
+  .mobile-nav-wrapper.is-open .teacher-tab-button.border-green-500 {
     border-left-color: transparent !important;
     background: transparent !important;
   }
