@@ -809,14 +809,20 @@ ON CONFLICT (tc_no) DO NOTHING;
                 return !assignment || !assignment.tests?.test_type || assignment.tests.test_type === 'normal';
             });
 
-            if (document.getElementById('totalTests')) document.getElementById('totalTests').textContent = normalAssignments.length;
-            if (document.getElementById('completedTests')) document.getElementById('completedTests').textContent = normalResults.length;
+            const totalTestsEl = document.getElementById('totalTests');
+            if (totalTestsEl) totalTestsEl.textContent = normalAssignments.length;
+            
+            const completedTestsEl = document.getElementById('completedTests');
+            if (completedTestsEl) completedTestsEl.textContent = normalResults.length;
             
             const avgScore = normalResults.length > 0 
                 ? Math.round(normalResults.reduce((sum, r) => sum + r.score, 0) / normalResults.length)
                 : 0;
-            if (document.getElementById('averageScore')) document.getElementById('averageScore').textContent = avgScore;
-            if (document.getElementById('badgeCount')) document.getElementById('badgeCount').textContent = badges?.length || 0;
+            const averageScoreEl = document.getElementById('averageScore');
+            if (averageScoreEl) averageScoreEl.textContent = avgScore;
+            
+            const badgeCountEl = document.getElementById('badgeCount');
+            if (badgeCountEl) badgeCountEl.textContent = badges?.length || 0;
 
             try {
                 const periodSelect = document.getElementById('studentPeriodSelect');
@@ -852,17 +858,14 @@ ON CONFLICT (tc_no) DO NOTHING;
                 const dateRangeElem = document.getElementById('currentWeekRange');
                 if (dateRangeElem) {
                     dateRangeElem.textContent = dateRangeText;
-                    console.log('Date range updated to:', dateRangeText);
                 }
 
-                // 2. Supabase'den veri çek - SQL View her zaman tüm verileri içerir, biz filtreleyiz
+                // 2. Supabase'den veri çek
                 const { data: statsData, error: statsError } = await supabase
                     .from('student_all_period_stats')
                     .select('*')
                     .eq('student_id', currentUser.id)
                     .single();
-                
-                console.log('Supabase statsData fetched:', statsData, 'selectedPeriod:', selectedPeriod);
                 
                 let successCount = 0;
                 let failedCount = 0;
@@ -870,12 +873,10 @@ ON CONFLICT (tc_no) DO NOTHING;
                 let dailyStats = {};
                 
                 if (!statsError && statsData) {
-                    console.log('Processing statsData for period:', selectedPeriod);
                     if (selectedPeriod === 'last') {
                         weekly = statsData.last_weekly_total_tests || 0;
                         successCount = statsData.last_weekly_successful_tests || 0;
                         failedCount = statsData.last_weekly_failed_tests || 0;
-                        console.log('Last week selected - weekly:', weekly, 'success:', successCount, 'failed:', failedCount);
                         dailyStats = {
                             0: statsData.last_mon_total || 0,
                             1: statsData.last_tue_total || 0,
@@ -889,7 +890,6 @@ ON CONFLICT (tc_no) DO NOTHING;
                         weekly = statsData.current_weekly_total_tests || 0;
                         successCount = statsData.current_weekly_successful_tests || 0;
                         failedCount = statsData.current_weekly_failed_tests || 0;
-                        console.log('Current week selected - weekly:', weekly, 'success:', successCount, 'failed:', failedCount);
                         dailyStats = {
                             0: statsData.current_mon_total || 0,
                             1: statsData.current_tue_total || 0,
@@ -901,38 +901,35 @@ ON CONFLICT (tc_no) DO NOTHING;
                         };
                     }
                     const monthly = statsData.monthly_total_tests || 0;
-                    document.getElementById('studentMonthlyTotal').textContent = monthly;
+                    const monthlyTotalEl = document.getElementById('studentMonthlyTotal');
+                    if (monthlyTotalEl) monthlyTotalEl.textContent = monthly;
                 }
 
-                // 3. Update Weekly Test Status (Öğretmen panelindeki gibi SQL View verilerini kullan)
+                // 3. Update Weekly Test Status
                 const daysShort = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
                 const rowContainer = document.getElementById('studentWeeklyStatusRow');
                 if (rowContainer) {
                     const today = new Date().getDay(); 
                     const currentDayIdx = today === 0 ? 6 : today - 1; 
 
-	                    rowContainer.innerHTML = daysShort.map((dayName, idx) => {
-	                        let content = '<span class="pill-tag pill-empty">-</span>';
-	                        const count = dailyStats[idx] || 0;
-	                        
-	                        if (count > 0) {
-	                            // AKILLI RENKLENDİRME: Haftalık toplamda hata varsa, test çözülen günleri KIRMIZI yap
-	                            if (failedCount > 0) {
-	                                content = `<span class="pill-tag pill-failed">${count} ✕</span>`;
-	                            } else {
-	                                // Hata yoksa ve test çözülmüşse YEŞİL yap
-	                                content = `<span class="pill-tag pill-success">${count} ✓</span>`;
-	                            }
-	                        } else if (selectedPeriod === 'current' && idx === currentDayIdx) {
-	                            content = '<span class="pill-tag pill-pending">!</span>';
-	                        }
-	                        return `<td class="px-2 py-4 text-center">${content}</td>`;
-	                    }).join('');
+                    rowContainer.innerHTML = daysShort.map((dayName, idx) => {
+                        let content = '<span class="pill-tag pill-empty">-</span>';
+                        const count = dailyStats[idx] || 0;
+                        
+                        if (count > 0) {
+                            if (failedCount > 0) {
+                                content = `<span class="pill-tag pill-failed">${count} ✕</span>`;
+                            } else {
+                                content = `<span class="pill-tag pill-success">${count} ✓</span>`;
+                            }
+                        } else if (selectedPeriod === 'current' && idx === currentDayIdx) {
+                            content = '<span class="pill-tag pill-pending">!</span>';
+                        }
+                        return `<td class="px-2 py-4 text-center">${content}</td>`;
+                    }).join('');
 
-                    // Update Summary Counts
-                    
-                    // Update Totals and Badge
-                    document.getElementById('studentWeeklyTotal').textContent = `${weekly} Test`;
+                    const weeklyTotalEl = document.getElementById('studentWeeklyTotal');
+                    if (weeklyTotalEl) weeklyTotalEl.textContent = `${weekly} Test`;
                     
                     let badgeHtml = '';
                     if (weekly >= 6) {
@@ -942,7 +939,8 @@ ON CONFLICT (tc_no) DO NOTHING;
                     } else {
                         badgeHtml = '<span class="status-badge badge-inactive"><i class="fas fa-exclamation-circle"></i> Harekete Geç</span>';
                     }
-                    document.getElementById('studentStatusBadgeContainer').innerHTML = badgeHtml;
+                    const badgeContainerEl = document.getElementById('studentStatusBadgeContainer');
+                    if (badgeContainerEl) badgeContainerEl.innerHTML = badgeHtml;
                 }
             } catch (e) { console.error("Error updating modern card:", e); }
         }
@@ -1000,6 +998,8 @@ ON CONFLICT (tc_no) DO NOTHING;
             }
             
             const container = document.getElementById('assignedTests');
+            if (!container) return; // Element yoksa çık
+            
             container.innerHTML = '';
 
             if (!assignments || assignments.length === 0) {
@@ -5589,6 +5589,7 @@ ON CONFLICT (tc_no) DO NOTHING;
         // Display student badges
         async function displayStudentBadges(badges) {
             const container = document.getElementById('studentBadges');
+            if (!container) return;
             container.innerHTML = '';
 
             // Tüm sonuçları çek (sayfalama ile)
@@ -5685,23 +5686,31 @@ ON CONFLICT (tc_no) DO NOTHING;
             const weeklyBtn = document.getElementById('starTabWeekly');
             const monthlyBtn = document.getElementById('starTabMonthly');
             
-            if (mode === 'weekly') {
-                weeklyBtn.classList.add('bg-white', 'text-indigo-600', 'shadow-sm');
-                weeklyBtn.classList.remove('text-white', 'hover:bg-white/5');
-                monthlyBtn.classList.remove('bg-white', 'text-indigo-600', 'shadow-sm');
-                monthlyBtn.classList.add('text-white', 'hover:bg-white/5');
-                document.getElementById('starListTitle').innerHTML = '<i class="fas fa-star mr-2 text-yellow-400"></i>Haftanın Yıldızları';
-                document.getElementById('starPeriodName').textContent = 'Bu Hafta';
-                document.getElementById('starHintText').textContent = 'Bu hafta en çok test çözen ve en yüksek puanı alan ilk 5 öğrenci "Haftanın Yıldızı" seçilir.';
-            } else {
-                monthlyBtn.classList.add('bg-white', 'text-indigo-600', 'shadow-sm');
-                monthlyBtn.classList.remove('text-white', 'hover:bg-white/5');
-                weeklyBtn.classList.remove('bg-white', 'text-indigo-600', 'shadow-sm');
-                weeklyBtn.classList.add('text-white', 'hover:bg-white/5');
-                document.getElementById('starListTitle').innerHTML = '<i class="fas fa-medal mr-2 text-yellow-400"></i>Ayın Yıldızları';
-                const monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
-                document.getElementById('starPeriodName').textContent = monthNames[new Date().getMonth()];
-                document.getElementById('starHintText').textContent = 'Bu ay en çok test çözen ve en yüksek puanı alan ilk 3 öğrenci "Ayın Yıldızı" seçilir.';
+            if (weeklyBtn && monthlyBtn) {
+                if (mode === 'weekly') {
+                    weeklyBtn.classList.add('bg-white', 'text-indigo-600', 'shadow-sm');
+                    weeklyBtn.classList.remove('text-white', 'hover:bg-white/5');
+                    monthlyBtn.classList.remove('bg-white', 'text-indigo-600', 'shadow-sm');
+                    monthlyBtn.classList.add('text-white', 'hover:bg-white/5');
+                    const title = document.getElementById('starListTitle');
+                    if (title) title.innerHTML = '<i class="fas fa-star mr-2 text-yellow-400"></i>Haftanın Yıldızları';
+                    const period = document.getElementById('starPeriodName');
+                    if (period) period.textContent = 'Bu Hafta';
+                    const hint = document.getElementById('starHintText');
+                    if (hint) hint.textContent = 'Bu hafta en çok test çözen ve en yüksek puanı alan ilk 5 öğrenci "Haftanın Yıldızı" seçilir.';
+                } else {
+                    monthlyBtn.classList.add('bg-white', 'text-indigo-600', 'shadow-sm');
+                    monthlyBtn.classList.remove('text-white', 'hover:bg-white/5');
+                    weeklyBtn.classList.remove('bg-white', 'text-indigo-600', 'shadow-sm');
+                    weeklyBtn.classList.add('text-white', 'hover:bg-white/5');
+                    const title = document.getElementById('starListTitle');
+                    if (title) title.innerHTML = '<i class="fas fa-medal mr-2 text-yellow-400"></i>Ayın Yıldızları';
+                    const monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+                    const period = document.getElementById('starPeriodName');
+                    if (period) period.textContent = monthNames[new Date().getMonth()];
+                    const hint = document.getElementById('starHintText');
+                    if (hint) hint.textContent = 'Bu ay en çok test çözen ve en yüksek puanı alan ilk 3 öğrenci "Ayın Yıldızı" seçilir.';
+                }
             }
             
             renderStarList();
@@ -5956,6 +5965,7 @@ ON CONFLICT (tc_no) DO NOTHING;
                 }
 
                 const container = document.getElementById('leaderboardList');
+                if (!container) return;
                 container.innerHTML = '';
 
                 if (generalLeaderboard.length === 0) {
