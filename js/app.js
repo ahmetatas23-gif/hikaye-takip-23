@@ -6144,16 +6144,21 @@ ON CONFLICT (tc_no) DO NOTHING;
             const yukleniyor = document.getElementById('sinavLiderYukleniyor');
             const sinavBtn = document.getElementById('sinavLiderBtn');
             const alistirmaBtn = document.getElementById('alistirmaLiderBtn');
+            const cevapKagidiBtn = document.getElementById('cevapKagidiLiderBtn');
 
             if (!list) return;
 
             // Buton stillerini güncelle
-            if (tip === 'sinav') {
+            [sinavBtn, alistirmaBtn, cevapKagidiBtn].forEach(btn => {
+                if (btn) btn.className = 'px-5 py-2 rounded-full text-sm font-semibold bg-gray-100 text-gray-600 hover:bg-gray-200 transition';
+            });
+
+            if (tip === 'sinav' && sinavBtn) {
                 sinavBtn.className = 'px-5 py-2 rounded-full text-sm font-semibold bg-orange-500 text-white shadow transition';
-                alistirmaBtn.className = 'px-5 py-2 rounded-full text-sm font-semibold bg-gray-100 text-gray-600 hover:bg-green-100 hover:text-green-700 transition';
-            } else {
+            } else if (tip === 'alistirma' && alistirmaBtn) {
                 alistirmaBtn.className = 'px-5 py-2 rounded-full text-sm font-semibold bg-green-500 text-white shadow transition';
-                sinavBtn.className = 'px-5 py-2 rounded-full text-sm font-semibold bg-gray-100 text-gray-600 hover:bg-orange-100 hover:text-orange-700 transition';
+            } else if (tip === 'cevap_kagidi' && cevapKagidiBtn) {
+                cevapKagidiBtn.className = 'px-5 py-2 rounded-full text-sm font-semibold bg-blue-500 text-white shadow transition';
             }
 
             list.innerHTML = '';
@@ -6170,10 +6175,14 @@ ON CONFLICT (tc_no) DO NOTHING;
 
                 if (testIds.length === 0) {
                     if (yukleniyor) yukleniyor.classList.add('hidden');
+                    let tipText = 'sınav testi';
+                    if (tip === 'alistirma') tipText = 'alıştırma testi';
+                    if (tip === 'cevap_kagidi') tipText = 'cevap kağıdı testi';
+                    
                     list.innerHTML = `
                         <div class="text-center py-12">
                             <i class="fas fa-trophy text-6xl text-gray-200 mb-4"></i>
-                            <p class="text-gray-400 text-lg">${tip === 'sinav' ? 'Henüz sınav testi' : 'Henüz alıştırma testi'} bulunmuyor.</p>
+                            <p class="text-gray-400 text-lg">Henüz ${tipText} bulunmuyor.</p>
                             <p class="text-gray-300 text-sm mt-1">Test yüklerken tip seçmeyi unutmayın.</p>
                         </div>`;
                     return;
@@ -6227,8 +6236,10 @@ ON CONFLICT (tc_no) DO NOTHING;
                     .sort((a, b) => b.successful_tests_count - a.successful_tests_count || b.average_score - a.average_score);
 
                 // Başlık
-                const tipRenk = tip === 'sinav' ? 'orange' : 'green';
-                const tipLabel = tip === 'sinav' ? '📋 Sınav' : '🔧 Alıştırma';
+                let tipRenk = 'orange';
+                let tipLabel = '📋 Sınav';
+                if (tip === 'alistirma') { tipRenk = 'green'; tipLabel = '🔧 Alıştırma'; }
+                if (tip === 'cevap_kagidi') { tipRenk = 'blue'; tipLabel = '📄 Cevap Kağıdı'; }
                 const headerDiv = document.createElement('div');
                 headerDiv.className = `mb-6 p-4 bg-${tipRenk}-50 rounded-xl border border-${tipRenk}-100`;
                 headerDiv.innerHTML = `
